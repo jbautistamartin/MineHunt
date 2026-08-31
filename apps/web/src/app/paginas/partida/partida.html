@@ -11,7 +11,7 @@
                 | translate
                   : {
                       jugador:
-                        'partida.jugador'
+                        claveNombre(partida.turnoDe)
                         | translate: { numero: numeroDe(partida.turnoDe) },
                     }
             }}
@@ -35,7 +35,7 @@
           [class.activo]="!partida.terminada && jugador.id === partida.turnoDe"
         >
           <span class="nombre">
-            {{ 'partida.jugador' | translate: { numero: numeroDe(jugador.id) } }}
+            {{ claveNombre(jugador.id) | translate: { numero: numeroDe(jugador.id) } }}
           </span>
           <span class="minas">{{ jugador.minasEncontradas }}</span>
         </li>
@@ -44,12 +44,14 @@
 
     <mh-tablero
       [estado]="partida"
-      [bloqueado]="partida.terminada"
+      [bloqueado]="partida.terminada || esTurnoDeBot()"
       (celdaPulsada)="jugar($event)"
     />
 
     <p class="aviso" role="status">
-      @if (ultimoError(); as codigo) {
+      @if (esTurnoDeBot()) {
+        <span class="pensando">{{ 'partida.pensando' | translate }}</span>
+      } @else if (ultimoError(); as codigo) {
         <span class="error">{{ 'error.' + codigo | translate }}</span>
       } @else if (ultimoSuceso(); as suceso) {
         {{
@@ -57,7 +59,7 @@
             | translate
               : {
                   jugador:
-                    'partida.jugador' | translate: { numero: numeroDe(suceso.jugador) },
+                    claveNombre(suceso.jugador) | translate: { numero: numeroDe(suceso.jugador) },
                   celdas: suceso.celdas,
                 }
         }}
@@ -75,7 +77,7 @@
                 | translate
                   : {
                       jugador:
-                        'partida.jugador' | translate: { numero: numeroDe(partida.ganador) },
+                        claveNombre(partida.ganador) | translate: { numero: numeroDe(partida.ganador) },
                     }
             }}
           </p>

@@ -22,7 +22,21 @@
       "dimensiones": "The board must be between {{minimo}} and {{maximo}} cells per side.",
       "minas": "This board fits between 1 and {{maximo}} mines.",
       "jugadores": "A game takes {{minimo}} to {{maximo}} players."
-    }
+    },
+    "humanos": "Human players",
+    "sin_bots": "All human, sharing one device.",
+    "con_bots": "{{humanos}} human(s) and {{bots}} bot(s). Bots play instantly.",
+    "solo_bots": "Bots only ({{bots}}): the game plays itself.",
+    "nivel_ia": "AI level",
+    "nivel": {
+      "1": "Pure chance: clicks blindly.",
+      "2": "Basic deduction: solves each number on its own.",
+      "3": "Combined deduction: cross-references several numbers.",
+      "4": "Probabilistic: with no certainty, goes for the likeliest.",
+      "5": "Strategic: also favours corners and edges."
+    },
+    "retardo": "Bot pacing",
+    "retardo_ms": "Pause between turns (ms)"
   },
   "partida": {
     "turno_de": "{{jugador}}'s turn",
@@ -42,7 +56,9 @@
       "gana": "{{jugador}} wins",
       "empate": "Draw",
       "por_mayoria": "Nobody can catch the winner any more, {{minas}} mines left unfound."
-    }
+    },
+    "bot": "Bot {{numero}}",
+    "pensando": "Thinking…"
   },
   "error": {
     "CELDA_YA_REVELADA": "That cell is already uncovered.",
@@ -51,6 +67,7 @@
     "DIMENSIONES_INVALIDAS": "The board size is not valid.",
     "MINAS_INVALIDAS": "The number of mines is not valid.",
     "JUGADORES_INVALIDOS": "The number of players is not valid.",
-    "DESCONOCIDO": "Something went wrong."
+    "DESCONOCIDO": "Something went wrong.",
+    "SIN_JUGADAS": "There are no cells left to uncover."
   }
 }

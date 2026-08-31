@@ -84,6 +84,70 @@
       </div>
     </fieldset>
 
+    <fieldset class="grupo">
+      <legend>{{ 'configuracion.humanos' | translate }}</legend>
+      <div class="opciones">
+        @for (opcion of opcionesHumanos(); track opcion) {
+          <button
+            type="button"
+            class="opcion"
+            [class.activa]="opcion === numHumanos()"
+            [attr.aria-pressed]="opcion === numHumanos()"
+            (click)="cambiarHumanos(opcion)"
+          >
+            {{ opcion }}
+          </button>
+        }
+      </div>
+      <p class="resumen">
+        @if (soloBots()) {
+          {{ 'configuracion.solo_bots' | translate: { bots: numBots() } }}
+        } @else if (hayBots()) {
+          {{ 'configuracion.con_bots' | translate: { humanos: numHumanos(), bots: numBots() } }}
+        } @else {
+          {{ 'configuracion.sin_bots' | translate }}
+        }
+      </p>
+    </fieldset>
+
+    @if (hayBots()) {
+      <fieldset class="grupo">
+        <legend>{{ 'configuracion.nivel_ia' | translate }}</legend>
+        <div class="opciones">
+          @for (nivel of niveles; track nivel) {
+            <button
+              type="button"
+              class="opcion"
+              [class.activa]="nivel === nivelIA()"
+              [attr.aria-pressed]="nivel === nivelIA()"
+              [attr.title]="'configuracion.nivel.' + nivel | translate"
+              (click)="cambiarNivelIA(nivel)"
+            >
+              {{ nivel }}
+            </button>
+          }
+        </div>
+        <p class="resumen">{{ 'configuracion.nivel.' + nivelIA() | translate }}</p>
+      </fieldset>
+    }
+
+    @if (soloBots()) {
+      <fieldset class="grupo">
+        <legend>{{ 'configuracion.retardo' | translate }}</legend>
+        <label class="campo">
+          <span>{{ 'configuracion.retardo_ms' | translate }}</span>
+          <input
+            type="number"
+            step="100"
+            [min]="retardoMinimo"
+            [max]="retardoMaximo"
+            [value]="retardoBotsMs()"
+            (input)="cambiarRetardo($any($event.target).value)"
+          />
+        </label>
+      </fieldset>
+    }
+
     <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
       {{ 'configuracion.empezar' | translate }}
     </button>

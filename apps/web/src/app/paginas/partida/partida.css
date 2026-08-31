@@ -144,3 +144,8 @@ h1 {
 .jugador-3 {
   color: var(--mh-jugador-3);
 }
+
+.aviso .pensando {
+  color: var(--mh-texto-tenue);
+  font-style: italic;
+}

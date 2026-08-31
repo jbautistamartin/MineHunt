@@ -9,8 +9,9 @@ import { ServicioPartida } from '../../nucleo/partida.servicio';
 /**
  * Pantalla de juego del Modo Entrenamiento.
  *
- * Todos los jugadores comparten dispositivo y el turno va rotando (hotseat).
- * El tablero se reutilizara tal cual en el Modo Historia y en el multijugador.
+ * Los humanos comparten dispositivo y el turno va rotando (hotseat); los
+ * puestos que lleva la IA juegan solos. El tablero se reutilizara tal cual en
+ * el Modo Historia y en el multijugador.
  */
 @Component({
   selector: 'mh-partida',
@@ -26,6 +27,7 @@ export class Partida {
   readonly estado = this.servicio.estado;
   readonly ultimoSuceso = this.servicio.ultimoSuceso;
   readonly ultimoError = this.servicio.ultimoError;
+  readonly esTurnoDeBot = this.servicio.esTurnoDeBot;
 
   readonly terminada = computed(() => this.estado()?.terminada ?? false);
 
@@ -62,5 +64,17 @@ export class Partida {
   /** Los jugadores se numeran desde 1 de cara al jugador. */
   numeroDe(idJugador: number): number {
     return idJugador + 1;
+  }
+
+  esBot(idJugador: number): boolean {
+    return this.servicio.esBot(idJugador);
+  }
+
+  /**
+   * Clave de traduccion del nombre de un jugador.
+   * Los puestos de la IA se llaman "Bot" para distinguirlos de un vistazo.
+   */
+  claveNombre(idJugador: number): string {
+    return this.servicio.esBot(idJugador) ? 'partida.bot' : 'partida.jugador';
   }
 }

@@ -22,7 +22,21 @@
       "dimensiones": "El tablero debe medir entre {{minimo}} y {{maximo}} celdas de lado.",
       "minas": "En este tablero caben entre 1 y {{maximo}} minas.",
       "jugadores": "La partida es de {{minimo}} a {{maximo}} jugadores."
-    }
+    },
+    "humanos": "Jugadores humanos",
+    "sin_bots": "Todos humanos, en el mismo dispositivo.",
+    "con_bots": "{{humanos}} humano(s) y {{bots}} bot(s). Los bots juegan al instante.",
+    "solo_bots": "Solo bots ({{bots}}): la partida se juega sola.",
+    "nivel_ia": "Nivel de la IA",
+    "nivel": {
+      "1": "Azar puro: clica a ciegas.",
+      "2": "Deducción básica: resuelve cada número por separado.",
+      "3": "Deducción combinada: cruza varios números entre sí.",
+      "4": "Probabilística: sin certezas, va a lo más probable.",
+      "5": "Estratégica: además prefiere esquinas y bordes."
+    },
+    "retardo": "Ritmo de los bots",
+    "retardo_ms": "Pausa entre turnos (ms)"
   },
   "partida": {
     "turno_de": "Turno de {{jugador}}",
@@ -42,7 +56,9 @@
       "gana": "Gana {{jugador}}",
       "empate": "Empate",
       "por_mayoria": "Nadie puede ya alcanzar al ganador, quedan {{minas}} minas sin encontrar."
-    }
+    },
+    "bot": "Bot {{numero}}",
+    "pensando": "Pensando…"
   },
   "error": {
     "CELDA_YA_REVELADA": "Esa celda ya está descubierta.",
@@ -51,6 +67,7 @@
     "DIMENSIONES_INVALIDAS": "Las medidas del tablero no son válidas.",
     "MINAS_INVALIDAS": "El número de minas no es válido.",
     "JUGADORES_INVALIDOS": "El número de jugadores no es válido.",
-    "DESCONOCIDO": "Ha ocurrido un error inesperado."
+    "DESCONOCIDO": "Ha ocurrido un error inesperado.",
+    "SIN_JUGADAS": "No queda ninguna celda por descubrir."
   }
 }

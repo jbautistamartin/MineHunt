@@ -13,10 +13,11 @@
   },
   "scripts": {
     "compilar": "npm run compilar --workspaces --if-present",
-    "probar": "npm run probar --workspaces --if-present",
+    "probar": "npm run compilar --workspace @minehunt/game-engine && npm run probar --workspaces --if-present",
     "verificar-tipos": "npm run verificar-tipos --workspaces --if-present",
     "build": "npm run compilar",
-    "test": "npm run probar"
+    "test": "npm run probar",
+    "verificar": "npm run compilar && npm run verificar-tipos && npm run probar"
   },
   "devDependencies": {
     "typescript": "6.0.3"

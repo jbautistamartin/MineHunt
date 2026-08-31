@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MAX_JUGADORES, MIN_JUGADORES } from '@minehunt/game-engine';
+import { MAX_JUGADORES, MIN_JUGADORES, NIVELES_IA, type NivelIA } from '@minehunt/game-engine';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
@@ -13,11 +13,17 @@ const LADO_MAXIMO = 30;
 /** Proporcion de minas con la que se propone un tablero nuevo. */
 const DENSIDAD_SUGERIDA = 0.18;
 
+/** Pausa por defecto entre turnos de bots cuando no juega ningun humano. */
+const RETARDO_BOTS_POR_DEFECTO_MS = 600;
+const RETARDO_MINIMO_MS = 0;
+const RETARDO_MAXIMO_MS = 3000;
+
 /**
  * Pantalla de configuracion del Modo Entrenamiento.
  *
- * Fase 1: solo jugadores humanos en el mismo dispositivo. Los bots y su nivel
- * de inteligencia se anaden aqui mismo en la Fase 2.
+ * De 2 a 4 jugadores, de los cuales 0 a 4 pueden ser humanos; el resto los
+ * lleva la IA con el nivel que se elija. Con 0 humanos la partida se juega
+ * sola y se puede espaciar con un retardo entre turnos.
  */
 @Component({
   selector: 'mh-configuracion',
@@ -35,16 +41,33 @@ export class Configuracion {
   readonly minJugadores = MIN_JUGADORES;
   readonly maxJugadores = MAX_JUGADORES;
 
+  readonly niveles = NIVELES_IA;
+  readonly retardoMinimo = RETARDO_MINIMO_MS;
+  readonly retardoMaximo = RETARDO_MAXIMO_MS;
+
   readonly ancho = signal(9);
   readonly alto = signal(9);
   readonly minas = signal(15);
   readonly numJugadores = signal(2);
+  readonly numHumanos = signal(1);
+  readonly nivelIA = signal<NivelIA>(3);
+  readonly retardoBotsMs = signal(RETARDO_BOTS_POR_DEFECTO_MS);
 
   /** Opciones del selector de jugadores: 2, 3 y 4. */
   readonly opcionesJugadores = Array.from(
     { length: MAX_JUGADORES - MIN_JUGADORES + 1 },
     (_valor, indice) => MIN_JUGADORES + indice,
   );
+
+  /** Opciones de humanos: de 0 al total de jugadores de la partida. */
+  readonly opcionesHumanos = computed(() =>
+    Array.from({ length: this.numJugadores() + 1 }, (_valor, indice) => indice),
+  );
+
+  readonly numBots = computed(() => this.numJugadores() - this.numHumanos());
+  readonly hayBots = computed(() => this.numBots() > 0);
+  /** Sin humanos la partida se juega sola: ahi si tiene sentido el retardo. */
+  readonly soloBots = computed(() => this.numHumanos() === 0);
 
   readonly totalCeldas = computed(() => this.ancho() * this.alto());
 
@@ -86,8 +109,23 @@ export class Configuracion {
     this.minas.set(this.aEntero(valor, this.minas()));
   }
 
+  /** Al cambiar el total de jugadores, los humanos no pueden pasarse. */
   cambiarJugadores(valor: number): void {
     this.numJugadores.set(valor);
+    this.numHumanos.set(Math.min(this.numHumanos(), valor));
+  }
+
+  cambiarHumanos(valor: number): void {
+    this.numHumanos.set(valor);
+  }
+
+  cambiarNivelIA(valor: NivelIA): void {
+    this.nivelIA.set(valor);
+  }
+
+  cambiarRetardo(valor: string): void {
+    const numero = this.aEntero(valor, this.retardoBotsMs());
+    this.retardoBotsMs.set(Math.min(RETARDO_MAXIMO_MS, Math.max(RETARDO_MINIMO_MS, numero)));
   }
 
   empezar(): void {
@@ -99,6 +137,9 @@ export class Configuracion {
       alto: this.alto(),
       minas: this.minas(),
       numJugadores: this.numJugadores(),
+      numHumanos: this.numHumanos(),
+      nivelIA: this.nivelIA(),
+      retardoBotsMs: this.retardoBotsMs(),
     });
     void this.router.navigate(['/partida']);
   }

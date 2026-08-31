@@ -4,7 +4,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 y 1 completadas.** El monorepo compila, tipa y pasa 50 pruebas. El motor implementa tablero, cascada, turnos y marcador; la web tiene el Modo Entrenamiento hotseat con i18n. Pendientes: IA (Fase 2), ítem de despeje (Fase 3), Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
+**Fases 0, 1 y 2 completadas.** El monorepo compila, tipa y pasa 80 pruebas. El motor implementa tablero, cascada, turnos, marcador y bots de 5 niveles; la web tiene el Modo Entrenamiento hotseat con bots e i18n. Pendientes: ítem de despeje (Fase 3), Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
 
 Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
@@ -15,9 +15,16 @@ Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 Desde la raíz, los scripts recorren los tres workspaces (`--workspaces --if-present`):
 
 ```bash
+npm run verificar         # compilar + verificar-tipos + probar, todo seguido
 npm run compilar          # tsc --build | nest build | ng build
 npm run probar            # vitest en los tres paquetes
 npm run verificar-tipos   # tsc --noEmit en los tres
+```
+
+**Trampa del monorepo:** `apps/web` y `apps/server` consumen el `dist/` compilado de `game-engine`, no su código fuente. Si tocas el motor y lanzas las pruebas de la web sin recompilarlo, se prueba contra la versión anterior y los errores no tienen ningún sentido. El `npm run probar` de la raíz recompila el motor antes de nada por ese mismo motivo; si lanzas un workspace suelto, recompila tú primero:
+
+```bash
+npm run compilar --workspace @minehunt/game-engine
 ```
 
 Para un paquete concreto, `--workspace @minehunt/<nombre>`:
@@ -42,6 +49,26 @@ El plan da estas dos por definidas de antes pero no las escribe. Se confirmaron 
 2. **La partida termina por mayoría matemática**: en cuanto al segundo clasificado no le alcanzan las minas que quedan para superar al líder, se acaba. También termina, obviamente, al encontrarse la última mina. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
 
 Otras invariantes del motor: las minas **se reparten en el primer clic**, no al crear la partida, para poder excluir la celda clicada; y `obtenerEstado()` **nunca** revela información oculta — una celda `oculta` lleva `minasAdyacentes: null` y no dice si esconde mina. Hay pruebas que lo verifican, y es lo que hará jugable la IA de la Fase 2 sin que haga trampas.
+
+## La IA (Fase 2)
+
+`packages/game-engine/src/ia/` tiene dos piezas: `analisis.ts` (traduce el tablero visible a restricciones y saca deducciones) y `jugador-ia.ts` (`JugadorIA`, los 5 niveles).
+
+**El bot recibe un `EstadoPartida` y nada más.** No hay puerta trasera al tablero real, y eso no es disciplina: es que el tipo no lleva esa información. La prueba de que funciona es que los tests construyen estados a mano con `estado-de-prueba.ayuda.ts` — si se pueden dibujar desde fuera, es que no hay nada oculto dentro.
+
+| Nivel | Qué hace |
+|---|---|
+| 1 | Azar puro |
+| 2 | Deducción por celda numerada, encadenada hasta agotarse |
+| 3 | Lo anterior más la regla del subconjunto (CSP local) |
+| 4 | Sin certezas, va a la celda más probable |
+| 5 | Como el 4, y entre empates prefiere la de menos vecinas |
+
+**Ojo al sentido invertido**: aquí una celda que con certeza esconde mina es la **mejor** jugada, no la peor. Una que se sabe libre es la peor, porque gasta el turno sin puntuar; por eso los niveles 2+ las descartan al elegir a ciegas.
+
+Las probabilidades del nivel 4 son una aproximación: cada celda se queda con la peor cota que le impone alguna celda numerada, y las que no tocan ningún número reciben la densidad general. El cálculo exacto exigiría enumerar todas las combinaciones compatibles y se dispara en tableros grandes.
+
+Los ficheros `*.ayuda.ts` son utilidades solo para pruebas: están excluidos del build en `tsconfig.json` junto a los `*.prueba.ts`.
 
 ## Versiones fijadas
 

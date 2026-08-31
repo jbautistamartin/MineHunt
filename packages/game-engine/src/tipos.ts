@@ -88,7 +88,8 @@ export type CodigoError =
   | 'JUGADORES_INVALIDOS'
   | 'CELDA_FUERA_DEL_TABLERO'
   | 'CELDA_YA_REVELADA'
-  | 'PARTIDA_TERMINADA';
+  | 'PARTIDA_TERMINADA'
+  | 'SIN_JUGADAS';
 
 /**
  * Error del motor con codigo traducible.
