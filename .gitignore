@@ -1,0 +1,39 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+out-tsc/
+.angular/
+
+# Tests / cobertura
+coverage/
+*.lcov
+
+# Capacitor / Android (Fase 5)
+/apps/web/android/
+/apps/web/ios/
+*.apk
+*.aab
+*.keystore
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+Thumbs.db
+Desktop.ini
