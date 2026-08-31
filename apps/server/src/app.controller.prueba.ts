@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { saludar } from '@minehunt/game-engine';
 
 import { ControladorPrincipal } from './app.controller.js';
 import { ServicioPrincipal } from './app.service.js';
@@ -20,8 +21,6 @@ describe('ControladorPrincipal', () => {
   });
 
   it('consume el motor de juego enlazado en el monorepo', () => {
-    expect(controlador.obtenerSaludoDelMotor()).toBe(
-      'MineHunt: motor de juego 0.0.0 listo',
-    );
+    expect(controlador.obtenerSaludoDelMotor()).toBe(saludar());
   });
 });

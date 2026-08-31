@@ -1,0 +1,101 @@
+@if (estado(); as partida) {
+  <section class="pantalla">
+    <header class="cabecera">
+      <div class="turno">
+        @if (partida.terminada) {
+          <h1>{{ 'partida.fin.titulo' | translate }}</h1>
+        } @else {
+          <h1 [class]="'jugador-' + partida.turnoDe">
+            {{
+              'partida.turno_de'
+                | translate
+                  : {
+                      jugador:
+                        'partida.jugador'
+                        | translate: { numero: numeroDe(partida.turnoDe) },
+                    }
+            }}
+          </h1>
+        }
+        <p class="restantes">
+          {{ 'partida.minas_restantes' | translate }}: <strong>{{ partida.minasRestantes }}</strong>
+        </p>
+      </div>
+
+      <button type="button" class="secundario" (click)="abandonar()">
+        {{ 'partida.abandonar' | translate }}
+      </button>
+    </header>
+
+    <ol class="marcador" [attr.aria-label]="'partida.marcador' | translate">
+      @for (jugador of partida.jugadores; track jugador.id) {
+        <li
+          class="ficha"
+          [class]="'jugador-' + jugador.id"
+          [class.activo]="!partida.terminada && jugador.id === partida.turnoDe"
+        >
+          <span class="nombre">
+            {{ 'partida.jugador' | translate: { numero: numeroDe(jugador.id) } }}
+          </span>
+          <span class="minas">{{ jugador.minasEncontradas }}</span>
+        </li>
+      }
+    </ol>
+
+    <mh-tablero
+      [estado]="partida"
+      [bloqueado]="partida.terminada"
+      (celdaPulsada)="jugar($event)"
+    />
+
+    <p class="aviso" role="status">
+      @if (ultimoError(); as codigo) {
+        <span class="error">{{ 'error.' + codigo | translate }}</span>
+      } @else if (ultimoSuceso(); as suceso) {
+        {{
+          'partida.evento.' + suceso.codigo
+            | translate
+              : {
+                  jugador:
+                    'partida.jugador' | translate: { numero: numeroDe(suceso.jugador) },
+                  celdas: suceso.celdas,
+                }
+        }}
+      }
+    </p>
+
+    @if (partida.terminada) {
+      <div class="fin">
+        @if (partida.empate) {
+          <p class="resultado">{{ 'partida.fin.empate' | translate }}</p>
+        } @else if (partida.ganador !== null) {
+          <p class="resultado" [class]="'jugador-' + partida.ganador">
+            {{
+              'partida.fin.gana'
+                | translate
+                  : {
+                      jugador:
+                        'partida.jugador' | translate: { numero: numeroDe(partida.ganador) },
+                    }
+            }}
+          </p>
+        }
+
+        @if (partida.minasRestantes > 0) {
+          <p class="detalle">
+            {{ 'partida.fin.por_mayoria' | translate: { minas: partida.minasRestantes } }}
+          </p>
+        }
+
+        <div class="acciones">
+          <button type="button" class="principal" (click)="revancha()">
+            {{ 'partida.revancha' | translate }}
+          </button>
+          <button type="button" class="secundario" (click)="abandonar()">
+            {{ 'partida.nueva' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+}

@@ -1,0 +1,34 @@
+.selector {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.etiqueta {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+.opciones {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--mh-superficie-alta);
+  border-radius: 999px;
+}
+
+.opcion {
+  padding: 0.3rem 0.75rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 999px;
+}
+
+.opcion.activa {
+  color: var(--mh-texto);
+  background: var(--mh-acento);
+}

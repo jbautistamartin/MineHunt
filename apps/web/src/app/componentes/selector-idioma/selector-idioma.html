@@ -1,0 +1,16 @@
+<div class="selector">
+  <span class="etiqueta">{{ 'idioma.etiqueta' | translate }}</span>
+  <div class="opciones" role="group">
+    @for (idioma of idiomas; track idioma) {
+      <button
+        type="button"
+        class="opcion"
+        [class.activa]="idioma === idiomaActual()"
+        [attr.aria-pressed]="idioma === idiomaActual()"
+        (click)="seleccionar(idioma)"
+      >
+        {{ 'idioma.' + idioma | translate }}
+      </button>
+    }
+  </div>
+</div>

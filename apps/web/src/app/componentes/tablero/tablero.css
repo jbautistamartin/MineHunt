@@ -1,0 +1,127 @@
+:host {
+  /* El lado se reduce en pantallas pequenas para que quepan tableros anchos. */
+  --lado-celda: 2rem;
+  display: block;
+}
+
+.tablero {
+  display: grid;
+  gap: 2px;
+  justify-content: center;
+  padding: 0.5rem;
+  background: var(--mh-tablero-fondo);
+  border-radius: 0.5rem;
+}
+
+.tablero.bloqueado {
+  opacity: 0.85;
+}
+
+.celda {
+  width: var(--lado-celda);
+  height: var(--lado-celda);
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: calc(var(--lado-celda) * 0.55);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    transform 80ms ease;
+}
+
+.celda:disabled {
+  cursor: default;
+}
+
+.celda.oculta {
+  background: var(--mh-celda-oculta);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 25%);
+}
+
+.celda.oculta:hover:not(:disabled) {
+  background: var(--mh-celda-oculta-encima);
+}
+
+.celda.oculta:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.celda.despejada {
+  background: var(--mh-celda-despejada);
+  color: var(--mh-texto-tenue);
+}
+
+.celda.mina {
+  color: #fff;
+  background: var(--mh-jugador-0);
+}
+
+.glifo {
+  font-size: calc(var(--lado-celda) * 0.62);
+}
+
+/* Color de la mina segun quien la encontro. */
+.celda.mina.jugador-0 {
+  background: var(--mh-jugador-0);
+}
+
+.celda.mina.jugador-1 {
+  background: var(--mh-jugador-1);
+}
+
+.celda.mina.jugador-2 {
+  background: var(--mh-jugador-2);
+}
+
+.celda.mina.jugador-3 {
+  background: var(--mh-jugador-3);
+}
+
+/* Colores por numero de minas adyacentes, como en el buscaminas clasico. */
+.celda.n1 {
+  color: #3b7ddd;
+}
+
+.celda.n2 {
+  color: #2f8f4e;
+}
+
+.celda.n3 {
+  color: #d23f31;
+}
+
+.celda.n4 {
+  color: #6b4bd6;
+}
+
+.celda.n5 {
+  color: #a3552a;
+}
+
+.celda.n6 {
+  color: #1f9c9c;
+}
+
+.celda.n7 {
+  color: #2b2b2b;
+}
+
+.celda.n8 {
+  color: #7a7a7a;
+}
+
+@media (width <= 700px) {
+  :host {
+    --lado-celda: 1.6rem;
+  }
+}
+
+@media (width <= 420px) {
+  :host {
+    --lado-celda: 1.35rem;
+  }
+}

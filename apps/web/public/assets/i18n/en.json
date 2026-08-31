@@ -1,0 +1,56 @@
+{
+  "app": {
+    "titulo": "MineHunt",
+    "lema": "Hunt the mines: most finds wins"
+  },
+  "idioma": {
+    "etiqueta": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "configuracion": {
+    "titulo": "Training mode",
+    "descripcion": "Everyone shares the same device and takes turns.",
+    "tablero": "Board",
+    "ancho": "Width",
+    "alto": "Height",
+    "minas": "Mines",
+    "jugadores": "Players",
+    "resumen": "{{celdas}} cells · {{densidad}} % mined",
+    "empezar": "Start game",
+    "error": {
+      "dimensiones": "The board must be between {{minimo}} and {{maximo}} cells per side.",
+      "minas": "This board fits between 1 and {{maximo}} mines.",
+      "jugadores": "A game takes {{minimo}} to {{maximo}} players."
+    }
+  },
+  "partida": {
+    "turno_de": "{{jugador}}'s turn",
+    "jugador": "Player {{numero}}",
+    "minas_restantes": "Mines left to find",
+    "marcador": "Score",
+    "minas_de": "{{minas}} mines",
+    "abandonar": "Quit",
+    "nueva": "New game",
+    "revancha": "Rematch",
+    "evento": {
+      "MINA_ENCONTRADA": "{{jugador}} found a mine",
+      "CELDA_DESPEJADA": "{{jugador}} cleared {{celdas}} cells"
+    },
+    "fin": {
+      "titulo": "Game over",
+      "gana": "{{jugador}} wins",
+      "empate": "Draw",
+      "por_mayoria": "Nobody can catch the winner any more, {{minas}} mines left unfound."
+    }
+  },
+  "error": {
+    "CELDA_YA_REVELADA": "That cell is already uncovered.",
+    "CELDA_FUERA_DEL_TABLERO": "That cell is not on the board.",
+    "PARTIDA_TERMINADA": "The game is already over.",
+    "DIMENSIONES_INVALIDAS": "The board size is not valid.",
+    "MINAS_INVALIDAS": "The number of mines is not valid.",
+    "JUGADORES_INVALIDOS": "The number of players is not valid.",
+    "DESCONOCIDO": "Something went wrong."
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "app": {
+    "titulo": "MineHunt",
+    "lema": "Caza las minas: gana quien más encuentre"
+  },
+  "idioma": {
+    "etiqueta": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "configuracion": {
+    "titulo": "Modo entrenamiento",
+    "descripcion": "Todos los jugadores comparten el mismo dispositivo y se van pasando el turno.",
+    "tablero": "Tablero",
+    "ancho": "Ancho",
+    "alto": "Alto",
+    "minas": "Minas",
+    "jugadores": "Jugadores",
+    "resumen": "{{celdas}} celdas · {{densidad}} % con mina",
+    "empezar": "Empezar partida",
+    "error": {
+      "dimensiones": "El tablero debe medir entre {{minimo}} y {{maximo}} celdas de lado.",
+      "minas": "En este tablero caben entre 1 y {{maximo}} minas.",
+      "jugadores": "La partida es de {{minimo}} a {{maximo}} jugadores."
+    }
+  },
+  "partida": {
+    "turno_de": "Turno de {{jugador}}",
+    "jugador": "Jugador {{numero}}",
+    "minas_restantes": "Minas por encontrar",
+    "marcador": "Marcador",
+    "minas_de": "{{minas}} minas",
+    "abandonar": "Abandonar",
+    "nueva": "Nueva partida",
+    "revancha": "Revancha",
+    "evento": {
+      "MINA_ENCONTRADA": "{{jugador}} ha encontrado una mina",
+      "CELDA_DESPEJADA": "{{jugador}} ha despejado {{celdas}} celdas"
+    },
+    "fin": {
+      "titulo": "Partida terminada",
+      "gana": "Gana {{jugador}}",
+      "empate": "Empate",
+      "por_mayoria": "Nadie puede ya alcanzar al ganador, quedan {{minas}} minas sin encontrar."
+    }
+  },
+  "error": {
+    "CELDA_YA_REVELADA": "Esa celda ya está descubierta.",
+    "CELDA_FUERA_DEL_TABLERO": "Esa celda no existe en el tablero.",
+    "PARTIDA_TERMINADA": "La partida ya ha terminado.",
+    "DIMENSIONES_INVALIDAS": "Las medidas del tablero no son válidas.",
+    "MINAS_INVALIDAS": "El número de minas no es válido.",
+    "JUGADORES_INVALIDOS": "El número de jugadores no es válido.",
+    "DESCONOCIDO": "Ha ocurrido un error inesperado."
+  }
+}

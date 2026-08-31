@@ -4,7 +4,9 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fase 0 completada** (rama `feature/estructura-monorepo`): el monorepo existe y los tres paquetes compilan, tipan y pasan sus pruebas. Todavía **no hay lógica de juego** — eso es la Fase 1.
+**Fases 0 y 1 completadas.** El monorepo compila, tipa y pasa 50 pruebas. El motor implementa tablero, cascada, turnos y marcador; la web tiene el Modo Entrenamiento hotseat con i18n. Pendientes: IA (Fase 2), ítem de despeje (Fase 3), Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
+
+Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
 `MineHunt-plan-maestro.md` es la fuente de verdad del diseño: define las fases, el alcance exacto de cada una y qué NO debe implementarse todavía. Léelo antes de tocar nada.
 
@@ -32,6 +34,15 @@ Una sola prueba: `npx vitest run -t "nombre de la prueba"` dentro del paquete, o
 
 **Los ficheros de prueba usan el sufijo `.prueba.ts`** (`.e2e-prueba.ts` para los e2e), no `.spec.ts`. Está configurado en `vitest.config.ts`, en `angular.json` (`test.options.include`) y en los `tsconfig.*.json`; si añades un test con otro sufijo, no se ejecutará.
 
+## Reglas del juego (decididas, no estaban en el plan)
+
+El plan da estas dos por definidas de antes pero no las escribe. Se confirmaron con el usuario y el motor las implementa así:
+
+1. **El turno pasa siempre** tras cada clic, se encuentre mina o no. No hay racha por acertar.
+2. **La partida termina por mayoría matemática**: en cuanto al segundo clasificado no le alcanzan las minas que quedan para superar al líder, se acaba. También termina, obviamente, al encontrarse la última mina. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
+
+Otras invariantes del motor: las minas **se reparten en el primer clic**, no al crear la partida, para poder excluir la celda clicada; y `obtenerEstado()` **nunca** revela información oculta — una celda `oculta` lleva `minasAdyacentes: null` y no dice si esconde mina. Hay pruebas que lo verifican, y es lo que hará jugable la IA de la Fase 2 sin que haga trampas.
+
 ## Versiones fijadas
 
 Angular 22 exige **TypeScript >=6.0 <6.1**, así que el monorepo va con **TypeScript 6.0.3** — no lo subas a la 7 (el compilador nativo) sin comprobar antes que Angular lo acepta. Node 24 LTS, Angular 22.1, NestJS 12, Vitest 4.1. Los tres paquetes usan Vitest; Angular lo hace con jsdom, así que no hace falta Chrome ni Karma.
@@ -56,7 +67,9 @@ Monorepo con npm workspaces (o pnpm):
 - `apps/web` — Angular 18+ con standalone components; consume `game-engine` como dependencia de workspace. Se empaqueta a Android con Capacitor (Fase 5).
 - `apps/server` — NestJS + Socket.IO; consume **la misma** `game-engine` como fuente de verdad autoritativa (valida cada clic y difunde el estado).
 
-Ya scaffolded y enlazados entre sí: `apps/web` y `apps/server` declaran `@minehunt/game-engine` como dependencia (`"*"`, resuelta por npm workspaces mediante junction) y ambos lo importan de verdad, con pruebas que lo comprueban — así una rotura del enlace del monorepo sale en los tests.
+`apps/web` y `apps/server` declaran `@minehunt/game-engine` como dependencia (`"*"`, resuelta por npm workspaces mediante junction) y ambos lo importan de verdad, con pruebas que lo comprueban — así una rotura del enlace del monorepo sale en los tests.
+
+Dentro de `apps/web/src/app`: `nucleo/` tiene los dos servicios con estado (`ServicioIdioma`, `ServicioPartida`), `paginas/` las pantallas enrutadas con carga diferida y `componentes/` lo reutilizable. **`ServicioPartida` es el único que habla con el motor**; las pantallas leen sus señales. En la Fase 7 ese servicio es el que se sustituye por el estado que llega del servidor, sin tocar los componentes.
 
 La decisión estructural clave es que el motor de juego es una sola implementación compartida entre cliente y servidor. Lógica de juego nueva va en `game-engine`, nunca en un componente Angular ni en un gateway de NestJS; esos dos solo orquestan y presentan.
 
@@ -64,4 +77,8 @@ En el cliente conviven tres modos que comparten los mismos componentes de tabler
 
 ## Idioma de la interfaz
 
-Detección al arrancar con `navigator.language`: `es-*` → español, cualquier otro → inglés por defecto. Un selector manual sobrescribe la detección y la elección se persiste en localStorage. Dentro del WebView de Android `navigator.language` puede no ser fiable: usar `@capacitor/device` si hace falta.
+Detección al arrancar con `navigator.language`: `es-*` → español, cualquier otro → inglés por defecto. Un selector manual sobrescribe la detección y la elección se persiste en localStorage (`minehunt.idioma`). Dentro del WebView de Android `navigator.language` puede no ser fiable: usar `@capacitor/device` si hace falta.
+
+Los textos viven en `apps/web/public/assets/i18n/{es,en}.json` y se sirven en `/assets/i18n/`. Angular 22 copia `public/` a la raíz del build; **no existe `src/assets/`**. Al añadir un texto hay que tocar los dos ficheros en el mismo cambio, o el idioma que falte cae al inglés por el `fallbackLang`.
+
+Los códigos del motor (`MINA_ENCONTRADA`, `CELDA_YA_REVELADA`…) tienen clave propia bajo `partida.evento.*` y `error.*`. **`ServicioPartida` guarda el código, nunca el texto ya traducido**, y la plantilla lo traduce — que es exactamente el contrato que el servidor tendrá que respetar en la Fase 6.

@@ -1,1 +1,39 @@
-/* You can add global styles to this file, and also import other style files */
+/* Paleta y ajustes globales de MineHunt. Los colores salen del icono. */
+:root {
+  --mh-fondo: #0d1730;
+  --mh-superficie: #16223f;
+  --mh-superficie-alta: #1f2f52;
+  --mh-tablero-fondo: #101b36;
+  --mh-celda-oculta: #2c4270;
+  --mh-celda-oculta-encima: #375289;
+  --mh-celda-despejada: #d7deec;
+  --mh-texto: #e8eefc;
+  --mh-texto-tenue: #8fa6d4;
+  --mh-acento: #e8433a;
+  --mh-peligro: #ff8a7a;
+
+  /* Un color por jugador, tambien usado para teñir las minas que encuentra. */
+  --mh-jugador-0: #e8433a;
+  --mh-jugador-1: #3b9ddd;
+  --mh-jugador-2: #f0a92b;
+  --mh-jugador-3: #45c07a;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100dvh;
+  font-family: system-ui, -apple-system, "Segoe UI", roboto, sans-serif;
+  color: var(--mh-texto);
+  background: var(--mh-fondo);
+}

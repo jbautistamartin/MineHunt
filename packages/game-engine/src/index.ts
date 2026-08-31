@@ -1,12 +1,29 @@
 /**
  * Punto de entrada publico del motor de juego de MineHunt.
  *
- * Fase 0: solo el esqueleto. La logica del tablero (generacion, revelado,
- * cascada, turnos y marcador) llega en la Fase 1.
+ * Fase 1: tablero, revelado en cascada, turnos y marcador.
+ * La IA llega en la Fase 2 y el item de despeje en la Fase 3.
  */
 
+export { MotorJuego } from './motor.js';
+export { Tablero } from './tablero.js';
+export {
+  ErrorPartida,
+  MAX_JUGADORES,
+  MIN_JUGADORES,
+  type CeldaVisible,
+  type CodigoError,
+  type CodigoResultadoClic,
+  type Coordenada,
+  type EstadoCelda,
+  type EstadoPartida,
+  type Jugador,
+  type OpcionesPartida,
+  type ResultadoClic,
+} from './tipos.js';
+
 /** Version del motor, util para comprobar que cliente y servidor comparten la misma. */
-export const VERSION_MOTOR = '0.0.0';
+export const VERSION_MOTOR = '0.1.0';
 
 /**
  * Saludo de comprobacion: confirma que el paquete compila, se exporta y se

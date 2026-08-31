@@ -1,0 +1,91 @@
+<section class="pantalla">
+  <header class="cabecera">
+    <div>
+      <h1>{{ 'app.titulo' | translate }}</h1>
+      <p class="lema">{{ 'app.lema' | translate }}</p>
+    </div>
+    <mh-selector-idioma />
+  </header>
+
+  <div class="tarjeta">
+    <h2>{{ 'configuracion.titulo' | translate }}</h2>
+    <p class="descripcion">{{ 'configuracion.descripcion' | translate }}</p>
+
+    <fieldset class="grupo">
+      <legend>{{ 'configuracion.tablero' | translate }}</legend>
+
+      <label class="campo">
+        <span>{{ 'configuracion.ancho' | translate }}</span>
+        <input
+          type="number"
+          [min]="ladoMinimo"
+          [max]="ladoMaximo"
+          [value]="ancho()"
+          (input)="cambiarAncho($any($event.target).value)"
+        />
+      </label>
+
+      <label class="campo">
+        <span>{{ 'configuracion.alto' | translate }}</span>
+        <input
+          type="number"
+          [min]="ladoMinimo"
+          [max]="ladoMaximo"
+          [value]="alto()"
+          (input)="cambiarAlto($any($event.target).value)"
+        />
+      </label>
+
+      <label class="campo">
+        <span>{{ 'configuracion.minas' | translate }}</span>
+        <input
+          type="number"
+          min="1"
+          [max]="minasMaximas()"
+          [value]="minas()"
+          (input)="cambiarMinas($any($event.target).value)"
+        />
+      </label>
+    </fieldset>
+
+    @if (!dimensionesValidas()) {
+      <p class="error">
+        {{
+          'configuracion.error.dimensiones'
+            | translate: { minimo: ladoMinimo, maximo: ladoMaximo }
+        }}
+      </p>
+    } @else if (!minasValidas()) {
+      <p class="error">
+        {{ 'configuracion.error.minas' | translate: { maximo: minasMaximas() } }}
+      </p>
+    } @else {
+      <p class="resumen">
+        {{
+          'configuracion.resumen' | translate: { celdas: totalCeldas(), densidad: densidad() }
+        }}
+      </p>
+    }
+
+    <fieldset class="grupo">
+      <legend>{{ 'configuracion.jugadores' | translate }}</legend>
+      <div class="opciones">
+        @for (opcion of opcionesJugadores; track opcion) {
+          <button
+            type="button"
+            class="opcion"
+            [class.activa]="opcion === numJugadores()"
+            [attr.aria-pressed]="opcion === numJugadores()"
+            (click)="cambiarJugadores(opcion)"
+          >
+            {{ opcion }}
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
+      {{ 'configuracion.empezar' | translate }}
+    </button>
+  </div>
+</section>

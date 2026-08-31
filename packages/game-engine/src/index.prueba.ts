@@ -4,10 +4,10 @@ import { VERSION_MOTOR, saludar } from './index.js';
 
 describe('motor de juego', () => {
   it('expone la version del motor', () => {
-    expect(VERSION_MOTOR).toBe('0.0.0');
+    expect(VERSION_MOTOR).toBe('0.1.0');
   });
 
   it('saluda indicando que el motor esta listo', () => {
-    expect(saludar()).toBe('MineHunt: motor de juego 0.0.0 listo');
+    expect(saludar()).toBe(`MineHunt: motor de juego ${VERSION_MOTOR} listo`);
   });
 });

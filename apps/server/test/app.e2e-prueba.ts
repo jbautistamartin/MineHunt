@@ -2,6 +2,7 @@ import type { Server } from 'node:http';
 
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { saludar } from '@minehunt/game-engine';
 import request from 'supertest';
 
 import { ModuloPrincipal } from './../src/app.module.js';
@@ -30,6 +31,6 @@ describe('Servidor MineHunt (e2e)', () => {
     return request(aplicacion.getHttpServer())
       .get('/motor')
       .expect(200)
-      .expect('MineHunt: motor de juego 0.0.0 listo');
+      .expect(saludar());
   });
 });

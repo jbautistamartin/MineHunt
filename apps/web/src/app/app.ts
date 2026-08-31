@@ -1,23 +1,22 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { saludar } from '@minehunt/game-engine';
+import { ServicioIdioma } from './nucleo/idioma.servicio';
 
 /**
- * Componente raiz del cliente de MineHunt.
+ * Componente raiz de MineHunt.
  *
- * Fase 0: solo el esqueleto. Las pantallas de configuracion y el tablero
- * llegan en la Fase 1, junto con la traduccion mediante ngx-translate.
+ * Solo aloja el enrutador; cada pantalla se carga de forma diferida. Inyecta
+ * el servicio de idioma para que quede activo desde el arranque.
  */
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
+  imports: [RouterOutlet],
   templateUrl: './app.html',
+  styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  protected readonly titulo = signal('MineHunt');
-
-  /** Saludo del motor de juego: comprueba que el enlace del monorepo funciona. */
-  readonly saludoMotor = signal(saludar());
+  // Basta con inyectarlo: al construirse fija el idioma detectado o el guardado.
+  protected readonly idioma = inject(ServicioIdioma);
 }
