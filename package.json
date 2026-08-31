@@ -1,0 +1,24 @@
+{
+  "name": "minehunt",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MineHunt - buscaminas invertido: multijugador por turnos donde gana quien mas minas encuentra",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "compilar": "npm run compilar --workspaces --if-present",
+    "probar": "npm run probar --workspaces --if-present",
+    "verificar-tipos": "npm run verificar-tipos --workspaces --if-present",
+    "build": "npm run compilar",
+    "test": "npm run probar"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
