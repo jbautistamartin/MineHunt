@@ -1,7 +1,8 @@
 {
   "app": {
     "titulo": "MineHunt",
-    "lema": "Caza las minas: gana quien más encuentre"
+    "lema": "Caza las minas: gana quien más encuentre",
+    "version": "versión {{version}}"
   },
   "idioma": {
     "etiqueta": "Idioma",
@@ -18,6 +19,8 @@
     "jugadores": "Jugadores",
     "resumen": "{{celdas}} celdas · {{densidad}} % con mina",
     "empezar": "Empezar partida",
+    "reiniciar": "Restablecer",
+    "reiniciar_ayuda": "Vuelve a los valores de partida y olvida lo que hubiera guardado.",
     "error": {
       "dimensiones": "El tablero debe medir entre {{minimo}} y {{maximo}} celdas de lado.",
       "minas": "En este tablero caben entre 1 y {{maximo}} minas.",
@@ -25,9 +28,11 @@
     },
     "humanos": "Jugadores humanos",
     "sin_bots": "Todos humanos, en el mismo dispositivo.",
-    "con_bots": "{{humanos}} humano(s) y {{bots}} bot(s). Los bots juegan al instante.",
-    "solo_bots": "Solo bots ({{bots}}): la partida se juega sola.",
+    "con_bots": "{{humanos}} humano(s) y {{bots}} bot(s). Cada bot se toma entre 0 y 2 segundos antes de jugar.",
+    "solo_bots": "Solo bots ({{bots}}): la partida se juega sola, a su ritmo.",
     "nivel_ia": "Nivel de la IA",
+    "nivel_por_bot": "Cada bot juega a su propio nivel: elígelo puesto por puesto.",
+    "igualar_niveles": "Todos",
     "nivel": {
       "1": "Azar puro: clica a ciegas.",
       "2": "Deducción básica: resuelve cada número por separado.",
@@ -35,8 +40,11 @@
       "4": "Probabilística: sin certezas, va a lo más probable.",
       "5": "Estratégica: además prefiere esquinas y bordes."
     },
-    "retardo": "Ritmo de los bots",
-    "retardo_ms": "Pausa entre turnos (ms)"
+    "ritmo": "Ritmo de la partida",
+    "recarga_segundos": "Recarga de la onda (s)",
+    "tiempo_turno": "Tiempo por turno (s)",
+    "sin_reloj": "Sin reloj: cada jugador se toma el tiempo que quiera.",
+    "con_reloj": "{{segundos}} s por turno; al agotarse pierdes el turno sin jugar."
   },
   "partida": {
     "turno_de": "Turno de {{jugador}}",
@@ -48,17 +56,80 @@
     "nueva": "Nueva partida",
     "revancha": "Revancha",
     "evento": {
-      "MINA_ENCONTRADA": "{{jugador}} ha encontrado una mina",
-      "CELDA_DESPEJADA": "{{jugador}} ha despejado {{celdas}} celdas"
+      "MINA_ENCONTRADA": "{{jugador}} ha encontrado una mina y sigue jugando",
+      "CELDA_DESPEJADA": "{{jugador}} ha despejado {{celdas}} celdas y cede el turno",
+      "ONDA_EXPANSIVA": "La onda de {{jugador}} ha abierto {{celdas}} celdas",
+      "TURNO_PERDIDO": "A {{jugador}} se le acabó el tiempo y pierde el turno",
+      "JUGADOR_RENDIDO": "{{jugador}} se ha rendido y deja la partida"
     },
     "fin": {
       "titulo": "Partida terminada",
       "gana": "Gana {{jugador}}",
       "empate": "Empate",
-      "por_mayoria": "Nadie puede ya alcanzar al ganador, quedan {{minas}} minas sin encontrar."
+      "ultimo_en_pie": "Se acabó al quedar un solo jugador en pie: quedaban {{minas}} minas sin encontrar."
     },
     "bot": "Bot {{numero}}",
-    "pensando": "Pensando…"
+    "nivel_bot": "nv. {{nivel}}",
+    "rendirse": {
+      "boton": "Rendirse",
+      "ayuda": "Sales de la partida y te quedas mirando. No se puede deshacer.",
+      "seguro": "¿Seguro que te rindes?",
+      "si": "Sí, me rindo",
+      "no": "Seguir jugando",
+      "marca": "rendido",
+      "espectador": "Te has rendido: la partida sigue sin ti y solo puedes mirar."
+    },
+    "pensando": "Pensando…",
+    "reloj": {
+      "etiqueta": "Tiempo que queda para jugar",
+      "restante": "{{segundos}} s"
+    },
+    "onda": {
+      "titulo": "Onda expansiva",
+      "usar": "Usar onda expansiva",
+      "cancelar": "Cancelar onda",
+      "activo": "Onda activa: elige el centro",
+      "recarga": "Onda lista en {{segundos}}s",
+      "ayuda": "Gástala en una celda vacía y arrastrará todas las conectadas.",
+      "lista": "Onda lista",
+      "armada": "Onda armada",
+      "recarga_corta": "Onda en {{segundos}} s",
+      "atajo": "Atajo: clic derecho sobre la celda."
+    }
+  },
+  "ayuda": {
+    "enlace": "Cómo se juega",
+    "titulo": "Cómo se juega",
+    "intro": "Las reglas de MineHunt, tal y como las aplica el juego ahora mismo.",
+    "volver": "← Volver",
+    "objetivo": {
+      "titulo": "El objetivo está al revés",
+      "texto": "Esto es un buscaminas invertido: las minas no se esquivan, se cazan. Cada clic destapa una sola celda, que o esconde una mina (y se apunta en tu marcador) o te dice cuántas minas tiene alrededor. Gana quien más minas encuentre."
+    },
+    "turnos": {
+      "titulo": "Aciertas, repites",
+      "texto": "Si encuentras una mina sigues jugando y puedes encadenar tantos turnos como minas seguidas aciertes. En cuanto fallas, el turno pasa al siguiente jugador."
+    },
+    "reloj": {
+      "titulo": "El reloj aprieta",
+      "texto": "Si la partida tiene tiempo por turno, la barra de arriba va bajando y se pone roja en los últimos segundos. Si se agota, pierdes el turno sin jugar y el tablero se queda como estaba. El reloj vuelve a empezar con cada clic, también cuando repites."
+    },
+    "onda": {
+      "titulo": "La onda expansiva",
+      "texto": "Gástala en una celda vacía y arrastrará todas las conectadas. En el navegador, el clic derecho sobre una celda la lanza ahí directamente, sin tocar este botón; en móvil hay que usar el botón. Sobre una celda numerada solo se revela ella y la onda se pierde; sobre una mina, la mina se apunta y la onda se gasta igual."
+    },
+    "rendirse": {
+      "titulo": "Rendirse",
+      "texto": "Puedes dejar la partida en tu turno. Sales del juego: no vuelven a llegarte turnos, tus minas dejan de contar y ya no puedes ganar, pero sigues viendo cómo acaba. No se puede deshacer."
+    },
+    "fin": {
+      "titulo": "Cuándo se acaba",
+      "texto": "La partida dura hasta que se destapa la última mina, aunque el resultado esté decidido mucho antes. La otra forma de acabar es que se rindan todos menos uno: entonces gana ese, tenga las minas que tenga. Si al destapar la última mina hay empate en cabeza, no hay ganador."
+    },
+    "bots": {
+      "titulo": "Los bots",
+      "texto": "Cada puesto de la IA juega a su propio nivel, del 1 (clica a ciegas) al 5 (deduce, calcula probabilidades y elige dónde gastar la onda). Se toman entre 0 y 2 segundos antes de mover, para que se les vea pensar."
+    }
   },
   "error": {
     "CELDA_YA_REVELADA": "Esa celda ya está descubierta.",
@@ -68,6 +139,8 @@
     "MINAS_INVALIDAS": "El número de minas no es válido.",
     "JUGADORES_INVALIDOS": "El número de jugadores no es válido.",
     "DESCONOCIDO": "Ha ocurrido un error inesperado.",
-    "SIN_JUGADAS": "No queda ninguna celda por descubrir."
+    "SIN_JUGADAS": "No queda ninguna celda por descubrir.",
+    "ONDA_NO_DISPONIBLE": "La onda expansiva todavía no está lista.",
+    "YA_RENDIDO": "Ese jugador ya se había rendido."
   }
 }

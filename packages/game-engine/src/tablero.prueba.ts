@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Tablero } from './tablero.js';
+import type { Coordenada } from './tipos.js';
 
 /** Cuenta las minas realmente colocadas recorriendo el tablero entero. */
 function contarMinas(tablero: Tablero): number {
@@ -83,7 +84,7 @@ describe('Tablero: numeros de minas adyacentes', () => {
     //   . . .
     const tablero = new Tablero(3, 3, 2);
     tablero.colocarMinas({ x: 2, y: 2 }, () => 0);
-    const numeros = tablero.despejar(2, 2);
+    const numeros = tablero.despejarEnCascada(2, 2);
     expect(numeros.length).toBeGreaterThan(0);
 
     const visible = tablero.aVisible();
@@ -102,14 +103,14 @@ describe('Tablero: cascada', () => {
     tablero.colocarMinas({ x: 2, y: 2 }, () => 0);
 
     // (2,0) tiene un 1: se revela ella sola.
-    expect(tablero.despejar(2, 0)).toEqual([{ x: 2, y: 0 }]);
+    expect(tablero.despejarEnCascada(2, 0)).toEqual([{ x: 2, y: 0 }]);
   });
 
   it('despeja el tablero entero cuando no hay ninguna mina alrededor', () => {
     // Una sola mina en la esquina deja el resto del tablero conectado.
     const tablero = new Tablero(5, 5, 1);
     tablero.colocarMinas({ x: 4, y: 4 }, () => 0);
-    const reveladas = tablero.despejar(4, 4);
+    const reveladas = tablero.despejarEnCascada(4, 4);
 
     // Las 24 celdas sin mina quedan visibles.
     expect(reveladas).toHaveLength(24);
@@ -119,8 +120,8 @@ describe('Tablero: cascada', () => {
   it('no revela dos veces la misma celda', () => {
     const tablero = new Tablero(5, 5, 1);
     tablero.colocarMinas({ x: 4, y: 4 }, () => 0);
-    const reveladas = tablero.despejar(4, 4);
-    const claves = new Set(reveladas.map((celda) => `${celda.x},${celda.y}`));
+    const reveladas = tablero.despejarEnCascada(4, 4);
+    const claves = new Set(reveladas.map((celda: Coordenada) => `${String(celda.x)},${String(celda.y)}`));
 
     expect(claves.size).toBe(reveladas.length);
   });

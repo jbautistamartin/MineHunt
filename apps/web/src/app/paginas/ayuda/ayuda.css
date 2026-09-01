@@ -1,0 +1,72 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: min(34rem, 100%);
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+}
+
+.lema {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--mh-superficie);
+  border-radius: 0.75rem;
+}
+
+.regla {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.regla h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--mh-acento);
+}
+
+.regla p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.pie {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.volver {
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+}
+
+.version {
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}

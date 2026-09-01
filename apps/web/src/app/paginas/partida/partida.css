@@ -149,3 +149,174 @@ h1 {
   color: var(--mh-texto-tenue);
   font-style: italic;
 }
+
+/* Onda expansiva */
+.onda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.boton-onda {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--mh-texto);
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.boton-onda:disabled {
+  color: var(--mh-texto-tenue);
+  cursor: not-allowed;
+}
+
+.onda.armado .boton-onda {
+  color: #fff;
+  background: var(--mh-acento);
+  border-color: var(--mh-acento);
+}
+
+.ayuda-onda {
+  font-size: 0.8rem;
+  color: var(--mh-texto-tenue);
+}
+
+.onda.armado .ayuda-onda {
+  color: var(--mh-acento);
+}
+
+/* Reloj del turno */
+.reloj {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.reloj-tiempo {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto-tenue);
+}
+
+.reloj-barra {
+  display: block;
+  flex: 1 1 6rem;
+  max-width: 12rem;
+  height: 0.4rem;
+  overflow: hidden;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.2rem;
+}
+
+.reloj-relleno {
+  display: block;
+  height: 100%;
+  background: var(--mh-acento);
+  /* El latido es de 250 ms: la transicion cubre el hueco entre lecturas. */
+  transition: width 250ms linear;
+}
+
+.reloj.apurado .reloj-tiempo {
+  font-weight: 700;
+  color: var(--mh-peligro);
+}
+
+.reloj.apurado .reloj-relleno {
+  background: var(--mh-peligro);
+}
+
+/* Estado de la onda dentro de cada ficha del marcador */
+.ficha {
+  flex-wrap: wrap;
+}
+
+.nivel {
+  margin-left: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}
+
+.onda-estado {
+  display: flex;
+  flex: 1 0 100%;
+  gap: 0.3rem;
+  align-items: center;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto-tenue);
+}
+
+.onda-estado.recargando {
+  opacity: 0.7;
+}
+
+/* Rendicion */
+.acciones-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.confirmar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.confirmar .pregunta {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+button.peligro {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: var(--mh-acento);
+  border: 1px solid var(--mh-acento);
+  border-radius: 0.4rem;
+}
+
+.ficha.rendido {
+  opacity: 0.55;
+}
+
+.marca-rendido {
+  margin-left: 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mh-texto-tenue);
+}
+
+.espectador {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+  text-align: center;
+}
+
+.acciones .enlace {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.ayuda-onda .atajo {
+  display: block;
+  opacity: 0.8;
+}

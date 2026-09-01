@@ -4,11 +4,13 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0, 1 y 2 completadas.** El monorepo compila, tipa y pasa 80 pruebas. El motor implementa tablero, cascada, turnos, marcador y bots de 5 niveles; la web tiene el Modo Entrenamiento hotseat con bots e i18n. Pendientes: ítem de despeje (Fase 3), Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
+**Fases 0 a 3 completadas.** El monorepo compila, tipa y pasa 148 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga y rendición; la web tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, onda, reloj, rendición, pantalla de ayuda e i18n. Pendientes: Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
 
 Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
-`MineHunt-plan-maestro.md` es la fuente de verdad del diseño: define las fases, el alcance exacto de cada una y qué NO debe implementarse todavía. Léelo antes de tocar nada.
+`documentos/MineHunt-plan-maestro.md` es la fuente de verdad del diseño: define las fases, el alcance exacto de cada una y qué NO debe implementarse todavía. Léelo antes de tocar nada.
+
+**Toda la documentación del proyecto vive en `documentos/`** (el plan maestro, el icono `MineHunt-icon.svg` y lo que se añada de aquí en adelante). Este `CLAUDE.md` se queda en la raíz porque es donde Claude Code lo busca. Al crear un documento nuevo, ponlo en `documentos/` y añádelo al índice de `documentos/README.md`.
 
 ## Comandos
 
@@ -39,14 +41,19 @@ npm run probar:e2e --workspace @minehunt/server
 
 Una sola prueba: `npx vitest run -t "nombre de la prueba"` dentro del paquete, o `npx vitest run ruta/al/fichero.prueba.ts`.
 
+En la raíz hay un **`.cmd` por cada tipo de ejecución** para lanzarlos desde el Explorador de Windows sin abrir una consola: `arrancar-web.cmd` (compila el motor y abre la web en el navegador), `arrancar-servidor.cmd`, `verificar.cmd`, `compilar.cmd`, `verificar-tipos.cmd`, `probar.cmd`, `probar-motor.cmd`, `probar-web.cmd`, `probar-servidor.cmd` y `limpiar.cmd`. Cada uno lleva dentro su documentación y el catálogo completo; los de pruebas aceptan `ver` para modo watch. **Si cambias los scripts de npm, actualiza el `.cmd` correspondiente.**
+
 **Los ficheros de prueba usan el sufijo `.prueba.ts`** (`.e2e-prueba.ts` para los e2e), no `.spec.ts`. Está configurado en `vitest.config.ts`, en `angular.json` (`test.options.include`) y en los `tsconfig.*.json`; si añades un test con otro sufijo, no se ejecutará.
 
 ## Reglas del juego (decididas, no estaban en el plan)
 
-El plan da estas dos por definidas de antes pero no las escribe. Se confirmaron con el usuario y el motor las implementa así:
+El plan las da por definidas de antes pero no las escribe. Se confirmaron con el usuario y el motor las implementa así:
 
-1. **El turno pasa siempre** tras cada clic, se encuentre mina o no. No hay racha por acertar.
-2. **La partida termina por mayoría matemática**: en cuanto al segundo clasificado no le alcanzan las minas que quedan para superar al líder, se acaba. También termina, obviamente, al encontrarse la última mina. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
+1. **Quien encuentra mina sigue jugando.** El turno solo pasa al siguiente cuando el clic *no* da mina, así que una racha se premia encadenando clics (`ResultadoClic.repite`). **Esto cambió sobre la marcha**: hasta la Fase 3 el turno pasaba siempre. Si ves código o pruebas que den por hecho que el turno alterna, están desactualizados.
+2. **Se puede perder el turno por tiempo.** Si la partida tiene reloj, quien se queda pensando de más lo pierde sin jugar. Ver la sección del reloj más abajo.
+3. **La partida termina al destapar la última mina.** No hay final anticipado por marcador: aunque el líder saque una ventaja imposible de remontar, se sigue jugando. **Esto también cambió sobre la marcha**: hasta la Fase 3 existía un fin por «mayoría matemática» que cortaba la partida antes de tiempo; se quitó porque cerraba partidas que el jugador quería terminar. Para salir antes está rendirse. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
+4. **Rendirse saca del juego.** `rendirse(idJugador)` deja al jugador de espectador: no vuelve a recibir turnos (`pasarTurno()` los salta), sus minas dejan de contar y no puede ganar, aunque sigue viendo la partida. Es irreversible. **Si al rendirse queda un único jugador en pie, la partida acaba y gana ese**, tenga el marcador que tenga.
+5. **No hay cascada automática.** Un clic normal destapa **solo la celda clicada**, sea mina, número o celda vacía. Esto contradice la letra de la Fase 1 del plan y fue una decisión posterior del usuario: la cascada existe únicamente como efecto de la onda expansiva.
 
 Otras invariantes del motor: las minas **se reparten en el primer clic**, no al crear la partida, para poder excluir la celda clicada; y `obtenerEstado()` **nunca** revela información oculta — una celda `oculta` lleva `minasAdyacentes: null` y no dice si esconde mina. Hay pruebas que lo verifican, y es lo que hará jugable la IA de la Fase 2 sin que haga trampas.
 
@@ -64,11 +71,68 @@ Otras invariantes del motor: las minas **se reparten en el primer clic**, no al 
 | 4 | Sin certezas, va a la celda más probable |
 | 5 | Como el 4, y entre empates prefiere la de menos vecinas |
 
-**Ojo al sentido invertido**: aquí una celda que con certeza esconde mina es la **mejor** jugada, no la peor. Una que se sabe libre es la peor, porque gasta el turno sin puntuar; por eso los niveles 2+ las descartan al elegir a ciegas.
+**Todos los niveles pueden gastar la onda**, cada uno con el criterio que le da su inteligencia (`JugadorIA.decidirOnda`): el nivel 1 la tira al azar el 20 % de las veces; los niveles 2 y 3 la gastan sobre una celda que sus deducciones declaran libre, que es donde no se pierde nada; los niveles 4 y 5 además la usan cuando ni siquiera hay libres seguras pero la mejor probabilidad de mina es tan baja que el clic no compensa. Ninguno la gasta teniendo una mina cantada, porque eso puntúa (y ahora además conserva el turno) y la onda no. `elegirJugada` devuelve `usarOnda`: **quien llame a la IA tiene que llamar a `activarOnda()` antes del clic**, o la decisión se pierde en silencio.
+
+En el Modo Entrenamiento **cada bot lleva su propio nivel**: `ConfiguracionPartida.nivelesIA` es un array en orden de asiento (el bot del puesto `numHumanos + i` usa `nivelesIA[i]`) y `ServicioPartida` guarda un `JugadorIA` por puesto. Se puede enfrentar un nivel 1 contra un nivel 5 en la misma partida.
+
+**Los bots no juegan al instante**: `ServicioPartida.retardoDelBot()` sortea entre 0 y 2 s antes de cada jugada suya, con humanos en la mesa o sin ellos. Jugando al instante el tablero cambiaba antes de que te diera tiempo a ver de quién era el turno, y con la regla de que quien acierta repite una racha de bot pasaba en un parpadeo. Esto sustituye al retardo fijo configurable que solo se aplicaba en las partidas de solo bots, que ya no existe ni en la configuración ni en `ConfiguracionPartida`.
+
+**Ojo al sentido invertido**: aquí una celda que con certeza esconde mina es la **mejor** jugada, no la peor. Una que se sabe libre es la peor, porque cede el turno sin puntuar; por eso los niveles 2+ las descartan al elegir a ciegas.
 
 Las probabilidades del nivel 4 son una aproximación: cada celda se queda con la peor cota que le impone alguna celda numerada, y las que no tocan ningún número reciben la densidad general. El cálculo exacto exigiría enumerar todas las combinaciones compatibles y se dispara en tableros grandes.
 
 Los ficheros `*.ayuda.ts` son utilidades solo para pruebas: están excluidos del build en `tsconfig.json` junto a los `*.prueba.ts`.
+
+## La onda expansiva (Fase 3)
+
+El ítem de despeje **se llama «onda expansiva»** (`shockwave` en inglés) y así se nombra en el código: `activarOnda`, `EstadoOnda`, `ONDA_NO_DISPONIBLE`, claves `partida.onda.*`. No lo llames «ítem» ni en código ni en textos.
+
+Es la **única** vía por la que se propaga la cascada. Cada jugador tiene la suya:
+
+- `activarOnda()` la arma; no despeja nada por sí sola, se gasta en el siguiente clic de ese jugador. `desactivarOnda()` se arrepiente sin coste.
+- Al gastarla sobre una celda **vacía**, arrastra todas las celdas vacías conectadas y su borde numerado (`Tablero.despejarEnCascada`).
+- Sobre una celda **numerada** no hay nada que propagar: se revela ella sola y la onda se pierde. Es la decisión que el jugador tiene que acertar.
+- Sobre una **mina**, la mina se apunta con normalidad y la onda se gasta igual.
+- Tras gastarse entra en recarga, configurable en segundos.
+- Si el jugador pierde el turno por tiempo con la onda armada, **no la pierde**: no llegó a gastarla y le sigue esperando armada.
+
+**En la web, el clic derecho sobre una celda lanza la onda ahí mismo** sin pasar por el botón (`Tablero.celdaPulsadaAlterna` → `ServicioPartida.clicConOnda`). Si la onda no está disponible, ese clic **no destapa nada**: dejar caer el clic normal gastaría el turno en una celda que el jugador eligió pensando en la onda. El botón sigue existiendo porque en Android (Fase 5) no hay botón derecho.
+
+## El reloj de turno (Fase 3)
+
+`OpcionesPartida.tiempoPorTurnoSegundos` limita lo que puede tardar cada jugador; **0 (el valor por defecto del motor) es sin límite**. El Modo Historia (Fase 4) lo irá bajando nivel a nivel para apretar; el Entrenamiento lo trae a 15 s y deja ponerlo a 0.
+
+El reloj **se reinicia con cada clic**, también cuando el jugador conserva el turno por haber encontrado mina.
+
+**El motor no tiene temporizadores propios**: expone `tiempoRestanteDeTurnoMs()` y `comprobarTiempoDeTurno()`, y es quien lo usa el que tiene que preguntar. Hoy lo hace `ServicioPartida`; en la Fase 6 lo hará el servidor. Mantenlo así — un `setInterval` dentro del motor rompería que sea código puro y que el servidor sea la autoridad.
+
+## Que el motor no llame al reloj del sistema
+
+Tanto la recarga de la onda como el reloj de turno corren con el tiempo y no con los turnos, así que el motor deja de ser una función pura del estado. Por eso `OpcionesPartida` acepta `ahora?: () => number`: las pruebas inyectan un reloj falso y en la Fase 6 mandará el del servidor. **Nunca llames a `Date.now()` dentro del motor**; usa el reloj inyectado.
+
+Como consecuencia, la interfaz tiene que releer el estado periódicamente para que bajen las cuentas atrás y para que el turno expire: `ServicioPartida` levanta un `setInterval` de 250 ms mientras haya algo que contar (una onda recargando o un turno con reloj) y lo apaga solo.
+
+El turno perdido por tiempo se publica como el código de suceso `TURNO_PERDIDO`, que vive en `CodigoSuceso` (motor) junto a los códigos de clic, para que cliente y servidor lo nombren igual.
+
+## Los ajustes recordados
+
+`ServicioAjustes` guarda en localStorage (`minehunt.entrenamiento`) lo que se deja puesto en la pantalla de configuración, y la pantalla lo restaura al abrirse; el botón «Restablecer» vuelve a `AJUSTES_POR_DEFECTO` y olvida lo guardado. Se guarda con un `effect` a cada cambio, no al empezar la partida, para que también se recuerde lo que se trasteó sin llegar a jugar.
+
+**Lo que sale de localStorage se valida entero antes de usarse** (`validar()` en `ajustes.servicio.ts`) y, si algo no cuadra, se descarta el lote completo y se vuelve a los valores por defecto: ese texto lo puede haber escrito cualquiera y además sobrevive a los cambios de formato entre versiones. Si añades un ajuste nuevo, añádelo también a la validación, o el lote entero dejará de cargarse en cuanto alguien tenga guardado el formato viejo.
+
+## Identidad y versión de la web
+
+El título de la pestaña es `MineHunt` y el favicon es `apps/web/public/icono.svg`, **copia servible del icono maestro `documentos/MineHunt-icon.svg`**; si se retoca el icono hay que copiarlo otra vez. Se deja `favicon.ico` como `alternate icon` para navegadores que no admitan SVG.
+
+La versión que se enseña al jugador (configuración y ayuda) es `VERSION_APP`, en `nucleo/version.ts`, hoy **0.0.1**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él: al subir la versión hay que tocar los dos. No confundir con `VERSION_MOTOR`, que es la del motor de juego y va por su cuenta.
+
+## La pantalla de ayuda
+
+`apps/web/src/app/paginas/ayuda/` explica las reglas al jugador, en la ruta `/ayuda`. Sus secciones son una lista declarativa (`SECCIONES` en `ayuda.ts`) y cada una se traduce en `ayuda.<seccion>.titulo` y `ayuda.<seccion>.texto` de los dos ficheros de idioma.
+
+**Cuando cambie una regla del juego hay que actualizar esa pantalla en el mismo cambio.** Es lo único donde el jugador lee las reglas, y una regla mal contada se nota más que un fallo de código. `ayuda.prueba.ts` comprueba que cada sección tenga título y texto en español y en inglés, así que olvidarse de un idioma rompe las pruebas, pero **un texto desactualizado no lo detecta nadie**: eso va en la revisión.
+
+No se entra a la ayuda desde una partida en curso, solo desde la configuración y desde el final de la partida: el reloj del turno sigue corriendo mientras se lee, y entrar a mirar las reglas costaría turnos.
 
 ## Versiones fijadas
 
@@ -76,7 +140,7 @@ Angular 22 exige **TypeScript >=6.0 <6.1**, así que el monorepo va con **TypeSc
 
 ## Qué es MineHunt
 
-Buscaminas **invertido**: el objetivo es *encontrar* minas, no evitarlas. Multijugador por turnos (2-4 jugadores, humanos y/o bots). Un clic revela o bien una mina (que se anota en el marcador del jugador) o bien un número de minas adyacentes, con revelado en cascada en celdas vacías. Existe un ítem de "despeje amplio" con tiempo de recarga. Gana quien más minas encuentre.
+Buscaminas **invertido**: el objetivo es *encontrar* minas, no evitarlas. Multijugador por turnos (2-4 jugadores, humanos y/o bots). Un clic revela o bien una mina (que se anota en el marcador del jugador) o bien un número de minas adyacentes. Quien encuentra mina sigue jugando; quien falla cede el turno, y también lo pierde si se le acaba el tiempo. Existe la «onda expansiva», con recarga, que es lo único que despeja en cascada. Gana quien más minas encuentre.
 
 ## Convenciones no negociables
 
@@ -96,7 +160,7 @@ Monorepo con npm workspaces (o pnpm):
 
 `apps/web` y `apps/server` declaran `@minehunt/game-engine` como dependencia (`"*"`, resuelta por npm workspaces mediante junction) y ambos lo importan de verdad, con pruebas que lo comprueban — así una rotura del enlace del monorepo sale en los tests.
 
-Dentro de `apps/web/src/app`: `nucleo/` tiene los dos servicios con estado (`ServicioIdioma`, `ServicioPartida`), `paginas/` las pantallas enrutadas con carga diferida y `componentes/` lo reutilizable. **`ServicioPartida` es el único que habla con el motor**; las pantallas leen sus señales. En la Fase 7 ese servicio es el que se sustituye por el estado que llega del servidor, sin tocar los componentes.
+Dentro de `apps/web/src/app`: `nucleo/` tiene los servicios con estado (`ServicioIdioma`, `ServicioPartida`, `ServicioAjustes`), `paginas/` las pantallas enrutadas con carga diferida y `componentes/` lo reutilizable. **`ServicioPartida` es el único que habla con el motor**; las pantallas leen sus señales. En la Fase 7 ese servicio es el que se sustituye por el estado que llega del servidor, sin tocar los componentes.
 
 La decisión estructural clave es que el motor de juego es una sola implementación compartida entre cliente y servidor. Lógica de juego nueva va en `game-engine`, nunca en un componente Angular ni en un gateway de NestJS; esos dos solo orquestan y presentan.
 

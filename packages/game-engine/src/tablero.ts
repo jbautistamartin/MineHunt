@@ -136,11 +136,26 @@ export class Tablero {
   }
 
   /**
-   * Despeja una celda sin mina. Si no tiene minas alrededor, arrastra en
-   * cascada a todas las celdas vacias conectadas y al borde numerado que las
-   * rodea. La cascada es iterativa para no agotar la pila en tableros grandes.
+   * Revela una unica celda sin mina, sin arrastrar nada mas.
+   * Es el comportamiento del clic normal: solo se destapa lo que se clica.
    */
-  despejar(x: number, y: number): Coordenada[] {
+  revelarUna(x: number, y: number): Coordenada[] {
+    const celda = this.celda(x, y);
+    if (celda.estado !== 'oculta') {
+      return [];
+    }
+    celda.estado = 'despejada';
+    return [{ x, y }];
+  }
+
+  /**
+   * Despeje amplio: revela la celda y, si no tiene minas alrededor, arrastra
+   * en cascada todas las celdas vacias conectadas y el borde numerado que las
+   * rodea. Solo ocurre al gastar la onda; el clic normal usa revelarUna.
+   *
+   * La cascada es iterativa para no agotar la pila en tableros grandes.
+   */
+  despejarEnCascada(x: number, y: number): Coordenada[] {
     const reveladas: Coordenada[] = [];
     const pendientes: Coordenada[] = [{ x, y }];
 

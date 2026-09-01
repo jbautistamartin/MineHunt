@@ -1,6 +1,6 @@
 {
   "name": "@minehunt/web",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "arrancar": "ng serve",
     "compilar": "ng build",

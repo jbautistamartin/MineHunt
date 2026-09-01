@@ -20,11 +20,52 @@
         <p class="restantes">
           {{ 'partida.minas_restantes' | translate }}: <strong>{{ partida.minasRestantes }}</strong>
         </p>
+
+        @if (!partida.terminada && segundosDeTurno() !== null) {
+          <div
+            class="reloj"
+            [class.apurado]="relojApurado()"
+            role="timer"
+            [attr.aria-label]="'partida.reloj.etiqueta' | translate"
+          >
+            <span class="reloj-tiempo">
+              {{ 'partida.reloj.restante' | translate: { segundos: segundosDeTurno() } }}
+            </span>
+            <span class="reloj-barra" aria-hidden="true">
+              <span class="reloj-relleno" [style.width.%]="porcentajeDeTurno()"></span>
+            </span>
+          </div>
+        }
       </div>
 
-      <button type="button" class="secundario" (click)="abandonar()">
-        {{ 'partida.abandonar' | translate }}
-      </button>
+      <div class="acciones-cabecera">
+        @if (puedeRendirse()) {
+          @if (confirmandoRendicion()) {
+            <span class="confirmar">
+              <span class="pregunta">{{ 'partida.rendirse.seguro' | translate }}</span>
+              <button type="button" class="peligro" (click)="confirmarRendicion()">
+                {{ 'partida.rendirse.si' | translate }}
+              </button>
+              <button type="button" class="secundario" (click)="cancelarRendicion()">
+                {{ 'partida.rendirse.no' | translate }}
+              </button>
+            </span>
+          } @else {
+            <button
+              type="button"
+              class="secundario"
+              [attr.title]="'partida.rendirse.ayuda' | translate"
+              (click)="pedirRendicion()"
+            >
+              {{ 'partida.rendirse.boton' | translate }}
+            </button>
+          }
+        }
+
+        <button type="button" class="secundario" (click)="abandonar()">
+          {{ 'partida.abandonar' | translate }}
+        </button>
+      </div>
     </header>
 
     <ol class="marcador" [attr.aria-label]="'partida.marcador' | translate">
@@ -33,20 +74,85 @@
           class="ficha"
           [class]="'jugador-' + jugador.id"
           [class.activo]="!partida.terminada && jugador.id === partida.turnoDe"
+          [class.rendido]="jugador.rendido"
         >
           <span class="nombre">
             {{ claveNombre(jugador.id) | translate: { numero: numeroDe(jugador.id) } }}
+            @if (nivelDeBot(jugador.id); as nivel) {
+              <span class="nivel" [attr.title]="'configuracion.nivel.' + nivel | translate">
+                {{ 'partida.nivel_bot' | translate: { nivel: nivel } }}
+              </span>
+            }
+            @if (jugador.rendido) {
+              <span class="marca-rendido">{{ 'partida.rendirse.marca' | translate }}</span>
+            }
           </span>
           <span class="minas">{{ jugador.minasEncontradas }}</span>
+
+          <span class="onda-estado" [class.recargando]="jugador.onda.estado === 'recargando'">
+            <span class="glifo" aria-hidden="true">&#10039;</span>
+            @switch (jugador.onda.estado) {
+              @case ('recargando') {
+                {{
+                  'partida.onda.recarga_corta'
+                    | translate: { segundos: segundosDeRecargaDe(jugador.onda.recargaRestanteMs) }
+                }}
+              }
+              @case ('activo') {
+                {{ 'partida.onda.armada' | translate }}
+              }
+              @default {
+                {{ 'partida.onda.lista' | translate }}
+              }
+            }
+          </span>
         </li>
       }
     </ol>
+
+    @if (puedeManejarOnda()) {
+      <div class="onda" [class.armado]="ondaDelTurno()?.estado === 'activo'">
+        <button
+          type="button"
+          class="boton-onda"
+          [disabled]="ondaDelTurno()?.estado === 'recargando'"
+          [attr.aria-pressed]="ondaDelTurno()?.estado === 'activo'"
+          (click)="alternarOnda()"
+        >
+          <span class="glifo" aria-hidden="true">✷</span>
+          @switch (ondaDelTurno()?.estado) {
+            @case ('activo') {
+              {{ 'partida.onda.cancelar' | translate }}
+            }
+            @case ('recargando') {
+              {{ 'partida.onda.recarga' | translate: { segundos: segundosDeRecarga() } }}
+            }
+            @default {
+              {{ 'partida.onda.usar' | translate }}
+            }
+          }
+        </button>
+        <span class="ayuda-onda">
+          @if (ondaDelTurno()?.estado === 'activo') {
+            {{ 'partida.onda.activo' | translate }}
+          } @else {
+            {{ 'partida.onda.ayuda' | translate }}
+            <span class="atajo">{{ 'partida.onda.atajo' | translate }}</span>
+          }
+        </span>
+      </div>
+    }
 
     <mh-tablero
       [estado]="partida"
       [bloqueado]="partida.terminada || esTurnoDeBot()"
       (celdaPulsada)="jugar($event)"
+      (celdaPulsadaAlterna)="jugarConOnda($event)"
     />
+
+    @if (soloMiran()) {
+      <p class="espectador" role="status">{{ 'partida.rendirse.espectador' | translate }}</p>
+    }
 
     <p class="aviso" role="status">
       @if (esTurnoDeBot()) {
@@ -85,7 +191,7 @@
 
         @if (partida.minasRestantes > 0) {
           <p class="detalle">
-            {{ 'partida.fin.por_mayoria' | translate: { minas: partida.minasRestantes } }}
+            {{ 'partida.fin.ultimo_en_pie' | translate: { minas: partida.minasRestantes } }}
           </p>
         }
 
@@ -96,6 +202,9 @@
           <button type="button" class="secundario" (click)="abandonar()">
             {{ 'partida.nueva' | translate }}
           </button>
+          <a class="secundario enlace" routerLink="/ayuda">
+            {{ 'ayuda.enlace' | translate }}
+          </a>
         </div>
       </div>
     }

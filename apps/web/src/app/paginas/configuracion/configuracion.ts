@@ -1,10 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { MAX_JUGADORES, MIN_JUGADORES, NIVELES_IA, type NivelIA } from '@minehunt/game-engine';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
+import {
+  ServicioAjustes,
+  type AjustesEntrenamiento,
+} from '../../nucleo/ajustes.servicio';
 import { ServicioPartida } from '../../nucleo/partida.servicio';
+import { VERSION_APP } from '../../nucleo/version';
 
 /** Limites del tablero, para que la partida sea jugable en un movil. */
 const LADO_MINIMO = 3;
@@ -13,27 +25,58 @@ const LADO_MAXIMO = 30;
 /** Proporcion de minas con la que se propone un tablero nuevo. */
 const DENSIDAD_SUGERIDA = 0.18;
 
-/** Pausa por defecto entre turnos de bots cuando no juega ningun humano. */
-const RETARDO_BOTS_POR_DEFECTO_MS = 600;
-const RETARDO_MINIMO_MS = 0;
-const RETARDO_MAXIMO_MS = 3000;
+/** Recarga de la onda expansiva, en segundos. */
+const RECARGA_POR_DEFECTO_S = 20;
+const RECARGA_MINIMA_S = 0;
+const RECARGA_MAXIMA_S = 120;
+
+/**
+ * Tiempo por turno, en segundos. Con 0 se juega sin reloj; el Modo Historia
+ * (Fase 4) lo ira apretando nivel a nivel.
+ */
+const TIEMPO_TURNO_POR_DEFECTO_S = 15;
+const TIEMPO_TURNO_MINIMO_S = 0;
+const TIEMPO_TURNO_MAXIMO_S = 120;
+
+/** Nivel con el que se propone cada bot mientras no se toque. */
+const NIVEL_IA_POR_DEFECTO: NivelIA = 3;
+
+/**
+ * Con que arranca la pantalla la primera vez, y a donde vuelve el boton de
+ * restablecer. Es tambien el respaldo si lo guardado no supera la validacion.
+ */
+const AJUSTES_POR_DEFECTO: AjustesEntrenamiento = {
+  ancho: 9,
+  alto: 9,
+  minas: 15,
+  numJugadores: 2,
+  numHumanos: 1,
+  nivelesIA: Array.from({ length: MAX_JUGADORES }, () => NIVEL_IA_POR_DEFECTO),
+  recargaOndaSegundos: RECARGA_POR_DEFECTO_S,
+  tiempoPorTurnoSegundos: TIEMPO_TURNO_POR_DEFECTO_S,
+};
 
 /**
  * Pantalla de configuracion del Modo Entrenamiento.
  *
  * De 2 a 4 jugadores, de los cuales 0 a 4 pueden ser humanos; el resto los
- * lleva la IA con el nivel que se elija. Con 0 humanos la partida se juega
- * sola y se puede espaciar con un retardo entre turnos.
+ * lleva la IA, y cada bot puede jugar a un nivel distinto. Con 0 humanos la
+ * partida se juega sola; el ritmo lo pone el retardo aleatorio de los bots,
+ * que vive en ServicioPartida y no se configura.
+ *
+ * Lo que se deje puesto aqui se recuerda para la proxima sesion, porque nadie
+ * quiere volver a montar su tablero de 20x20 cada vez que abre el juego.
  */
 @Component({
   selector: 'mh-configuracion',
-  imports: [TranslatePipe, SelectorIdioma],
+  imports: [TranslatePipe, SelectorIdioma, RouterLink],
   templateUrl: './configuracion.html',
   styleUrl: './configuracion.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Configuracion {
   private readonly partida = inject(ServicioPartida);
+  private readonly ajustes = inject(ServicioAjustes);
   private readonly router = inject(Router);
 
   readonly ladoMinimo = LADO_MINIMO;
@@ -41,17 +84,51 @@ export class Configuracion {
   readonly minJugadores = MIN_JUGADORES;
   readonly maxJugadores = MAX_JUGADORES;
 
+  readonly version = VERSION_APP;
   readonly niveles = NIVELES_IA;
-  readonly retardoMinimo = RETARDO_MINIMO_MS;
-  readonly retardoMaximo = RETARDO_MAXIMO_MS;
+  readonly recargaMinima = RECARGA_MINIMA_S;
+  readonly recargaMaxima = RECARGA_MAXIMA_S;
+  readonly tiempoTurnoMinimo = TIEMPO_TURNO_MINIMO_S;
+  readonly tiempoTurnoMaximo = TIEMPO_TURNO_MAXIMO_S;
 
-  readonly ancho = signal(9);
-  readonly alto = signal(9);
-  readonly minas = signal(15);
-  readonly numJugadores = signal(2);
-  readonly numHumanos = signal(1);
-  readonly nivelIA = signal<NivelIA>(3);
-  readonly retardoBotsMs = signal(RETARDO_BOTS_POR_DEFECTO_MS);
+  readonly ancho = signal(AJUSTES_POR_DEFECTO.ancho);
+  readonly alto = signal(AJUSTES_POR_DEFECTO.alto);
+  readonly minas = signal(AJUSTES_POR_DEFECTO.minas);
+  readonly numJugadores = signal(AJUSTES_POR_DEFECTO.numJugadores);
+  readonly numHumanos = signal(AJUSTES_POR_DEFECTO.numHumanos);
+  /**
+   * Nivel de cada puesto de bot, en orden de asiento. Se guardan los cuatro
+   * aunque jueguen menos: asi cambiar el numero de jugadores no borra lo que
+   * ya se habia elegido.
+   */
+  readonly nivelesIA = signal<readonly NivelIA[]>(AJUSTES_POR_DEFECTO.nivelesIA);
+  readonly recargaOndaSegundos = signal(AJUSTES_POR_DEFECTO.recargaOndaSegundos);
+  readonly tiempoPorTurnoSegundos = signal(AJUSTES_POR_DEFECTO.tiempoPorTurnoSegundos);
+
+  /** Todo lo configurable, junto, tal y como se guarda y se restaura. */
+  readonly ajustesActuales = computed<AjustesEntrenamiento>(() => ({
+    ancho: this.ancho(),
+    alto: this.alto(),
+    minas: this.minas(),
+    numJugadores: this.numJugadores(),
+    numHumanos: this.numHumanos(),
+    nivelesIA: this.nivelesIA(),
+    recargaOndaSegundos: this.recargaOndaSegundos(),
+    tiempoPorTurnoSegundos: this.tiempoPorTurnoSegundos(),
+  }));
+
+  constructor() {
+    const guardados = this.ajustes.cargar();
+    if (guardados !== null) {
+      this.aplicar(guardados);
+    }
+
+    // Se guarda a cada cambio y no al empezar la partida: asi tambien se
+    // recuerda lo que se estuvo trasteando aunque al final no se jugara.
+    effect(() => {
+      this.ajustes.guardar(this.ajustesActuales());
+    });
+  }
 
   /** Opciones del selector de jugadores: 2, 3 y 4. */
   readonly opcionesJugadores = Array.from(
@@ -66,7 +143,19 @@ export class Configuracion {
 
   readonly numBots = computed(() => this.numJugadores() - this.numHumanos());
   readonly hayBots = computed(() => this.numBots() > 0);
-  /** Sin humanos la partida se juega sola: ahi si tiene sentido el retardo. */
+
+  /**
+   * Un puesto por bot en juego: indice dentro de nivelesIA, id del jugador que
+   * ocupa y nivel elegido. Es lo que recorre la plantilla.
+   */
+  readonly puestosDeBot = computed(() =>
+    Array.from({ length: this.numBots() }, (_valor, indice) => ({
+      indice,
+      idJugador: this.numHumanos() + indice,
+      nivel: this.nivelesIA()[indice] ?? NIVEL_IA_POR_DEFECTO,
+    })),
+  );
+  /** Sin humanos la partida se juega sola de principio a fin. */
   readonly soloBots = computed(() => this.numHumanos() === 0);
 
   readonly totalCeldas = computed(() => this.ancho() * this.alto());
@@ -119,13 +208,34 @@ export class Configuracion {
     this.numHumanos.set(valor);
   }
 
-  cambiarNivelIA(valor: NivelIA): void {
-    this.nivelIA.set(valor);
+  /** Cambia el nivel de un puesto de bot sin tocar el de los demas. */
+  cambiarNivelDeBot(indice: number, valor: NivelIA): void {
+    const niveles = [...this.nivelesIA()];
+    niveles[indice] = valor;
+    this.nivelesIA.set(niveles);
   }
 
-  cambiarRetardo(valor: string): void {
-    const numero = this.aEntero(valor, this.retardoBotsMs());
-    this.retardoBotsMs.set(Math.min(RETARDO_MAXIMO_MS, Math.max(RETARDO_MINIMO_MS, numero)));
+  /** Pone el mismo nivel en todos los puestos, que es lo habitual. */
+  igualarNiveles(valor: NivelIA): void {
+    this.nivelesIA.set(this.nivelesIA().map(() => valor));
+  }
+
+  cambiarTiempoPorTurno(valor: string): void {
+    const numero = this.aEntero(valor, this.tiempoPorTurnoSegundos());
+    this.tiempoPorTurnoSegundos.set(
+      Math.min(TIEMPO_TURNO_MAXIMO_S, Math.max(TIEMPO_TURNO_MINIMO_S, numero)),
+    );
+  }
+
+  cambiarRecarga(valor: string): void {
+    const numero = this.aEntero(valor, this.recargaOndaSegundos());
+    this.recargaOndaSegundos.set(Math.min(RECARGA_MAXIMA_S, Math.max(RECARGA_MINIMA_S, numero)));
+  }
+
+  /** Vuelve a los valores de fabrica y olvida lo guardado. */
+  reiniciarAjustes(): void {
+    this.aplicar(AJUSTES_POR_DEFECTO);
+    this.ajustes.olvidar();
   }
 
   empezar(): void {
@@ -138,10 +248,34 @@ export class Configuracion {
       minas: this.minas(),
       numJugadores: this.numJugadores(),
       numHumanos: this.numHumanos(),
-      nivelIA: this.nivelIA(),
-      retardoBotsMs: this.retardoBotsMs(),
+      nivelesIA: this.puestosDeBot().map((puesto) => puesto.nivel),
+      recargaOndaSegundos: this.recargaOndaSegundos(),
+      tiempoPorTurnoSegundos: this.tiempoPorTurnoSegundos(),
     });
     void this.router.navigate(['/partida']);
+  }
+
+  /** Vuelca unos ajustes en los campos de la pantalla. */
+  private aplicar(ajustes: AjustesEntrenamiento): void {
+    this.ancho.set(ajustes.ancho);
+    this.alto.set(ajustes.alto);
+    this.minas.set(ajustes.minas);
+    this.numJugadores.set(ajustes.numJugadores);
+    this.numHumanos.set(ajustes.numHumanos);
+    this.nivelesIA.set(this.completarNiveles(ajustes.nivelesIA));
+    this.recargaOndaSegundos.set(ajustes.recargaOndaSegundos);
+    this.tiempoPorTurnoSegundos.set(ajustes.tiempoPorTurnoSegundos);
+  }
+
+  /**
+   * Deja siempre un nivel por cada puesto posible: lo guardado pudo venir de
+   * una partida con menos jugadores de los que se elijan ahora.
+   */
+  private completarNiveles(niveles: readonly NivelIA[]): readonly NivelIA[] {
+    return Array.from(
+      { length: MAX_JUGADORES },
+      (_valor, indice) => niveles[indice] ?? NIVEL_IA_POR_DEFECTO,
+    );
   }
 
   private esLadoValido(lado: number): boolean {

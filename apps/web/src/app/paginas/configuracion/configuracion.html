@@ -3,8 +3,12 @@
     <div>
       <h1>{{ 'app.titulo' | translate }}</h1>
       <p class="lema">{{ 'app.lema' | translate }}</p>
+      <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
     </div>
-    <mh-selector-idioma />
+    <div class="cabecera-acciones">
+      <a class="enlace-ayuda" routerLink="/ayuda">{{ 'ayuda.enlace' | translate }}</a>
+      <mh-selector-idioma />
+    </div>
   </header>
 
   <div class="tarjeta">
@@ -113,43 +117,94 @@
     @if (hayBots()) {
       <fieldset class="grupo">
         <legend>{{ 'configuracion.nivel_ia' | translate }}</legend>
-        <div class="opciones">
-          @for (nivel of niveles; track nivel) {
-            <button
-              type="button"
-              class="opcion"
-              [class.activa]="nivel === nivelIA()"
-              [attr.aria-pressed]="nivel === nivelIA()"
-              [attr.title]="'configuracion.nivel.' + nivel | translate"
-              (click)="cambiarNivelIA(nivel)"
-            >
-              {{ nivel }}
-            </button>
-          }
-        </div>
-        <p class="resumen">{{ 'configuracion.nivel.' + nivelIA() | translate }}</p>
+        <p class="descripcion">{{ 'configuracion.nivel_por_bot' | translate }}</p>
+
+        @for (puesto of puestosDeBot(); track puesto.indice) {
+          <div class="puesto-bot">
+            <span class="nombre-bot">
+              {{ 'partida.bot' | translate: { numero: puesto.idJugador + 1 } }}
+            </span>
+            <div class="opciones">
+              @for (nivel of niveles; track nivel) {
+                <button
+                  type="button"
+                  class="opcion"
+                  [class.activa]="nivel === puesto.nivel"
+                  [attr.aria-pressed]="nivel === puesto.nivel"
+                  [attr.title]="'configuracion.nivel.' + nivel | translate"
+                  (click)="cambiarNivelDeBot(puesto.indice, nivel)"
+                >
+                  {{ nivel }}
+                </button>
+              }
+            </div>
+            <p class="resumen">{{ 'configuracion.nivel.' + puesto.nivel | translate }}</p>
+          </div>
+        }
+
+        @if (numBots() > 1) {
+          <div class="igualar">
+            <span class="nombre-bot">{{ 'configuracion.igualar_niveles' | translate }}</span>
+            <div class="opciones">
+              @for (nivel of niveles; track nivel) {
+                <button type="button" class="opcion suave" (click)="igualarNiveles(nivel)">
+                  {{ nivel }}
+                </button>
+              }
+            </div>
+          </div>
+        }
       </fieldset>
     }
 
-    @if (soloBots()) {
-      <fieldset class="grupo">
-        <legend>{{ 'configuracion.retardo' | translate }}</legend>
-        <label class="campo">
-          <span>{{ 'configuracion.retardo_ms' | translate }}</span>
-          <input
-            type="number"
-            step="100"
-            [min]="retardoMinimo"
-            [max]="retardoMaximo"
-            [value]="retardoBotsMs()"
-            (input)="cambiarRetardo($any($event.target).value)"
-          />
-        </label>
-      </fieldset>
-    }
+    <fieldset class="grupo">
+      <legend>{{ 'configuracion.ritmo' | translate }}</legend>
 
-    <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
-      {{ 'configuracion.empezar' | translate }}
-    </button>
+      <label class="campo">
+        <span>{{ 'configuracion.recarga_segundos' | translate }}</span>
+        <input
+          type="number"
+          [min]="recargaMinima"
+          [max]="recargaMaxima"
+          [value]="recargaOndaSegundos()"
+          (input)="cambiarRecarga($any($event.target).value)"
+        />
+      </label>
+
+      <label class="campo">
+        <span>{{ 'configuracion.tiempo_turno' | translate }}</span>
+        <input
+          type="number"
+          [min]="tiempoTurnoMinimo"
+          [max]="tiempoTurnoMaximo"
+          [value]="tiempoPorTurnoSegundos()"
+          (input)="cambiarTiempoPorTurno($any($event.target).value)"
+        />
+      </label>
+
+      <p class="resumen">
+        @if (tiempoPorTurnoSegundos() === 0) {
+          {{ 'configuracion.sin_reloj' | translate }}
+        } @else {
+          {{
+            'configuracion.con_reloj' | translate: { segundos: tiempoPorTurnoSegundos() }
+          }}
+        }
+      </p>
+    </fieldset>
+
+    <div class="acciones">
+      <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
+        {{ 'configuracion.empezar' | translate }}
+      </button>
+      <button
+        type="button"
+        class="secundario"
+        [attr.title]="'configuracion.reiniciar_ayuda' | translate"
+        (click)="reiniciarAjustes()"
+      >
+        {{ 'configuracion.reiniciar' | translate }}
+      </button>
+    </div>
   </div>
 </section>

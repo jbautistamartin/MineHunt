@@ -10,7 +10,9 @@ import { Tablero } from './tablero';
  */
 function estadoDePrueba(): EstadoPartida {
   const partida = MotorJuego.crearPartida(3, 3, 2, 2, { aleatorio: () => 0 });
-  partida.clicCelda(2, 2); // J0 despeja y arrastra la cascada
+  // La cascada solo sale de la onda: sin ella, el clic destaparia una sola celda.
+  partida.activarOnda();
+  partida.clicCelda(2, 2); // J0 gasta la onda y arrastra la cascada
   partida.clicCelda(0, 0); // J1 encuentra una mina
   return partida.obtenerEstado();
 }
@@ -61,6 +63,38 @@ describe('Tablero', () => {
     expect(mina.classList).toContain('mina');
     // La encontro el jugador 1.
     expect(mina.classList).toContain('jugador-1');
+  });
+
+  it('el boton derecho avisa por su propia salida y se come el menu del navegador', () => {
+    const fixture = crearComponente(estadoDePrueba());
+    const alternas: Coordenada[] = [];
+    fixture.componentInstance.celdaPulsadaAlterna.subscribe((celda: Coordenada) => {
+      alternas.push(celda);
+    });
+
+    const celdas = fixture.nativeElement.querySelectorAll('.celda');
+    const evento = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    // (2,0) es la tercera celda y sigue oculta.
+    (celdas[2] as HTMLButtonElement).dispatchEvent(evento);
+
+    expect(alternas).toEqual([{ x: 2, y: 0 }]);
+    // Sin esto saldria el menu contextual del navegador en plena partida.
+    expect(evento.defaultPrevented).toBe(true);
+  });
+
+  it('el boton derecho sobre el tablero bloqueado no avisa de nada', () => {
+    const fixture = crearComponente(estadoDePrueba(), true);
+    const alternas: Coordenada[] = [];
+    fixture.componentInstance.celdaPulsadaAlterna.subscribe((celda: Coordenada) => {
+      alternas.push(celda);
+    });
+
+    const celdas = fixture.nativeElement.querySelectorAll('.celda');
+    (celdas[2] as HTMLButtonElement).dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+    );
+
+    expect(alternas).toEqual([]);
   });
 
   it('avisa de la celda pulsada solo si sigue oculta', () => {

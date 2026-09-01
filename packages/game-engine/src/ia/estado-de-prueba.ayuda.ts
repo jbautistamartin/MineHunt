@@ -1,4 +1,7 @@
-import type { CeldaVisible, EstadoPartida } from '../tipos.js';
+import type { CeldaVisible, EstadoPartida, OndaJugador } from '../tipos.js';
+
+/** Onda lista para usarse, que es como arrancan todos los jugadores. */
+const ONDA_DISPONIBLE: OndaJugador = { estado: 'disponible', recargaRestanteMs: 0 };
 
 /**
  * Ayudante de pruebas: construye un EstadoPartida a partir de un dibujo del
@@ -15,7 +18,11 @@ import type { CeldaVisible, EstadoPartida } from '../tipos.js';
  * Los dibujos de las pruebas son consistentes: existe un reparto real de
  * minas que produce exactamente esos numeros.
  */
-export function tableroDe(dibujo: readonly string[], minasRestantes: number): EstadoPartida {
+export function tableroDe(
+  dibujo: readonly string[],
+  minasRestantes: number,
+  onda: OndaJugador = ONDA_DISPONIBLE,
+): EstadoPartida {
   const celdas: CeldaVisible[][] = dibujo.map((fila, y) =>
     [...fila].map((simbolo, x): CeldaVisible => {
       if (simbolo === '#') {
@@ -42,10 +49,12 @@ export function tableroDe(dibujo: readonly string[], minasRestantes: number): Es
     minasRestantes,
     celdas,
     jugadores: [
-      { id: 0, minasEncontradas: 0 },
-      { id: 1, minasEncontradas: 0 },
+      { id: 0, minasEncontradas: 0, onda, rendido: false },
+      { id: 1, minasEncontradas: 0, onda, rendido: false },
     ],
     turnoDe: 0,
+    tiempoPorTurnoMs: 0,
+    tiempoRestanteMs: null,
     terminada: false,
     ganador: null,
     empate: false,

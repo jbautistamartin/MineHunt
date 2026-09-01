@@ -3,8 +3,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    /* node hace falta para las pruebas que leen ficheros del proyecto, como la
+       que comprueba que la pantalla de ayuda esta traducida en los dos idiomas. */
     "types": [
-      "vitest/globals"
+      "vitest/globals",
+      "node"
     ]
   },
   "include": [

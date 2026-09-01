@@ -119,6 +119,9 @@ describe('JugadorIA: nunca usa informacion oculta', () => {
         const estado = partida.obtenerEstado();
         const decision = bot.elegirJugada(estado);
         expect(estado.celdas[decision.celda.y]?.[decision.celda.x]?.estado).toBe('oculta');
+        if (decision.usarOnda) {
+          partida.activarOnda();
+        }
         partida.clicCelda(decision.celda.x, decision.celda.y);
       }
     }
@@ -145,6 +148,9 @@ describe('JugadorIA: nunca usa informacion oculta', () => {
 
       while (!juego.estaTerminada()) {
         const decision = bot.elegirJugada(juego.obtenerEstado());
+        if (decision.usarOnda) {
+          juego.activarOnda();
+        }
         const resultado = juego.clicCelda(decision.celda.x, decision.celda.y);
         clics += 1;
         if (resultado.codigo === 'MINA_ENCONTRADA') {
@@ -175,6 +181,9 @@ describe('JugadorIA: los niveles altos juegan mejor', () => {
         if (decision === undefined) {
           break;
         }
+        if (decision.usarOnda) {
+          juego.activarOnda();
+        }
         juego.clicCelda(decision.celda.x, decision.celda.y);
       }
 
@@ -184,5 +193,68 @@ describe('JugadorIA: los niveles altos juegan mejor', () => {
     }
 
     expect(listo).toBeGreaterThan(torpe);
+  });
+});
+
+describe('JugadorIA: uso de la onda expansiva', () => {
+  const RECARGANDO = { estado: 'recargando' as const, recargaRestanteMs: 5000 };
+
+  it('el nivel 1 lo tira de vez en cuando, sin criterio', () => {
+    const estado = tableroDe(['###', '232', '000'], 3);
+    let veces = 0;
+
+    for (let intento = 0; intento < 400; intento += 1) {
+      if (new JugadorIA(1).elegirJugada(estado).usarOnda) {
+        veces += 1;
+      }
+    }
+
+    // Ni siempre ni nunca: lo usa a ojo, en torno al 20 % de los turnos.
+    expect(veces).toBeGreaterThan(20);
+    expect(veces).toBeLessThan(200);
+  });
+
+  it('los niveles 2 y 3 lo gastan en una celda que saben libre', () => {
+    // Reparto real: unica mina en (3,0). Los ceros liberan (0,0), (1,0) y (2,0),
+    // pero eso encadena hasta cantar (3,0) como mina, que es mejor jugada.
+    // Aqui se corta esa cadena: sin el 1 de (2,1) no hay mina segura.
+    const estado = tableroDe(['####', '0000', '0000'], 2);
+
+    for (const nivel of [2, 3] as const) {
+      const decision = new JugadorIA(nivel).elegirJugada(estado);
+      expect(decision.motivo).toBe('DESPEJE_CON_ONDA');
+      expect(decision.usarOnda).toBe(true);
+    }
+  });
+
+  it('nunca lo gasta si tiene una mina cantada: eso puntua y la onda no', () => {
+    const estado = tableroDe(['###', '232', '000'], 3);
+
+    for (const nivel of NIVELES_IA.filter((valor) => valor > 1)) {
+      const decision = new JugadorIA(nivel).elegirJugada(estado);
+      expect(decision.motivo).toBe('MINA_SEGURA');
+      expect(decision.usarOnda).toBe(false);
+    }
+  });
+
+  it('no lo intenta gastar mientras esta en recarga', () => {
+    const estado = tableroDe(['####', '0000', '0000'], 2, RECARGANDO);
+
+    for (const nivel of NIVELES_IA.filter((valor) => valor > 1)) {
+      expect(new JugadorIA(nivel).elegirJugada(estado).usarOnda).toBe(false);
+    }
+  });
+
+  it('el nivel 5 lo gasta donde mas tablero puede abrir', () => {
+    // Las celdas libres son toda la fila superior; la de enmedio es la que
+    // mas vecinas ocultas tiene y por tanto la que mas cascada promete.
+    const estado = tableroDe(['#####', '00000', '#####'], 2);
+
+    const decision = new JugadorIA(5).elegirJugada(estado);
+
+    expect(decision.usarOnda).toBe(true);
+    // Ni (0,0) ni (4,0): las esquinas abren menos.
+    expect(decision.celda.x).toBeGreaterThan(0);
+    expect(decision.celda.x).toBeLessThan(4);
   });
 });

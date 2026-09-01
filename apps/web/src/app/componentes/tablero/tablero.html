@@ -1,4 +1,9 @@
-<div class="tablero" [style.grid-template-columns]="columnas()" [class.bloqueado]="bloqueado()">
+<div
+  class="tablero"
+  [style.grid-template-columns]="columnas()"
+  [class.bloqueado]="bloqueado()"
+  (contextmenu)="$event.preventDefault()"
+>
   @for (fila of filas(); track $index) {
     @for (celda of fila; track clave($index, celda)) {
       <button
@@ -7,6 +12,7 @@
         [ngClass]="clasesDe(celda)"
         [disabled]="bloqueado() || celda.estado !== 'oculta'"
         (click)="pulsar(celda)"
+        (contextmenu)="pulsarAlterna($event, celda)"
       >
         @if (celda.estado === 'mina-encontrada') {
           <span class="glifo" aria-hidden="true">✸</span>

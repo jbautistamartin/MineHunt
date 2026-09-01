@@ -1,0 +1,23 @@
+<section class="pantalla">
+  <header class="cabecera">
+    <div>
+      <h1>{{ 'ayuda.titulo' | translate }}</h1>
+      <p class="lema">{{ 'ayuda.intro' | translate }}</p>
+    </div>
+    <mh-selector-idioma />
+  </header>
+
+  <div class="tarjeta">
+    @for (seccion of secciones; track seccion) {
+      <article class="regla">
+        <h2>{{ 'ayuda.' + seccion + '.titulo' | translate }}</h2>
+        <p>{{ 'ayuda.' + seccion + '.texto' | translate }}</p>
+      </article>
+    }
+  </div>
+
+  <footer class="pie">
+    <a class="volver" routerLink="/">{{ 'ayuda.volver' | translate }}</a>
+    <span class="version">{{ 'app.version' | translate: { version: version } }}</span>
+  </footer>
+</section>

@@ -16,5 +16,9 @@ export const routes: Routes = [
     path: 'partida',
     loadComponent: () => import('./paginas/partida/partida').then((modulo) => modulo.Partida),
   },
+  {
+    path: 'ayuda',
+    loadComponent: () => import('./paginas/ayuda/ayuda').then((modulo) => modulo.Ayuda),
+  },
   { path: '**', redirectTo: '' },
 ];

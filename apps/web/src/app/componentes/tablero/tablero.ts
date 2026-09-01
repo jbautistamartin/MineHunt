@@ -22,6 +22,12 @@ export class Tablero {
   readonly bloqueado = input(false);
 
   readonly celdaPulsada = output<Coordenada>();
+  /**
+   * Celda pulsada con el boton derecho, que en la web es el atajo para lanzar
+   * la onda expansiva sin pasar por el boton. El tablero no sabe que es una
+   * onda: solo avisa de que se pulso de la otra manera.
+   */
+  readonly celdaPulsadaAlterna = output<Coordenada>();
 
   readonly filas = computed(() => this.estado().celdas);
 
@@ -35,6 +41,20 @@ export class Tablero {
       return;
     }
     this.celdaPulsada.emit({ x: celda.x, y: celda.y });
+  }
+
+  /**
+   * Pulsacion con el boton derecho. Se traga el menu contextual del navegador
+   * siempre, incluso sobre celdas ya destapadas o con el tablero bloqueado:
+   * que aparezca el menu del navegador en mitad de una partida es peor que no
+   * hacer nada.
+   */
+  pulsarAlterna(evento: Event, celda: CeldaVisible): void {
+    evento.preventDefault();
+    if (this.bloqueado() || celda.estado !== 'oculta') {
+      return;
+    }
+    this.celdaPulsadaAlterna.emit({ x: celda.x, y: celda.y });
   }
 
   /**

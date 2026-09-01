@@ -4,10 +4,25 @@ import {
   JugadorIA,
   MotorJuego,
   type CodigoError,
-  type CodigoResultadoClic,
+  type CodigoSuceso,
   type EstadoPartida,
   type NivelIA,
 } from '@minehunt/game-engine';
+
+/** Cada cuanto se relee el estado para mover las cuentas atras. */
+const LATIDO_MS = 250;
+
+/**
+ * Lo que tarda un bot en jugar su turno, en milisegundos.
+ *
+ * Es un tiempo al azar dentro de este rango, distinto en cada turno: jugando
+ * al instante los bots resultaban desconcertantes, porque el tablero cambiaba
+ * antes de que te diera tiempo a ver de quien era el turno. Vale tanto con
+ * humanos en la mesa como en las partidas de solo bots, que antes llevaban una
+ * pausa fija configurable.
+ */
+const RETARDO_BOT_MINIMO_MS = 0;
+const RETARDO_BOT_MAXIMO_MS = 2000;
 
 /** Ajustes con los que se crea una partida de entrenamiento. */
 export interface ConfiguracionPartida {
@@ -20,14 +35,21 @@ export interface ConfiguracionPartida {
    * Los primeros ids son los humanos y el resto los controla la IA.
    */
   readonly numHumanos: number;
-  readonly nivelIA: NivelIA;
-  /** Pausa entre turnos de bots, solo se aplica si no juega ningun humano. */
-  readonly retardoBotsMs: number;
+  /**
+   * Nivel de cada bot, en orden de asiento: nivelesIA[0] es el primer bot, que
+   * ocupa el puesto numHumanos. Cada uno lleva el suyo, asi que se puede
+   * enfrentar un nivel 1 contra un nivel 5 y ver la diferencia jugando.
+   */
+  readonly nivelesIA: readonly NivelIA[];
+  /** Segundos que tarda en recargarse la onda expansiva. */
+  readonly recargaOndaSegundos: number;
+  /** Segundos por turno antes de perderlo; 0 deja la partida sin reloj. */
+  readonly tiempoPorTurnoSegundos: number;
 }
 
 /** Ultimo suceso de la partida, en forma de codigo mas datos sin traducir. */
 export interface UltimoSuceso {
-  readonly codigo: CodigoResultadoClic;
+  readonly codigo: CodigoSuceso;
   readonly jugador: number;
   readonly celdas: number;
 }
@@ -41,13 +63,17 @@ export interface UltimoSuceso {
  * mecanismo servira para los eventos que lleguen del servidor en la Fase 7.
  *
  * Tambien lleva el turno de los bots: cuando toca a uno, le pide la jugada a
- * JugadorIA y la aplica sola.
+ * su JugadorIA y la aplica sola. Cada bot tiene su propia instancia, porque
+ * cada uno puede jugar a un nivel distinto.
  */
 @Injectable({ providedIn: 'root' })
 export class ServicioPartida {
   private motor: MotorJuego | null = null;
-  private bot: JugadorIA | null = null;
+  /** Un JugadorIA por bot, indexado por id de jugador. */
+  private readonly bots = new Map<number, JugadorIA>();
   private temporizador: ReturnType<typeof setTimeout> | null = null;
+  /** Refresco periodico mientras haya cuentas atras que mover. */
+  private latido: ReturnType<typeof setInterval> | null = null;
 
   private readonly estadoInterno = signal<EstadoPartida | null>(null);
   private readonly configuracionInterna = signal<ConfiguracionPartida | null>(null);
@@ -67,6 +93,53 @@ export class ServicioPartida {
     return estado !== null && !estado.terminada && this.esBot(estado.turnoDe);
   });
 
+  /** Onda del jugador al que le toca, que es el unico que puede gastarla. */
+  readonly ondaDelTurno = computed(() => {
+    const estado = this.estadoInterno();
+    if (estado === null) {
+      return null;
+    }
+    return estado.jugadores[estado.turnoDe]?.onda ?? null;
+  });
+
+  /** Segundos que faltan para recuperar la onda, redondeados hacia arriba. */
+  readonly segundosDeRecarga = computed(() =>
+    Math.ceil((this.ondaDelTurno()?.recargaRestanteMs ?? 0) / 1000),
+  );
+
+  /** Segundos que le quedan al turno; null si la partida no tiene reloj. */
+  readonly segundosDeTurno = computed(() => {
+    const restante = this.estadoInterno()?.tiempoRestanteMs ?? null;
+    return restante === null ? null : Math.ceil(restante / 1000);
+  });
+
+  /** Jugadores que siguen jugando: los que no se han rendido. */
+  readonly jugadoresActivos = computed(() =>
+    (this.estadoInterno()?.jugadores ?? []).filter((jugador) => !jugador.rendido),
+  );
+
+  /**
+   * Ya no queda ningun humano jugando, pero la partida sigue entre bots.
+   * Es el estado de espectador: se ve el tablero, no se toca.
+   */
+  readonly soloMiran = computed(() => {
+    const estado = this.estadoInterno();
+    const configuracion = this.configuracionInterna();
+    if (estado === null || configuracion === null || configuracion.numHumanos === 0) {
+      return false;
+    }
+    return !estado.terminada && this.jugadoresActivos().every((jugador) => this.esBot(jugador.id));
+  });
+
+  /** Parte del turno que queda, de 1 a 0, para pintar la barra. */
+  readonly fraccionDeTurno = computed(() => {
+    const estado = this.estadoInterno();
+    if (estado === null || estado.tiempoRestanteMs === null || estado.tiempoPorTurnoMs === 0) {
+      return null;
+    }
+    return estado.tiempoRestanteMs / estado.tiempoPorTurnoMs;
+  });
+
   /** Crea una partida nueva con la configuracion dada. */
   iniciar(configuracion: ConfiguracionPartida): void {
     this.cancelarTurnoDeBot();
@@ -75,11 +148,21 @@ export class ServicioPartida {
       configuracion.alto,
       configuracion.minas,
       configuracion.numJugadores,
+      {
+        recargaOndaSegundos: configuracion.recargaOndaSegundos,
+        tiempoPorTurnoSegundos: configuracion.tiempoPorTurnoSegundos,
+      },
     );
-    this.bot =
-      configuracion.numHumanos < configuracion.numJugadores
-        ? new JugadorIA(configuracion.nivelIA)
-        : null;
+
+    // Un bot por puesto no humano, cada uno con el nivel que se le asigno.
+    this.bots.clear();
+    for (let id = configuracion.numHumanos; id < configuracion.numJugadores; id += 1) {
+      const nivel = configuracion.nivelesIA[id - configuracion.numHumanos];
+      if (nivel !== undefined) {
+        this.bots.set(id, new JugadorIA(nivel));
+      }
+    }
+
     this.configuracionInterna.set(configuracion);
     this.sucesoInterno.set(null);
     this.errorInterno.set(null);
@@ -95,11 +178,77 @@ export class ServicioPartida {
     }
   }
 
+  /**
+   * Activa la onda expansiva del jugador humano al que le toca.
+   * La onda no despeja nada por si sola: se gasta en el siguiente clic.
+   */
+  activarOnda(): boolean {
+    if (this.motor === null) {
+      return false;
+    }
+    try {
+      this.motor.activarOnda();
+      this.errorInterno.set(null);
+      this.refrescar();
+      return true;
+    } catch (error) {
+      this.errorInterno.set(error instanceof ErrorPartida ? error.codigo : null);
+      return false;
+    }
+  }
+
+  /**
+   * El jugador de turno tira la toalla: sale de la partida y se queda solo
+   * mirando. Si con eso queda un unico jugador en pie, la partida se acaba y
+   * ese gana.
+   */
+  rendirse(): boolean {
+    const estado = this.estadoInterno();
+    if (this.motor === null || estado === null) {
+      return false;
+    }
+
+    const jugador = estado.turnoDe;
+    try {
+      this.motor.rendirse(jugador);
+      this.sucesoInterno.set({ codigo: 'JUGADOR_RENDIDO', jugador, celdas: 0 });
+      this.errorInterno.set(null);
+      this.refrescar();
+      this.programarTurnoDeBot();
+      return true;
+    } catch (error) {
+      this.errorInterno.set(error instanceof ErrorPartida ? error.codigo : null);
+      return false;
+    }
+  }
+
+  /**
+   * Clic que gasta la onda expansiva en esa misma celda, que es lo que hace el
+   * boton derecho del raton.
+   *
+   * Si la onda no esta disponible **no se clica nada**: dejar caer el clic
+   * normal gastaria el turno en una celda que el jugador eligio pensando en la
+   * onda, y eso se siente como que el juego te la ha jugado.
+   */
+  clicConOnda(x: number, y: number): boolean {
+    if (this.ondaDelTurno()?.estado !== 'activo' && !this.activarOnda()) {
+      return false;
+    }
+    return this.clicEnCelda(x, y);
+  }
+
+  /** Se arrepiente antes de clicar: devuelve la onda sin gastarla. */
+  desactivarOnda(): void {
+    this.motor?.desactivarOnda();
+    this.refrescar();
+  }
+
   /** Descarta la partida en curso. */
   abandonar(): void {
     this.cancelarTurnoDeBot();
+    this.detenerLatido();
     this.motor = null;
-    this.bot = null;
+    this.bots.clear();
     this.estadoInterno.set(null);
     this.sucesoInterno.set(null);
     this.errorInterno.set(null);
@@ -124,18 +273,56 @@ export class ServicioPartida {
     return configuracion !== null && idJugador >= configuracion.numHumanos;
   }
 
+  /** Nivel con el que juega ese bot, o null si el puesto es humano. */
+  nivelDeBot(idJugador: number): NivelIA | null {
+    return this.bots.get(idJugador)?.nivel ?? null;
+  }
+
   /**
    * Juega el turno del bot ahora mismo, sin esperar al temporizador.
    * Es lo que usan las pruebas para no depender de relojes.
    */
   jugarTurnoDeBot(): boolean {
     const estado = this.estadoInterno();
-    if (estado === null || estado.terminada || this.bot === null || !this.esBot(estado.turnoDe)) {
+    if (estado === null || estado.terminada) {
+      return false;
+    }
+    const bot = this.bots.get(estado.turnoDe);
+    if (bot === undefined) {
       return false;
     }
 
-    const decision = this.bot.elegirJugada(estado);
+    const decision = bot.elegirJugada(estado);
+    // La IA decide por su cuenta si le compensa gastar la onda.
+    if (decision.usarOnda) {
+      this.motor?.activarOnda();
+    }
     return this.aplicarClic(decision.celda.x, decision.celda.y);
+  }
+
+  /**
+   * Le pregunta al motor si al jugador de turno se le acabo el tiempo y, en
+   * tal caso, le quita el turno. Devuelve true solo si cambio de manos.
+   *
+   * El motor no tiene temporizadores propios, asi que alguien tiene que
+   * preguntarle: aqui lo hace el latido, y en la Fase 6 lo hara el servidor.
+   */
+  comprobarReloj(): boolean {
+    const estado = this.estadoInterno();
+    if (this.motor === null || estado === null) {
+      return false;
+    }
+
+    const perdedor = estado.turnoDe;
+    if (!this.motor.comprobarTiempoDeTurno()) {
+      return false;
+    }
+
+    this.sucesoInterno.set({ codigo: 'TURNO_PERDIDO', jugador: perdedor, celdas: 0 });
+    this.errorInterno.set(null);
+    this.refrescar();
+    this.programarTurnoDeBot();
+    return true;
   }
 
   private aplicarClic(x: number, y: number): boolean {
@@ -160,8 +347,12 @@ export class ServicioPartida {
   }
 
   /**
-   * Encadena el turno del bot. Solo se hace esperar cuando no juega ningun
-   * humano; con alguien mirando la partida ya tiene su propio ritmo.
+   * Encadena el turno del bot, haciendole esperar un poco antes de jugar.
+   *
+   * El retardo se sortea en cada turno, asi que dos bots seguidos no caen
+   * nunca al mismo ritmo y la partida no parece un teletipo. Como ahora quien
+   * acierta repite, un bot con racha encadena varios turnos, y cada uno de
+   * ellos vuelve a esperar: se le ve pensar entre mina y mina.
    */
   private programarTurnoDeBot(): void {
     this.cancelarTurnoDeBot();
@@ -169,17 +360,18 @@ export class ServicioPartida {
       return;
     }
 
-    const configuracion = this.configuracionInterna();
-    const retardo = configuracion !== null && configuracion.numHumanos === 0
-      ? configuracion.retardoBotsMs
-      : 0;
-
     this.temporizador = setTimeout(() => {
       this.temporizador = null;
       if (this.jugarTurnoDeBot()) {
         this.programarTurnoDeBot();
       }
-    }, retardo);
+    }, this.retardoDelBot());
+  }
+
+  /** Tiempo que se toma un bot antes de jugar, al azar dentro del rango. */
+  private retardoDelBot(): number {
+    const margen = RETARDO_BOT_MAXIMO_MS - RETARDO_BOT_MINIMO_MS;
+    return Math.round(RETARDO_BOT_MINIMO_MS + Math.random() * margen);
   }
 
   private cancelarTurnoDeBot(): void {
@@ -191,5 +383,40 @@ export class ServicioPartida {
 
   private refrescar(): void {
     this.estadoInterno.set(this.motor?.obtenerEstado() ?? null);
+    this.ajustarLatido();
+  }
+
+  /**
+   * Tanto la recarga de la onda como el reloj del turno corren con el tiempo y
+   * no con las jugadas, asi que hay que releer el estado periodicamente para
+   * que las cuentas atras bajen en pantalla y para preguntarle al motor si el
+   * turno ya expiro. El latido solo vive mientras haya algo que contar.
+   */
+  private ajustarLatido(): void {
+    const estado = this.estadoInterno();
+    const hayQueContar =
+      estado !== null &&
+      !estado.terminada &&
+      (estado.tiempoRestanteMs !== null ||
+        estado.jugadores.some((jugador) => jugador.onda.estado === 'recargando'));
+
+    if (hayQueContar && this.latido === null) {
+      this.latido = setInterval(() => {
+        // comprobarReloj ya refresca y reprograma si el turno cambia de manos.
+        if (!this.comprobarReloj()) {
+          this.estadoInterno.set(this.motor?.obtenerEstado() ?? null);
+          this.ajustarLatido();
+        }
+      }, LATIDO_MS);
+    } else if (!hayQueContar) {
+      this.detenerLatido();
+    }
+  }
+
+  private detenerLatido(): void {
+    if (this.latido !== null) {
+      clearInterval(this.latido);
+      this.latido = null;
+    }
   }
 }

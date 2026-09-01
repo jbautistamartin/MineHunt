@@ -139,3 +139,64 @@ legend {
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* Un nivel por bot */
+.puesto-bot,
+.igualar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+}
+
+.igualar {
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--mh-superficie-alta);
+}
+
+.nombre-bot {
+  min-width: 4.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.puesto-bot .resumen {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.opcion.suave {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* Enlace a la pantalla de ayuda */
+.cabecera-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.enlace-ayuda {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Empezar y restablecer, juntos al final de la tarjeta */
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.acciones .principal {
+  flex: 1 1 12rem;
+}
+
+.version {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}

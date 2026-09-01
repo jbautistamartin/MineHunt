@@ -4,7 +4,7 @@
 
 **Nombre:** **MineHunt** (antes "MinaCaza") — más internacional, se entiende el concepto invertido en cualquier idioma: cazar minas, no evitarlas.
 
-**Icono:** `MineHunt-icon.svg` (adjunto), mismo diseño que antes: fondo azul marino, mina roja-naranja con mecha encendida y un dedo/cursor tocándola.
+**Icono:** `MineHunt-icon.svg` (en esta misma carpeta), mismo diseño que antes: fondo azul marino, mina roja-naranja con mecha encendida y un dedo/cursor tocándola.
 
 **Idioma del código:** nombres de variables, funciones y comentarios en **español**, tal como pediste. Solo los textos que ve el jugador se manejan con el sistema de traducción (punto siguiente).
 
@@ -57,6 +57,11 @@ Cómo funciona en la práctica:
 ---
 
 ## 4. Diseño del algoritmo de la IA y reglas del juego
+
+> **Aviso:** varias reglas de esta sección y de la Fase 1 quedaron concretadas o
+> corregidas durante la implementación. Lo que manda es el
+> [apéndice de decisiones](#apéndice-decisiones-tomadas-durante-la-implementación)
+> del final de este documento, no la letra de aquí.
 
 Sin cambios respecto al plan anterior: la IA solo usa información visible (nunca la posición real de minas ocultas), con 5 niveles de inteligencia (aleatorio → deducción básica → CSP local → probabilístico → estratégico), y las reglas del juego (clic revela mina o número, cascada en celdas vacías, ítem de despeje con recarga, gana quien más minas encuentre) siguen exactamente como las definiste.
 
@@ -208,3 +213,180 @@ inglés) y despliegue del servidor (Docker + variables de entorno).
 - Nueva librería: **`@ngx-translate/core`** para textos de UI en español/inglés según configuración regional del cliente, con selector manual y persistencia de la elección.
 - Regla de diseño para el servidor: comunicar siempre por **códigos de evento**, nunca texto ya traducido, para que cada jugador vea la partida en su propio idioma.
 - Código, nombres de variables y comentarios: **en español** en todo el proyecto, sin excepción.
+
+
+---
+
+## Apéndice: decisiones tomadas durante la implementación
+
+El plan daba por definidas reglas que no llegaba a escribir, y en un punto la
+realidad del juego obligó a corregirlo. Esto es lo que efectivamente está
+implementado y probado. **Ante cualquier discrepancia con el texto de arriba,
+manda este apéndice.**
+
+### Turnos: quien acierta repite (Fases 1 y 3)
+
+**Regla vigente:** el turno pasa al siguiente jugador solo cuando el clic **no**
+encuentra mina. Quien acierta **sigue jugando** y encadena tantos clics como
+minas seguidas encuentre.
+
+Esto se decidió al cerrar la Fase 3 y **sustituye a la regla anterior**, que
+hacía pasar el turno siempre. Se cambió para premiar la racha: con el turno
+alternando pasara lo que pasara, acertar y fallar valían casi lo mismo en el
+ritmo de la partida.
+
+Efecto de lado que conviene tener presente: refuerza el orden de prioridades de
+la IA en vez de cambiarlo, porque la mina cantada ya era su primera opción, y
+ahora además le regala el turno siguiente.
+
+### Fin de partida: hasta la última mina (Fases 1 y 3)
+
+**Regla vigente:** la partida termina cuando se destapa la **última mina**, o
+cuando se rinden todos menos uno. No hay final anticipado por marcador.
+
+Al cerrar la Fase 3 se retiró el fin por «mayoría matemática» que traía la
+Fase 1, aquel que cortaba la partida en cuanto el segundo ya no podía alcanzar
+al líder. Sobre el papel evitaba jugar un final decidido; en la práctica cerraba
+de golpe partidas que el jugador quería terminar de destapar. Quien no quiera
+seguir hasta el final ahora tiene la rendición.
+
+Si al destapar la última mina varios empatan en cabeza no hay ganador:
+`obtenerGanador()` devuelve `null` y el estado marca `empate`.
+
+### Rendirse (Fase 3)
+
+Un jugador puede **dejar la partida en su turno**. Sale del juego: no vuelve a
+recibir turnos, sus minas dejan de contar, ya no puede ganar y se queda de
+espectador viendo cómo acaba. Es irreversible, así que la interfaz pide
+confirmación.
+
+**Si al rendirse queda un solo jugador en pie, la partida acaba y ese gana**,
+tenga las minas que tenga. Es la única forma de ganar sin ser quien más minas
+encontró, y la razón de que exista: sin ella, rendirse en una partida de dos
+dejaría la mesa sin partida.
+
+### Revelado: corrección a la Fase 1
+
+La Fase 1 decía que una celda con 0 minas alrededor arrastra la cascada de
+forma automática. **No es así.** Un clic normal destapa **únicamente la celda
+clicada**, sea mina, número o celda vacía.
+
+La cascada existe solo como efecto del ítem de despeje de la Fase 3, y ese es
+justo el valor del ítem: sin él no habría forma de abrir tablero de golpe.
+
+### Reloj de turno (Fase 3)
+
+Cada partida puede limitar lo que tarda un jugador en mover. Si se le acaba el
+tiempo **pierde el turno sin jugar**, y el tablero se queda como estaba. El
+reloj vuelve a empezar con cada clic, también cuando el jugador conserva el
+turno por haber encontrado mina.
+
+El límite se configura en segundos y **0 significa sin reloj**, que es como
+arranca el motor si nadie dice otra cosa: es cada modo el que decide si aprieta.
+El Modo Entrenamiento lo trae a 15 s y deja desactivarlo; el **Modo Historia
+(Fase 4) lo irá bajando nivel a nivel** para que la dificultad no crezca solo
+por tamaño de tablero, sino también por presión de tiempo.
+
+El motor **no lleva temporizadores dentro**: publica el tiempo que queda y
+expone `comprobarTiempoDeTurno()` para que se lo pregunten. Hoy lo pregunta el
+cliente cada 250 ms; en la Fase 6 lo hará el servidor, que es quien manda.
+
+### La onda expansiva (Fase 3)
+
+El «ítem de despeje amplio» del plan tiene nombre propio: **onda expansiva**
+(*shockwave* en inglés). Se llama así en el código y en los textos de los dos
+idiomas; no se le llama «ítem» en ninguna parte.
+
+- Se activa aparte y **se gasta en el siguiente clic** de ese jugador; armarla
+  no destapa nada. Se puede desarmar sin coste, y si el jugador pierde el turno
+  por tiempo con ella armada no la pierde: no llegó a gastarla.
+- Sobre una celda **vacía** arrastra todas las celdas vacías conectadas y su
+  borde numerado.
+- Sobre una celda **numerada** no hay nada que propagar: se revela ella sola y
+  el ítem se pierde. Acertar dónde gastarlo es la decisión del jugador.
+- Sobre una **mina**, la mina se apunta con normalidad y el ítem se gasta
+  igualmente.
+- La recarga se configura en segundos y **corre con el reloj, no con los
+  turnos**. El motor recibe el reloj inyectado para que las pruebas no dependan
+  del tiempo real y para que en la Fase 6 mande el del servidor.
+
+### La IA y la onda (Fases 2 y 3)
+
+El plan reservaba el uso del ítem al nivel 5. Se amplió: **todos los niveles
+pueden gastar la onda**, cada uno con el criterio que le corresponde a su
+inteligencia. El nivel 1 la tira al azar; los niveles 2 y 3 la gastan sobre una
+celda que sus deducciones declaran libre; los niveles 4 y 5 además la usan
+cuando no hay nada seguro y la mejor probabilidad de mina es demasiado baja
+para arriesgar el clic. Ninguno la gasta teniendo una mina cantada, porque esa
+sí puntúa y encima conserva el turno.
+
+### Un nivel por bot en Entrenamiento (Fases 2 y 3)
+
+El plan hablaba de «el nivel de la IA» como si fuera uno para toda la partida.
+En el Modo Entrenamiento **cada bot lleva el suyo**: se elige puesto por puesto
+y se puede sentar a un nivel 1 y a un nivel 5 en la misma mesa, que es la forma
+más directa de ver qué aporta cada nivel. La configuración viaja como un array
+en orden de asiento y el servicio guarda un jugador de IA por puesto.
+
+### El ritmo de los bots (Fases 2 y 3)
+
+Los bots **esperan entre 0 y 2 segundos antes de cada jugada**, sorteados en
+cada turno, jueguen humanos o no.
+
+La Fase 2 los dejó jugando al instante, con una pausa fija configurable solo
+para las partidas de solo bots. No funcionaba: el tablero cambiaba antes de que
+diera tiempo a ver de quién era el turno, y en cuanto quien acierta conserva el
+turno, una racha de bot pasaba entera en un parpadeo. La pausa fija desapareció
+de la configuración; el ritmo lo pone ahora el azar.
+
+### Los ajustes del Entrenamiento se recuerdan (Fase 3)
+
+La pantalla de configuración guarda en el navegador lo último que se dejó
+puesto y lo restaura al volver, con un botón para restablecer los valores de
+partida. El plan solo preveía persistencia para el progreso del Modo Historia
+(Fase 4); esto es aparte y mucho más pequeño, pero se agradece en cuanto uno
+juega dos veces seguidas con un tablero que no es el de por defecto.
+
+Lo guardado se valida antes de usarse y, si no cuadra, se descarta entero.
+
+### El clic derecho lanza la onda (Fase 3)
+
+En la web, el **botón derecho del ratón sobre una celda** lanza ahí la onda
+expansiva sin tener que armarla antes con el botón. Si la onda no está lista,
+ese clic no hace nada: no se convierte en un clic normal, porque gastaría el
+turno en una celda elegida pensando en la onda.
+
+El botón de la interfaz se queda igualmente: en Android (Fase 5) no hay botón
+derecho, así que es la única vía en móvil.
+
+### La pantalla de ayuda (Fase 3)
+
+El plan no la pedía, pero con las reglas cambiando de una fase a otra hacía
+falta un sitio donde el jugador las lea. Vive en la ruta `/ayuda`, con una
+sección por regla y todo traducido a los dos idiomas.
+
+**Es parte del contrato de cualquier cambio de reglas:** si se toca una regla,
+se actualiza la ayuda en el mismo cambio. Una prueba comprueba que cada sección
+esté escrita en español y en inglés; que el texto siga siendo verdad no lo puede
+comprobar nadie automáticamente.
+
+### Añadidos al motor que el plan no pedía
+
+- `CeldaVisible.encontradaPor`: qué jugador encontró cada mina. Sin ese dato la
+  interfaz no puede pintar las minas del color de quien se las llevó.
+- Fin de partida por mayoría, con `empate` y `obtenerClasificacion()`.
+- `ResultadoClic.repite`, para que la interfaz pueda decir que el jugador sigue.
+- `CodigoSuceso`, que suma `TURNO_PERDIDO` y `JUGADOR_RENDIDO` a los códigos de
+  clic: ni el turno perdido por tiempo ni la rendición los produce una jugada,
+  pero cliente y servidor tienen que nombrarlos igual (regla de los códigos,
+  nunca texto traducido).
+- `Jugador.rendido`, `jugadoresActivos()` y `estaRendido()`, para que la
+  interfaz pueda apagar al jugador que se fue sin dejar de mostrar lo que
+  encontró.
+
+### Detalle de implementación con consecuencias
+
+Los ficheros de traducción viven en `apps/web/public/assets/i18n/`, no en
+`src/assets/`: Angular 22 eliminó `src/assets` y copia `public/` a la raíz del
+build, con lo que la URL servida sigue siendo `/assets/i18n/es.json`, que es la
+que dice el plan.

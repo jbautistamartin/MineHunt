@@ -1,7 +1,8 @@
 {
   "app": {
     "titulo": "MineHunt",
-    "lema": "Hunt the mines: most finds wins"
+    "lema": "Hunt the mines: most finds wins",
+    "version": "version {{version}}"
   },
   "idioma": {
     "etiqueta": "Language",
@@ -18,6 +19,8 @@
     "jugadores": "Players",
     "resumen": "{{celdas}} cells · {{densidad}} % mined",
     "empezar": "Start game",
+    "reiniciar": "Reset",
+    "reiniciar_ayuda": "Back to the default values, forgetting whatever was saved.",
     "error": {
       "dimensiones": "The board must be between {{minimo}} and {{maximo}} cells per side.",
       "minas": "This board fits between 1 and {{maximo}} mines.",
@@ -25,9 +28,11 @@
     },
     "humanos": "Human players",
     "sin_bots": "All human, sharing one device.",
-    "con_bots": "{{humanos}} human(s) and {{bots}} bot(s). Bots play instantly.",
-    "solo_bots": "Bots only ({{bots}}): the game plays itself.",
+    "con_bots": "{{humanos}} human(s) and {{bots}} bot(s). Each bot takes 0 to 2 seconds before playing.",
+    "solo_bots": "Bots only ({{bots}}): the game plays itself, at its own pace.",
     "nivel_ia": "AI level",
+    "nivel_por_bot": "Each bot plays at its own level: pick one per seat.",
+    "igualar_niveles": "All",
     "nivel": {
       "1": "Pure chance: clicks blindly.",
       "2": "Basic deduction: solves each number on its own.",
@@ -35,8 +40,11 @@
       "4": "Probabilistic: with no certainty, goes for the likeliest.",
       "5": "Strategic: also favours corners and edges."
     },
-    "retardo": "Bot pacing",
-    "retardo_ms": "Pause between turns (ms)"
+    "ritmo": "Match pace",
+    "recarga_segundos": "Shockwave cooldown (s)",
+    "tiempo_turno": "Time per turn (s)",
+    "sin_reloj": "No clock: take as long as you like.",
+    "con_reloj": "{{segundos}} s per turn; run out and you lose it without playing."
   },
   "partida": {
     "turno_de": "{{jugador}}'s turn",
@@ -48,17 +56,80 @@
     "nueva": "New game",
     "revancha": "Rematch",
     "evento": {
-      "MINA_ENCONTRADA": "{{jugador}} found a mine",
-      "CELDA_DESPEJADA": "{{jugador}} cleared {{celdas}} cells"
+      "MINA_ENCONTRADA": "{{jugador}} found a mine and keeps playing",
+      "CELDA_DESPEJADA": "{{jugador}} cleared {{celdas}} cells and passes the turn",
+      "ONDA_EXPANSIVA": "{{jugador}}'s shockwave opened {{celdas}} cells",
+      "TURNO_PERDIDO": "{{jugador}} ran out of time and loses the turn",
+      "JUGADOR_RENDIDO": "{{jugador}} surrendered and left the game"
     },
     "fin": {
       "titulo": "Game over",
       "gana": "{{jugador}} wins",
       "empate": "Draw",
-      "por_mayoria": "Nobody can catch the winner any more, {{minas}} mines left unfound."
+      "ultimo_en_pie": "It ended with a single player left standing: {{minas}} mines were still unfound."
     },
     "bot": "Bot {{numero}}",
-    "pensando": "Thinking…"
+    "nivel_bot": "lv. {{nivel}}",
+    "rendirse": {
+      "boton": "Surrender",
+      "ayuda": "You leave the game and stay as a spectator. It cannot be undone.",
+      "seguro": "Surrender for good?",
+      "si": "Yes, I surrender",
+      "no": "Keep playing",
+      "marca": "out",
+      "espectador": "You surrendered: the game goes on without you and you can only watch."
+    },
+    "pensando": "Thinking…",
+    "reloj": {
+      "etiqueta": "Time left to play",
+      "restante": "{{segundos}} s"
+    },
+    "onda": {
+      "titulo": "Shockwave",
+      "usar": "Use shockwave",
+      "cancelar": "Cancel shockwave",
+      "activo": "Shockwave armed: pick the centre",
+      "recarga": "Shockwave ready in {{segundos}}s",
+      "ayuda": "Spend it on an empty cell and it drags every connected one.",
+      "lista": "Shockwave ready",
+      "armada": "Shockwave armed",
+      "recarga_corta": "Shockwave in {{segundos}} s",
+      "atajo": "Shortcut: right-click on the cell."
+    }
+  },
+  "ayuda": {
+    "enlace": "How to play",
+    "titulo": "How to play",
+    "intro": "The rules of MineHunt, exactly as the game applies them right now.",
+    "volver": "← Back",
+    "objetivo": {
+      "titulo": "The goal is inverted",
+      "texto": "This is minesweeper turned around: you do not avoid mines, you hunt them. Each click uncovers a single cell, which either hides a mine (scored on your board) or tells you how many mines surround it. Most mines found wins."
+    },
+    "turnos": {
+      "titulo": "Hit and you play on",
+      "texto": "Find a mine and you keep the turn, chaining as many turns as mines you hit in a row. The moment you miss, the turn passes to the next player."
+    },
+    "reloj": {
+      "titulo": "The clock is on you",
+      "texto": "If the game has a time limit per turn, the bar at the top drains and turns red in the final seconds. Run out and you lose the turn without playing, leaving the board untouched. The clock restarts with every click, including when you keep the turn."
+    },
+    "onda": {
+      "titulo": "The shockwave",
+      "texto": "Spend it on an empty cell and it drags every connected one. In the browser, right-clicking a cell fires it there directly, without touching this button; on mobile you need the button. On a numbered cell only that cell is revealed and the shockwave is wasted; on a mine, the mine is scored and it is spent anyway."
+    },
+    "rendirse": {
+      "titulo": "Surrendering",
+      "texto": "You can leave the game on your turn. You are out: no more turns come your way, your mines stop counting and you can no longer win, but you still get to watch how it ends. It cannot be undone."
+    },
+    "fin": {
+      "titulo": "How it ends",
+      "texto": "The game runs until the last mine is uncovered, even if the result was settled long before. The other way to end it is everyone surrendering but one: that player wins, whatever their score. If the last mine leaves a tie at the top, there is no winner."
+    },
+    "bots": {
+      "titulo": "The bots",
+      "texto": "Every AI seat plays at its own level, from 1 (clicks blindly) to 5 (deduces, weighs probabilities and picks where to spend the shockwave). They take between 0 and 2 seconds before moving, so you can see them think."
+    }
   },
   "error": {
     "CELDA_YA_REVELADA": "That cell is already uncovered.",
@@ -68,6 +139,8 @@
     "MINAS_INVALIDAS": "The number of mines is not valid.",
     "JUGADORES_INVALIDOS": "The number of players is not valid.",
     "DESCONOCIDO": "Something went wrong.",
-    "SIN_JUGADAS": "There are no cells left to uncover."
+    "SIN_JUGADAS": "There are no cells left to uncover.",
+    "ONDA_NO_DISPONIBLE": "The shockwave is not ready yet.",
+    "YA_RENDIDO": "That player had already surrendered."
   }
 }

@@ -3,7 +3,8 @@
  *
  * Fase 1: tablero, revelado en cascada, turnos y marcador.
  * Fase 2: bots con cinco niveles de inteligencia.
- * El item de despeje llega en la Fase 3.
+ * Fase 3: onda expansiva con recarga, turno que se conserva al encontrar mina,
+ * reloj de turno opcional y rendicion.
  */
 
 export {
@@ -29,19 +30,24 @@ export {
   ErrorPartida,
   MAX_JUGADORES,
   MIN_JUGADORES,
+  RECARGA_ONDA_POR_DEFECTO_S,
+  SIN_LIMITE_DE_TIEMPO,
   type CeldaVisible,
   type CodigoError,
   type CodigoResultadoClic,
+  type CodigoSuceso,
   type Coordenada,
   type EstadoCelda,
+  type EstadoOnda,
   type EstadoPartida,
   type Jugador,
+  type OndaJugador,
   type OpcionesPartida,
   type ResultadoClic,
 } from './tipos.js';
 
 /** Version del motor, util para comprobar que cliente y servidor comparten la misma. */
-export const VERSION_MOTOR = '0.2.0';
+export const VERSION_MOTOR = '0.5.0';
 
 /**
  * Saludo de comprobacion: confirma que el paquete compila, se exporta y se
