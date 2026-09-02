@@ -1,0 +1,265 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: min(34rem, 100%);
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.cabecera {
+  display: block;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+}
+
+.lema {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--mh-superficie);
+  border-radius: 0.75rem;
+}
+
+h2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.descripcion {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Cuanto se lleva superado, con barra */
+.cuenta {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.barra {
+  display: block;
+  height: 0.4rem;
+  overflow: hidden;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.2rem;
+}
+
+.relleno {
+  display: block;
+  height: 100%;
+  background: var(--mh-acento);
+  transition: width 0.3s ease;
+}
+
+.enhorabuena {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mh-jugador-3);
+}
+
+/* Rejilla de niveles de una zona */
+.zona.bloqueada {
+  opacity: 0.65;
+}
+
+.niveles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nivel {
+  display: flex;
+  gap: 0.15rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.55rem 0.25rem;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto);
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: 2px solid transparent;
+  border-radius: 0.4rem;
+}
+
+/* Superado se marca con el verde del jugador 3, que es el color de "hecho". */
+.nivel.superado {
+  color: var(--mh-jugador-3);
+  border-color: color-mix(in srgb, var(--mh-jugador-3) 45%, transparent);
+}
+
+.nivel.elegido {
+  border-color: var(--mh-acento);
+}
+
+.nivel.bloqueado {
+  color: var(--mh-texto-tenue);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.marca {
+  font-size: 0.7rem;
+}
+
+/* Detalle del nivel elegido */
+.etiqueta {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--mh-jugador-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: color-mix(in srgb, var(--mh-jugador-3) 18%, transparent);
+  border-radius: 0.3rem;
+}
+
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.ficha dt {
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ficha dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.rivales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+}
+
+.titulo-rivales {
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rival {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.3rem;
+}
+
+.nivel-rival {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}
+
+.aviso {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.principal {
+  flex: 1 1 12rem;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: var(--mh-acento);
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.principal:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Pie: volver y borrar el progreso */
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* El «volver» es un enlace, pero se ensena como boton para no desentonar
+   con los que lleva al lado. */
+.volver,
+.secundario {
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.confirmar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.confirmar .pregunta {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+button.peligro {
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: var(--mh-acento);
+  border: 1px solid var(--mh-acento);
+  border-radius: 0.5rem;
+}

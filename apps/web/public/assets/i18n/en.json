@@ -4,6 +4,29 @@
     "lema": "Hunt the mines: most finds wins",
     "version": "version {{version}}"
   },
+  "inicio": {
+    "aria": {
+      "menu": "Game modes"
+    },
+    "entrenamiento": {
+      "titulo": "Training mode",
+      "texto": "A one-off game on this device, against bots or passing the turn around."
+    },
+    "historia": {
+      "titulo": "Story mode",
+      "texto": "Fifty linked levels that tighten the screws little by little."
+    },
+    "online": {
+      "titulo": "Online multiplayer",
+      "texto": "Open a room and play with anyone, each on their own screen.",
+      "proximamente": "Coming soon"
+    },
+    "ayuda": {
+      "titulo": "How to play",
+      "texto": "The rules, the shockwave and the turn clock."
+    },
+    "volver": "← Back to menu"
+  },
   "idioma": {
     "etiqueta": "Language",
     "es": "Español",
@@ -80,6 +103,15 @@
       "espectador": "You surrendered: the game goes on without you and you can only watch."
     },
     "pensando": "Thinking…",
+    "historia": {
+      "nivel": "Story · level {{numero}}",
+      "superado": "Level {{numero}} cleared!",
+      "fallado": "You did not win level {{numero}}. Replay it as many times as you need.",
+      "siguiente": "Go to level {{numero}}",
+      "repetir": "Replay level {{numero}}",
+      "mapa": "Back to the map",
+      "final": "You finished Story mode: all fifty levels cleared."
+    },
     "reloj": {
       "etiqueta": "Time left to play",
       "restante": "{{segundos}} s"
@@ -97,8 +129,62 @@
       "atajo": "Shortcut: right-click on the cell."
     }
   },
+  "historia": {
+    "titulo": "Story mode",
+    "intro": "Fifty levels that tighten step by step: board, mines, opponents and clock.",
+    "progreso": "{{superados}} of {{total}} levels cleared",
+    "completada": "You cleared all fifty levels!",
+    "aria": {
+      "niveles": "Levels in this zone"
+    },
+    "zona": {
+      "1": {
+        "nombre": "Practice field",
+        "texto": "Small boards, an opponent that clicks almost blindly and, for the first five levels, no clock at all."
+      },
+      "2": {
+        "nombre": "The quarry",
+        "texto": "The board grows, the mines pack together and the clock is running. Halfway through, a third player sits down."
+      },
+      "3": {
+        "nombre": "Deep galleries",
+        "texto": "Opponents that really deduce, cross-referencing one number with another, and fewer seconds per turn each level."
+      },
+      "4": {
+        "nombre": "The minefield",
+        "texto": "Big boards and, in the second half, four players fighting over the same mines."
+      },
+      "5": {
+        "nombre": "Ground zero",
+        "texto": "The hardest of the lot: level 5 opponents, the densest boards and six seconds per turn at the end."
+      }
+    },
+    "nivel": {
+      "titulo": "Level {{numero}}",
+      "superado": "Cleared",
+      "bloqueado": "Win the previous level to open this one.",
+      "tablero": "Board",
+      "tablero_valor": "{{ancho}} × {{alto}} · {{celdas}} cells",
+      "minas": "Mines",
+      "minas_valor": "{{minas}} · {{densidad}} % of the board",
+      "reloj": "Time per turn",
+      "sin_reloj": "No clock",
+      "segundos": "{{segundos}} s",
+      "onda": "Shockwave cooldown",
+      "rivales": "Opponents"
+    },
+    "jugar": "Play level {{numero}}",
+    "rejugar": "Replay level {{numero}}",
+    "reiniciar": "Erase progress",
+    "reiniciar_ayuda": "Leaves only the first level open again. It cannot be undone.",
+    "volver": "← Back",
+    "confirmar": {
+      "seguro": "Erase your progress for good?",
+      "si": "Yes, erase it",
+      "no": "Leave it as it is"
+    }
+  },
   "ayuda": {
-    "enlace": "How to play",
     "titulo": "How to play",
     "intro": "The rules of MineHunt, exactly as the game applies them right now.",
     "volver": "← Back",
@@ -124,11 +210,15 @@
     },
     "fin": {
       "titulo": "How it ends",
-      "texto": "The game runs until the last mine is uncovered, even if the result was settled long before. The other way to end it is everyone surrendering but one: that player wins, whatever their score. If the last mine leaves a tie at the top, there is no winner."
+      "texto": "The game runs until the last mine is uncovered, even if the result was settled long before. The other way to end it is everyone surrendering but one: that player wins, whatever their score. If the last mine leaves a tie at the top, there is no winner. However it ends, the whole board is uncovered afterwards: you get to see where the remaining mines were and what every square was hiding."
     },
     "bots": {
       "titulo": "The bots",
       "texto": "Every AI seat plays at its own level, from 1 (clicks blindly) to 5 (deduces, weighs probabilities and picks where to spend the shockwave). They take between 0 and 2 seconds before moving, so you can see them think."
+    },
+    "historia": {
+      "titulo": "Story mode",
+      "texto": "Fifty levels under the same rules, with the difficulty climbing four ways at once: a bigger board, more mines, smarter (and more numerous) opponents and less time per turn. You only move forward by winning: lose and you replay the level, but you never lose what you had already cleared. Progress is saved on this device."
     }
   },
   "error": {

@@ -8,11 +8,7 @@
 }
 
 .cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: block;
 }
 
 h1 {
@@ -61,9 +57,19 @@ h1 {
   justify-content: space-between;
 }
 
+/* El «volver» es un enlace, pero se ensena como boton igual que en el resto
+   de las pantallas. */
 .volver {
+  padding: 0.5rem 0.9rem;
+  font: inherit;
   font-size: 0.9rem;
+  font-weight: 600;
   color: var(--mh-texto-tenue);
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: none;
+  border-radius: 0.5rem;
 }
 
 .version {

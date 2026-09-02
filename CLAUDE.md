@@ -4,7 +4,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 a 3 completadas.** El monorepo compila, tipa y pasa 148 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga y rendición; la web tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, onda, reloj, rendición, pantalla de ayuda e i18n. Pendientes: Modo Historia (Fase 4), Capacitor (Fase 5) y servidor (Fases 6-7).
+**Fases 0 a 4 completadas.** El monorepo compila, tipa y pasa 192 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n. Pendientes: Capacitor (Fase 5) y servidor (Fases 6-7).
 
 Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
@@ -53,9 +53,10 @@ El plan las da por definidas de antes pero no las escribe. Se confirmaron con el
 2. **Se puede perder el turno por tiempo.** Si la partida tiene reloj, quien se queda pensando de más lo pierde sin jugar. Ver la sección del reloj más abajo.
 3. **La partida termina al destapar la última mina.** No hay final anticipado por marcador: aunque el líder saque una ventaja imposible de remontar, se sigue jugando. **Esto también cambió sobre la marcha**: hasta la Fase 3 existía un fin por «mayoría matemática» que cortaba la partida antes de tiempo; se quitó porque cerraba partidas que el jugador quería terminar. Para salir antes está rendirse. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
 4. **Rendirse saca del juego.** `rendirse(idJugador)` deja al jugador de espectador: no vuelve a recibir turnos (`pasarTurno()` los salta), sus minas dejan de contar y no puede ganar, aunque sigue viendo la partida. Es irreversible. **Si al rendirse queda un único jugador en pie, la partida acaba y gana ese**, tenga el marcador que tenga.
-5. **No hay cascada automática.** Un clic normal destapa **solo la celda clicada**, sea mina, número o celda vacía. Esto contradice la letra de la Fase 1 del plan y fue una decisión posterior del usuario: la cascada existe únicamente como efecto de la onda expansiva.
+5. **Al terminar se destapa el tablero entero.** `obtenerEstado()` deja de filtrar en cuanto la partida acaba: las celdas que nadie tocó llegan despejadas con su número, y las minas que no encontró nadie —solo puede haberlas si se acabó por rendiciones— con el estado `mina-sin-encontrar`, que durante la partida no aparece jamás. Es una transformación de la vista (`Tablero.aVisible(revelarTodo)`): el tablero interno no se toca.
+6. **No hay cascada automática.** Un clic normal destapa **solo la celda clicada**, sea mina, número o celda vacía. Esto contradice la letra de la Fase 1 del plan y fue una decisión posterior del usuario: la cascada existe únicamente como efecto de la onda expansiva.
 
-Otras invariantes del motor: las minas **se reparten en el primer clic**, no al crear la partida, para poder excluir la celda clicada; y `obtenerEstado()` **nunca** revela información oculta — una celda `oculta` lleva `minasAdyacentes: null` y no dice si esconde mina. Hay pruebas que lo verifican, y es lo que hará jugable la IA de la Fase 2 sin que haga trampas.
+Otras invariantes del motor: las minas **se reparten en el primer clic**, no al crear la partida, para poder excluir la celda clicada; y `obtenerEstado()` **nunca** revela información oculta mientras se juega — una celda `oculta` lleva `minasAdyacentes: null` y no dice si esconde mina; solo se destapa todo cuando la partida ya ha terminado. Hay pruebas que lo verifican, y es lo que hará jugable la IA de la Fase 2 sin que haga trampas.
 
 ## La IA (Fase 2)
 
@@ -96,7 +97,7 @@ Es la **única** vía por la que se propaga la cascada. Cada jugador tiene la su
 - Tras gastarse entra en recarga, configurable en segundos.
 - Si el jugador pierde el turno por tiempo con la onda armada, **no la pierde**: no llegó a gastarla y le sigue esperando armada.
 
-**En la web, el clic derecho sobre una celda lanza la onda ahí mismo** sin pasar por el botón (`Tablero.celdaPulsadaAlterna` → `ServicioPartida.clicConOnda`). Si la onda no está disponible, ese clic **no destapa nada**: dejar caer el clic normal gastaría el turno en una celda que el jugador eligió pensando en la onda. El botón sigue existiendo porque en Android (Fase 5) no hay botón derecho.
+**En la web, el clic derecho sobre una celda lanza la onda ahí mismo** sin pasar por el botón (`Tablero.celdaPulsadaAlterna` → `ServicioPartida.clicConOnda`). Si la onda no está disponible, ese clic **no destapa nada**: dejar caer el clic normal gastaría el turno en una celda que el jugador eligió pensando en la onda. El botón sigue existiendo porque en Android (Fase 5) no hay botón derecho. Su recuadro va **debajo del tablero**: solo se le enseña a quien puede usarla, y colocado encima hacía saltar el tablero cada vez que le tocaba a un bot.
 
 ## El reloj de turno (Fase 3)
 
@@ -114,17 +115,46 @@ Como consecuencia, la interfaz tiene que releer el estado periódicamente para q
 
 El turno perdido por tiempo se publica como el código de suceso `TURNO_PERDIDO`, que vive en `CodigoSuceso` (motor) junto a los códigos de clic, para que cliente y servidor lo nombren igual.
 
+## El Modo Historia (Fase 4)
+
+En el motor, `packages/game-engine/src/historia/` tiene dos piezas, las dos sin estado:
+
+- `niveles.ts`: los **50 niveles** (el plan decía «por ejemplo 20»; el usuario pidió 50). No están escritos a mano uno por uno: los genera `construirNivel()` con una progresión documentada, y `NIVELES_HISTORIA` se congela al cargar el módulo. La dificultad sube por cuatro vías a la vez —tablero, densidad de minas, nivel de los rivales y reloj de turno— y las pruebas comprueban que cada nivel es jugable de verdad (creando la partida) y que **la dificultad no retrocede nunca** de un nivel al siguiente.
+- `progreso.ts`: funciones puras sobre `ProgresoHistoria`. Se avanza **solo ganando**; perder no mueve el progreso ni quita lo conseguido.
+
+**La densidad de minas va con el avance global, no por zonas.** Atada a la zona, el sumando del paso se reiniciaba al cambiar de decena y el nivel 11 salía con menos minas que el 10. Hay una prueba que lo vigila.
+
+En el cliente, `ServicioHistoria` (`nucleo/historia.servicio.ts`) es el puente: guarda el progreso en localStorage (`minehunt.historia`, validado entero como los ajustes) y monta el nivel sobre `ServicioPartida`, que sigue siendo **el único que habla con el motor**. El jugador se sienta siempre en el puesto 0 (`JUGADOR_HUMANO`) y los rivales del nivel detrás; de ahí que ganar sea `ganador === 0`.
+
+**El resultado lo apunta el propio servicio**, con un `effect` que vigila el estado de la partida y registra el nivel en cuanto termina. No lo hace la pantalla a propósito: así da igual por dónde salga el jugador de la partida, que el nivel ganado no se pierde. Un `resultadoApuntado` privado evita apuntarlo dos veces y se rearma solo cuando la partida vuelve a estar en marcha (una revancha del mismo nivel se apunta otra vez).
+
+La pantalla `/historia` (`paginas/historia/`) enseña los 50 niveles en 5 zonas de 10, con lo superado marcado y lo que aún no toca bloqueado, y deja ver tablero, minas, rivales y reloj antes de entrar. La ficha del nivel elegido, con su botón de jugar, va **arriba del todo**, antes del progreso y de las zonas: al abrir la pantalla ya viene seleccionado el nivel que toca, así que se juega sin bajar. Los nombres y descripciones de zona son claves de i18n (`historia.zona.<n>.nombre` y `.texto`), no texto en el código. Se llega desde la tarjeta que abre la pantalla de configuración.
+
+**La partida de un nivel usa la misma pantalla `/partida` que el Entrenamiento.** Cuando `nivelEnCurso()` no es null, la cabecera dice qué nivel es y el final ofrece pasar al siguiente o repetir, y «Abandonar» vuelve al mapa en lugar de a la configuración. Al salir se navega **antes** de descartar la partida (`volverAlMapa()`): la pantalla lleva un `effect` que devuelve a `/` en cuanto no hay partida, y si se descarta primero es ese effect el que decide el destino.
+
 ## Los ajustes recordados
 
 `ServicioAjustes` guarda en localStorage (`minehunt.entrenamiento`) lo que se deja puesto en la pantalla de configuración, y la pantalla lo restaura al abrirse; el botón «Restablecer» vuelve a `AJUSTES_POR_DEFECTO` y olvida lo guardado. Se guarda con un `effect` a cada cambio, no al empezar la partida, para que también se recuerde lo que se trasteó sin llegar a jugar.
 
-**Lo que sale de localStorage se valida entero antes de usarse** (`validar()` en `ajustes.servicio.ts`) y, si algo no cuadra, se descarta el lote completo y se vuelve a los valores por defecto: ese texto lo puede haber escrito cualquiera y además sobrevive a los cambios de formato entre versiones. Si añades un ajuste nuevo, añádelo también a la validación, o el lote entero dejará de cargarse en cuanto alguien tenga guardado el formato viejo.
+**Lo que sale de localStorage se valida entero antes de usarse** (`validar()` en `ajustes.servicio.ts`) y, si algo no cuadra, se descarta el lote completo y se vuelve a los valores por defecto: ese texto lo puede haber escrito cualquiera y además sobrevive a los cambios de formato entre versiones. Si añades un ajuste nuevo, añádelo también a la validación, o el lote entero dejará de cargarse en cuanto alguien tenga guardado el formato viejo. El progreso del Modo Historia se guarda igual, con su propia validación en `historia.servicio.ts`, y ahí importa todavía más: un progreso inventado desbloquearía niveles sin jugarlos.
 
 ## Identidad y versión de la web
 
-El título de la pestaña es `MineHunt` y el favicon es `apps/web/public/icono.svg`, **copia servible del icono maestro `documentos/MineHunt-icon.svg`**; si se retoca el icono hay que copiarlo otra vez. Se deja `favicon.ico` como `alternate icon` para navegadores que no admitan SVG.
+El título de la pestaña es `MineHunt` y el favicon es `apps/web/public/icono.svg`, **copia servible del icono maestro `documentos/MineHunt-icon.svg`**; si se retoca el icono hay que copiarlo otra vez. También se declara como `apple-touch-icon`, y el `theme-color` de `index.html` es el fondo de la paleta.
+
+**No hay `favicon.ico`.** El que había era el de la plantilla de Angular y era el que salía en la pestaña, porque los navegadores piden `/favicon.ico` y ese ganaba al SVG. Se borró: el icono del juego es uno solo. Si alguna vez hace falta una versión rasterizada (o un juego de PNG), sale del icono maestro al generar los recursos de Android en la Fase 5, que es donde hay con qué rasterizar.
 
 La versión que se enseña al jugador (configuración y ayuda) es `VERSION_APP`, en `nucleo/version.ts`, hoy **0.0.1**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él: al subir la versión hay que tocar los dos. No confundir con `VERSION_MOTOR`, que es la del motor de juego y va por su cuenta.
+
+## El menú principal
+
+La raíz (`/`) es el **menú**, en `paginas/inicio/`: icono, nombre y una entrada por modo de juego. No hace nada más — decidir a qué se juega es lo único que el jugador tiene que hacer al abrir la app.
+
+Por eso la configuración del Entrenamiento, que antes ocupaba la raíz, vive en **`/entrenamiento`**; el Modo Historia sigue en `/historia` y ya no se entra por una tarjeta metida encima de la configuración. Al salir de una partida de Entrenamiento se vuelve a `/entrenamiento` (a montar otra), y al salir de un nivel de Historia al mapa, igual que antes; el menú es solo el destino del `effect` que rescata a quien entra a `/partida` sin partida.
+
+**El selector de idioma y la entrada a la ayuda viven solo aquí.** Las demás pantallas los tenían repetidos en su cabecera (y la ayuda también colgaba del final de la partida); con un menú que se abre al arrancar y al que se vuelve entre partidas, repetirlos solo llenaba de ruido pantallas que ya piden bastante al jugador. Si añades una pantalla, no le pongas ninguno de los dos.
+
+El **Multijugador Online aparece en el menú apagado**, con su etiqueta de «próximamente», hasta la Fase 7. Es un `div` y no un enlace a propósito: la ruta comodín devolvería al propio menú sin explicar nada. Cuando llegue la Fase 7 se convierte en enlace y se le quita la etiqueta.
 
 ## La pantalla de ayuda
 
@@ -132,7 +162,7 @@ La versión que se enseña al jugador (configuración y ayuda) es `VERSION_APP`,
 
 **Cuando cambie una regla del juego hay que actualizar esa pantalla en el mismo cambio.** Es lo único donde el jugador lee las reglas, y una regla mal contada se nota más que un fallo de código. `ayuda.prueba.ts` comprueba que cada sección tenga título y texto en español y en inglés, así que olvidarse de un idioma rompe las pruebas, pero **un texto desactualizado no lo detecta nadie**: eso va en la revisión.
 
-No se entra a la ayuda desde una partida en curso, solo desde la configuración y desde el final de la partida: el reloj del turno sigue corriendo mientras se lee, y entrar a mirar las reglas costaría turnos.
+Se entra **solo desde el menú principal**, como el selector de idioma. Nunca desde una partida en curso: el reloj del turno sigue corriendo mientras se lee, y entrar a mirar las reglas costaría turnos.
 
 ## Versiones fijadas
 
@@ -164,7 +194,7 @@ Dentro de `apps/web/src/app`: `nucleo/` tiene los servicios con estado (`Servici
 
 La decisión estructural clave es que el motor de juego es una sola implementación compartida entre cliente y servidor. Lógica de juego nueva va en `game-engine`, nunca en un componente Angular ni en un gateway de NestJS; esos dos solo orquestan y presentan.
 
-En el cliente conviven tres modos que comparten los mismos componentes de tablero: Entrenamiento (motor local, hotseat + bots), Historia (progresión de ~20 niveles, progreso en localStorage/IndexedDB) y Multijugador Online (el motor local se sustituye por el estado que llega del servidor).
+En el cliente conviven tres modos que comparten los mismos componentes de tablero: Entrenamiento (motor local, hotseat + bots), Historia (progresión de 50 niveles, progreso en localStorage) y Multijugador Online (el motor local se sustituye por el estado que llega del servidor).
 
 ## Idioma de la interfaz
 

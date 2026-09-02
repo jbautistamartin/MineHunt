@@ -64,6 +64,13 @@
   font-size: calc(var(--lado-celda) * 0.62);
 }
 
+/* Las que salieron al acabar la partida no son de nadie: van apagadas. */
+.celda.mina.sin-duenno {
+  color: var(--mh-texto-tenue);
+  background: var(--mh-celda-despejada);
+  box-shadow: inset 0 0 0 2px var(--mh-texto-tenue);
+}
+
 /* Color de la mina segun quien la encontro. */
 .celda.mina.jugador-0 {
   background: var(--mh-jugador-0);

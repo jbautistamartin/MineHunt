@@ -1,19 +1,27 @@
 <section class="pantalla">
   <header class="cabecera">
-    <div>
-      <h1>{{ 'app.titulo' | translate }}</h1>
-      <p class="lema">{{ 'app.lema' | translate }}</p>
-      <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
-    </div>
-    <div class="cabecera-acciones">
-      <a class="enlace-ayuda" routerLink="/ayuda">{{ 'ayuda.enlace' | translate }}</a>
-      <mh-selector-idioma />
-    </div>
+    <h1>{{ 'app.titulo' | translate }}</h1>
+    <p class="lema">{{ 'app.lema' | translate }}</p>
+    <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
   </header>
 
   <div class="tarjeta">
     <h2>{{ 'configuracion.titulo' | translate }}</h2>
     <p class="descripcion">{{ 'configuracion.descripcion' | translate }}</p>
+
+    <div class="acciones">
+      <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
+        {{ 'configuracion.empezar' | translate }}
+      </button>
+      <button
+        type="button"
+        class="secundario"
+        [attr.title]="'configuracion.reiniciar_ayuda' | translate"
+        (click)="reiniciarAjustes()"
+      >
+        {{ 'configuracion.reiniciar' | translate }}
+      </button>
+    </div>
 
     <fieldset class="grupo">
       <legend>{{ 'configuracion.tablero' | translate }}</legend>
@@ -192,19 +200,9 @@
         }
       </p>
     </fieldset>
-
-    <div class="acciones">
-      <button type="button" class="principal" [disabled]="!puedeEmpezar()" (click)="empezar()">
-        {{ 'configuracion.empezar' | translate }}
-      </button>
-      <button
-        type="button"
-        class="secundario"
-        [attr.title]="'configuracion.reiniciar_ayuda' | translate"
-        (click)="reiniciarAjustes()"
-      >
-        {{ 'configuracion.reiniciar' | translate }}
-      </button>
-    </div>
   </div>
+
+  <footer class="pie">
+    <a class="volver" routerLink="/">{{ 'inicio.volver' | translate }}</a>
+  </footer>
 </section>

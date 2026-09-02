@@ -60,12 +60,17 @@ export class Tablero {
   /**
    * Clases de una celda: su estado, el color del numero y, si esconde una mina
    * ya encontrada, el color del jugador que se la apunto.
+   *
+   * Las minas que salen al destapar el tablero al final no son de nadie, asi
+   * que llevan 'mina' pero tambien 'sin-duenno', que las pinta apagadas para
+   * que no se confundan con las que si se llevo alguien.
    */
   clasesDe(celda: CeldaVisible): Record<string, boolean> {
     return {
       oculta: celda.estado === 'oculta',
       despejada: celda.estado === 'despejada',
-      mina: celda.estado === 'mina-encontrada',
+      mina: celda.estado === 'mina-encontrada' || celda.estado === 'mina-sin-encontrar',
+      'sin-duenno': celda.estado === 'mina-sin-encontrar',
       [`n${String(celda.minasAdyacentes ?? 0)}`]:
         celda.estado === 'despejada' && (celda.minasAdyacentes ?? 0) > 0,
       [`jugador-${String(celda.encontradaPor ?? 0)}`]: celda.encontradaPor !== null,

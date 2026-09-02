@@ -1,0 +1,51 @@
+<section class="pantalla">
+  <header class="portada">
+    <img class="logo" src="icono.svg" alt="" width="112" height="112" />
+    <h1>{{ 'app.titulo' | translate }}</h1>
+    <p class="lema">{{ 'app.lema' | translate }}</p>
+  </header>
+
+  <nav class="menu" [attr.aria-label]="'inicio.aria.menu' | translate">
+    <a class="modo" routerLink="/historia">
+      <span class="modo-texto">
+        <span class="modo-titulo">{{ 'inicio.historia.titulo' | translate }}</span>
+        <span class="modo-detalle">{{ 'inicio.historia.texto' | translate }}</span>
+        <span class="modo-progreso">
+          {{
+            'historia.progreso' | translate: { superados: nivelesSuperados(), total: totalNiveles }
+          }}
+        </span>
+      </span>
+      <span class="modo-flecha" aria-hidden="true">&#8594;</span>
+    </a>
+
+    <a class="modo" routerLink="/entrenamiento">
+      <span class="modo-texto">
+        <span class="modo-titulo">{{ 'inicio.entrenamiento.titulo' | translate }}</span>
+        <span class="modo-detalle">{{ 'inicio.entrenamiento.texto' | translate }}</span>
+      </span>
+      <span class="modo-flecha" aria-hidden="true">&#8594;</span>
+    </a>
+
+    <div class="modo bloqueado" aria-disabled="true">
+      <span class="modo-texto">
+        <span class="modo-titulo">{{ 'inicio.online.titulo' | translate }}</span>
+        <span class="modo-detalle">{{ 'inicio.online.texto' | translate }}</span>
+      </span>
+      <span class="etiqueta">{{ 'inicio.online.proximamente' | translate }}</span>
+    </div>
+
+    <a class="modo menor" routerLink="/ayuda">
+      <span class="modo-texto">
+        <span class="modo-titulo">{{ 'inicio.ayuda.titulo' | translate }}</span>
+        <span class="modo-detalle">{{ 'inicio.ayuda.texto' | translate }}</span>
+      </span>
+      <span class="modo-flecha" aria-hidden="true">&#8594;</span>
+    </a>
+  </nav>
+
+  <footer class="pie">
+    <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
+    <mh-selector-idioma />
+  </footer>
+</section>

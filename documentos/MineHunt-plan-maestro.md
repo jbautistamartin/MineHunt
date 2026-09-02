@@ -339,6 +339,50 @@ diera tiempo a ver de quién era el turno, y en cuanto quien acierta conserva el
 turno, una racha de bot pasaba entera en un parpadeo. La pausa fija desapareció
 de la configuración; el ritmo lo pone ahora el azar.
 
+### El Modo Historia son 50 niveles, y generados (Fase 4)
+
+El plan decía «por ejemplo 20 niveles»; se hacen **50**, a petición del usuario.
+
+No se escriben a mano uno por uno: una función construye cada nivel a partir de
+su número, con una progresión documentada, y la tabla resultante se congela al
+cargar. Con cincuenta niveles, una tabla escrita a mano son cincuenta sitios
+donde equivocarse y ningún sitio donde ver la progresión de un vistazo. Lo que
+da garantías son las pruebas: comprueban que cada nivel crea una partida válida
+de verdad y que la dificultad no retrocede nunca.
+
+La dificultad sube por cuatro vías a la vez: tablero más grande, más densidad de
+minas, rivales más listos y más numerosos, y menos tiempo por turno. Los cinco
+primeros niveles se juegan **sin reloj**, para aprender; a partir del sexto
+empieza en 30 s y baja hasta 6 s en el último, que es lo que el apéndice del
+reloj de turno dejaba pendiente para esta fase.
+
+### El mapa de niveles y el progreso (Fase 4)
+
+Los cincuenta niveles se enseñan agrupados en **cinco zonas de diez**, cada una
+con su nombre y su descripción, traducidos por clave como cualquier otro texto.
+La zona es solo una forma de leer la progresión: la dificultad la fija el número
+de nivel, no la zona.
+
+Antes de entrar a un nivel se ve con qué se va a jugar —tablero, minas, rivales
+y sus niveles de IA, reloj de turno y recarga de la onda—, que es la información
+con la que el jugador decide si repite el anterior o sigue.
+
+El progreso se guarda en `localStorage` (no hizo falta IndexedDB: son dos
+números y una lista) y **se valida entero antes de usarse**, igual que los
+ajustes del Entrenamiento. Aquí la validación pesa más: un progreso inventado
+desbloquearía niveles sin haberlos jugado. Hay un botón para borrarlo, con
+confirmación.
+
+**Un nivel se juega en la misma pantalla que el Entrenamiento.** El jugador se
+sienta siempre en el puesto 0 y los rivales del nivel detrás; ganar es, por
+tanto, que el ganador sea el puesto 0. Al terminar, la pantalla ofrece pasar al
+siguiente nivel o repetir el actual sin pasar por el mapa, y el resultado queda
+apuntado en cuanto la partida acaba, sin depender de por dónde salga el jugador.
+
+Rendirse en un nivel de Historia cuenta como perderlo: se sale de la partida y
+ya no se puede ganar. Perder no quita nada de lo conseguido; solo hay que
+repetir el nivel.
+
 ### Los ajustes del Entrenamiento se recuerdan (Fase 3)
 
 La pantalla de configuración guarda en el navegador lo último que se dejó
@@ -390,3 +434,42 @@ Los ficheros de traducción viven en `apps/web/public/assets/i18n/`, no en
 `src/assets/`: Angular 22 eliminó `src/assets` y copia `public/` a la raíz del
 build, con lo que la URL servida sigue siendo `/assets/i18n/es.json`, que es la
 que dice el plan.
+
+### El menú principal (posterior a la Fase 4)
+
+El plan repartía las pantallas por fases y nunca llegó a decir por dónde entra
+el jugador, así que la raíz la fue ocupando lo último que se implementaba: la
+configuración del Entrenamiento, con el Modo Historia colgando de una tarjeta
+encima. Con tres modos previstos eso ya no se sostenía.
+
+Ahora la raíz es un **menú**: icono, nombre y una entrada por modo. La
+configuración del Entrenamiento pasa a `/entrenamiento` y el Modo Historia se
+queda en `/historia`, cada uno con su vuelta al menú.
+
+El **Multijugador Online se enseña desde ya, apagado** y con etiqueta de
+«próximamente». Se ve que el modo existe y que falta, que es más honesto que
+esconderlo; en la Fase 7 solo hay que convertirlo en enlace.
+
+De paso se quitó el `favicon.ico`, que seguía siendo el de la plantilla de
+Angular y era el que salía en la pestaña: los navegadores piden `/favicon.ico`
+y ese ganaba al SVG del juego. El icono de la web es ahora únicamente la copia
+servible del icono maestro.
+
+### El tablero se destapa al acabar (posterior a la Fase 4)
+
+El plan no decía qué pasa con lo que queda tapado cuando la partida termina, y
+el motor lo dejaba oculto para siempre: se acababa la partida y no había manera
+de ver dónde estaban las minas que nadie encontró ni qué escondía cada casilla.
+
+Ahora `obtenerEstado()` deja de filtrar en cuanto la partida termina. Las celdas
+que nadie tocó llegan despejadas con su número, y las minas que no encontró
+nadie con un estado propio, `mina-sin-encontrar`, que durante la partida no
+aparece nunca. La regla de oro sigue en pie mientras se juega, que es donde
+importa: la IA no ve ni una celda más que un humano.
+
+### La ayuda y el idioma, solo en el menú (posterior a la Fase 4)
+
+Cada pantalla llevaba en su cabecera el selector de idioma y un enlace a la
+ayuda, y la ayuda colgaba además del final de la partida. Con un menú principal
+que se abre al arrancar y al que se vuelve entre partidas, repetirlos solo era
+ruido: los dos viven ahora únicamente en el menú.

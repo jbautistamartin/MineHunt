@@ -1,0 +1,151 @@
+<section class="pantalla">
+  <header class="cabecera">
+    <h1>{{ 'historia.titulo' | translate }}</h1>
+    <p class="lema">{{ 'historia.intro' | translate }}</p>
+  </header>
+
+  @if (seleccionado(); as nivel) {
+    <div class="tarjeta detalle">
+      <h2>
+        {{ 'historia.nivel.titulo' | translate: { numero: nivel.numero } }}
+        @if (seleccionadoSuperado()) {
+          <span class="etiqueta">{{ 'historia.nivel.superado' | translate }}</span>
+        }
+      </h2>
+
+      <dl class="fichas">
+        <div class="ficha">
+          <dt>{{ 'historia.nivel.tablero' | translate }}</dt>
+          <dd>
+            {{
+              'historia.nivel.tablero_valor'
+                | translate: { ancho: nivel.ancho, alto: nivel.alto, celdas: celdasDelNivel() }
+            }}
+          </dd>
+        </div>
+        <div class="ficha">
+          <dt>{{ 'historia.nivel.minas' | translate }}</dt>
+          <dd>
+            {{
+              'historia.nivel.minas_valor'
+                | translate: { minas: nivel.minas, densidad: densidadDelNivel() }
+            }}
+          </dd>
+        </div>
+        <div class="ficha">
+          <dt>{{ 'historia.nivel.reloj' | translate }}</dt>
+          <dd>
+            @if (nivel.tiempoPorTurnoSegundos === 0) {
+              {{ 'historia.nivel.sin_reloj' | translate }}
+            } @else {
+              {{
+                'historia.nivel.segundos' | translate: { segundos: nivel.tiempoPorTurnoSegundos }
+              }}
+            }
+          </dd>
+        </div>
+        <div class="ficha">
+          <dt>{{ 'historia.nivel.onda' | translate }}</dt>
+          <dd>
+            {{ 'historia.nivel.segundos' | translate: { segundos: nivel.recargaOndaSegundos } }}
+          </dd>
+        </div>
+      </dl>
+
+      <div class="rivales">
+        <span class="titulo-rivales">{{ 'historia.nivel.rivales' | translate }}</span>
+        @for (rival of rivalesDelNivel(); track rival.idJugador) {
+          <span class="rival" [attr.title]="'configuracion.nivel.' + rival.nivelIA | translate">
+            {{ 'partida.bot' | translate: { numero: rival.idJugador + 1 } }}
+            <span class="nivel-rival">
+              {{ 'partida.nivel_bot' | translate: { nivel: rival.nivelIA } }}
+            </span>
+          </span>
+        }
+      </div>
+
+      @if (!puedeJugar()) {
+        <p class="aviso">{{ 'historia.nivel.bloqueado' | translate }}</p>
+      }
+
+      <div class="acciones">
+        <button type="button" class="principal" [disabled]="!puedeJugar()" (click)="jugar()">
+          @if (seleccionadoSuperado()) {
+            {{ 'historia.rejugar' | translate: { numero: nivel.numero } }}
+          } @else {
+            {{ 'historia.jugar' | translate: { numero: nivel.numero } }}
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="tarjeta progreso">
+    <p class="cuenta">
+      {{ 'historia.progreso' | translate: { superados: totalSuperados(), total: totalNiveles } }}
+    </p>
+    <span class="barra" aria-hidden="true">
+      <span class="relleno" [style.width.%]="porcentaje()"></span>
+    </span>
+    @if (completada()) {
+      <p class="enhorabuena">{{ 'historia.completada' | translate }}</p>
+    }
+  </div>
+
+  @for (zona of zonas(); track zona.numero) {
+    <div class="tarjeta zona" [class.bloqueada]="!zona.abierta">
+      <h2>{{ 'historia.zona.' + zona.numero + '.nombre' | translate }}</h2>
+      <p class="descripcion">{{ 'historia.zona.' + zona.numero + '.texto' | translate }}</p>
+
+      <ol class="niveles" [attr.aria-label]="'historia.aria.niveles' | translate">
+        @for (pintado of zona.niveles; track pintado.nivel.numero) {
+          <li>
+            <button
+              type="button"
+              class="nivel"
+              [class.superado]="pintado.superado"
+              [class.bloqueado]="!pintado.desbloqueado"
+              [class.elegido]="pintado.nivel.numero === seleccionado()?.numero"
+              [disabled]="!pintado.desbloqueado"
+              [attr.aria-pressed]="pintado.nivel.numero === seleccionado()?.numero"
+              [attr.title]="'historia.nivel.titulo' | translate: { numero: pintado.nivel.numero }"
+              (click)="seleccionar(pintado.nivel)"
+            >
+              <span class="numero">{{ pintado.nivel.numero }}</span>
+              @if (pintado.superado) {
+                <span class="marca" aria-hidden="true">&#10003;</span>
+              } @else if (!pintado.desbloqueado) {
+                <span class="marca" aria-hidden="true">&#128274;</span>
+              }
+            </button>
+          </li>
+        }
+      </ol>
+    </div>
+  }
+
+  <footer class="pie">
+    <a class="volver" routerLink="/">{{ 'historia.volver' | translate }}</a>
+
+    @if (confirmandoReinicio()) {
+      <span class="confirmar">
+        <span class="pregunta">{{ 'historia.confirmar.seguro' | translate }}</span>
+        <button type="button" class="peligro" (click)="confirmarReinicio()">
+          {{ 'historia.confirmar.si' | translate }}
+        </button>
+        <button type="button" class="secundario" (click)="cancelarReinicio()">
+          {{ 'historia.confirmar.no' | translate }}
+        </button>
+      </span>
+    } @else {
+      <button
+        type="button"
+        class="secundario"
+        [attr.title]="'historia.reiniciar_ayuda' | translate"
+        (click)="pedirReinicio()"
+      >
+        {{ 'historia.reiniciar' | translate }}
+      </button>
+    }
+  </footer>
+</section>

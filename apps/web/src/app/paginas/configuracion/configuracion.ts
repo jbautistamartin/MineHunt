@@ -10,7 +10,6 @@ import { Router, RouterLink } from '@angular/router';
 import { MAX_JUGADORES, MIN_JUGADORES, NIVELES_IA, type NivelIA } from '@minehunt/game-engine';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
 import {
   ServicioAjustes,
   type AjustesEntrenamiento,
@@ -69,7 +68,7 @@ const AJUSTES_POR_DEFECTO: AjustesEntrenamiento = {
  */
 @Component({
   selector: 'mh-configuracion',
-  imports: [TranslatePipe, SelectorIdioma, RouterLink],
+  imports: [TranslatePipe, RouterLink],
   templateUrl: './configuracion.html',
   styleUrl: './configuracion.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -8,11 +8,7 @@
 }
 
 .cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: block;
 }
 
 h1 {
@@ -170,20 +166,7 @@ legend {
   opacity: 0.85;
 }
 
-/* Enlace a la pantalla de ayuda */
-.cabecera-acciones {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-
-.enlace-ayuda {
-  font-size: 0.85rem;
-  color: var(--mh-texto-tenue);
-}
-
-/* Empezar y restablecer, juntos al final de la tarjeta */
+/* Empezar y restablecer, arriba del todo: jugar no deberia costar un scroll */
 .acciones {
   display: flex;
   flex-wrap: wrap;
@@ -199,4 +182,26 @@ legend {
   margin: 0.2rem 0 0;
   font-size: 0.75rem;
   color: var(--mh-texto-tenue);
+}
+
+/* Volver al menu principal */
+.pie {
+  display: flex;
+  align-items: center;
+}
+
+/* El «volver» es un enlace, pero se ensena como boton para no desentonar
+   con los que lleva al lado. */
+.volver,
+.secundario {
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: none;
+  border-radius: 0.5rem;
 }

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
 import { VERSION_APP } from '../../nucleo/version';
 
 /**
@@ -21,18 +20,19 @@ const SECCIONES = [
   'rendirse',
   'fin',
   'bots',
+  'historia',
 ] as const;
 
 /**
  * Pantalla de ayuda: las reglas del juego, en el idioma activo.
  *
- * No tiene estado ni habla con el motor. Se llega desde la configuracion y
- * desde el final de una partida; no desde la partida en curso, porque el reloj
- * del turno sigue corriendo mientras se lee y se perderian turnos.
+ * No tiene estado ni habla con el motor. Se llega desde el menu principal y
+ * solo desde ahi: nunca desde una partida en curso, porque el reloj del turno
+ * sigue corriendo mientras se lee y se perderian turnos.
  */
 @Component({
   selector: 'mh-ayuda',
-  imports: [TranslatePipe, SelectorIdioma, RouterLink],
+  imports: [TranslatePipe, RouterLink],
   templateUrl: './ayuda.html',
   styleUrl: './ayuda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

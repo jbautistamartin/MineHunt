@@ -310,13 +310,22 @@ button.peligro {
   text-align: center;
 }
 
-.acciones .enlace {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
 .ayuda-onda .atajo {
   display: block;
   opacity: 0.8;
+}
+
+/* Modo Historia: de que nivel es la partida y como acabo */
+.nivel-historia {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mh-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.detalle.superado {
+  font-weight: 600;
+  color: var(--mh-jugador-3);
 }

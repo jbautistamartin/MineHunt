@@ -189,24 +189,44 @@ export class Tablero {
     return reveladas;
   }
 
-  /** Proyeccion del tablero sin filtrar informacion oculta. */
-  aVisible(): CeldaVisible[][] {
+  /**
+   * Proyeccion del tablero para los jugadores, con lo oculto filtrado.
+   *
+   * Con `revelarTodo` no se filtra nada: es lo que pide el motor cuando la
+   * partida ha terminado, para ensenar como estaba el tablero.
+   */
+  aVisible(revelarTodo = false): CeldaVisible[][] {
     const filas: CeldaVisible[][] = [];
     for (let y = 0; y < this.alto; y += 1) {
       const fila: CeldaVisible[] = [];
       for (let x = 0; x < this.ancho; x += 1) {
         const celda = this.celda(x, y);
+        const estado = this.estadoVisible(celda, revelarTodo);
         fila.push({
           x,
           y,
-          estado: celda.estado,
+          estado,
           // El numero solo se conoce cuando la celda esta despejada.
-          minasAdyacentes: celda.estado === 'despejada' ? celda.minasAdyacentes : null,
+          minasAdyacentes: estado === 'despejada' ? celda.minasAdyacentes : null,
           encontradaPor: celda.encontradaPor,
         });
       }
       filas.push(fila);
     }
     return filas;
+  }
+
+  /**
+   * Estado con el que se ensena una celda.
+   *
+   * Con `revelarTodo` lo que quedaba oculto se destapa: las minas que no
+   * encontro nadie salen como 'mina-sin-encontrar' y el resto como despejadas,
+   * con su numero. Es una transformacion de la vista, no toca el tablero.
+   */
+  private estadoVisible(celda: CeldaInterna, revelarTodo: boolean): EstadoCelda {
+    if (!revelarTodo || celda.estado !== 'oculta') {
+      return celda.estado;
+    }
+    return celda.tieneMina ? 'mina-sin-encontrar' : 'despejada';
   }
 }

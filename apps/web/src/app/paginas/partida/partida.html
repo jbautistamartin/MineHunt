@@ -2,6 +2,11 @@
   <section class="pantalla">
     <header class="cabecera">
       <div class="turno">
+        @if (nivelHistoria(); as nivel) {
+          <p class="nivel-historia">
+            {{ 'partida.historia.nivel' | translate: { numero: nivel.numero } }}
+          </p>
+        }
         @if (partida.terminada) {
           <h1>{{ 'partida.fin.titulo' | translate }}</h1>
         } @else {
@@ -110,6 +115,13 @@
       }
     </ol>
 
+    <mh-tablero
+      [estado]="partida"
+      [bloqueado]="partida.terminada || esTurnoDeBot()"
+      (celdaPulsada)="jugar($event)"
+      (celdaPulsadaAlterna)="jugarConOnda($event)"
+    />
+
     @if (puedeManejarOnda()) {
       <div class="onda" [class.armado]="ondaDelTurno()?.estado === 'activo'">
         <button
@@ -142,13 +154,6 @@
         </span>
       </div>
     }
-
-    <mh-tablero
-      [estado]="partida"
-      [bloqueado]="partida.terminada || esTurnoDeBot()"
-      (celdaPulsada)="jugar($event)"
-      (celdaPulsadaAlterna)="jugarConOnda($event)"
-    />
 
     @if (soloMiran()) {
       <p class="espectador" role="status">{{ 'partida.rendirse.espectador' | translate }}</p>
@@ -195,17 +200,45 @@
           </p>
         }
 
-        <div class="acciones">
-          <button type="button" class="principal" (click)="revancha()">
-            {{ 'partida.revancha' | translate }}
-          </button>
-          <button type="button" class="secundario" (click)="abandonar()">
-            {{ 'partida.nueva' | translate }}
-          </button>
-          <a class="secundario enlace" routerLink="/ayuda">
-            {{ 'ayuda.enlace' | translate }}
-          </a>
-        </div>
+        @if (nivelHistoria(); as nivel) {
+          @if (nivelSuperado()) {
+            <p class="detalle superado">
+              {{ 'partida.historia.superado' | translate: { numero: nivel.numero } }}
+            </p>
+          } @else {
+            <p class="detalle">
+              {{ 'partida.historia.fallado' | translate: { numero: nivel.numero } }}
+            </p>
+          }
+
+          @if (nivelSuperado() && siguienteNivel() === null) {
+            <p class="detalle superado">{{ 'partida.historia.final' | translate }}</p>
+          }
+
+          <div class="acciones">
+            @if (nivelSuperado() && siguienteNivel(); as siguiente) {
+              <button type="button" class="principal" (click)="jugarSiguienteNivel()">
+                {{ 'partida.historia.siguiente' | translate: { numero: siguiente.numero } }}
+              </button>
+            } @else {
+              <button type="button" class="principal" (click)="revancha()">
+                {{ 'partida.historia.repetir' | translate: { numero: nivel.numero } }}
+              </button>
+            }
+            <button type="button" class="secundario" (click)="volverAlMapa()">
+              {{ 'partida.historia.mapa' | translate }}
+            </button>
+          </div>
+        } @else {
+          <div class="acciones">
+            <button type="button" class="principal" (click)="revancha()">
+              {{ 'partida.revancha' | translate }}
+            </button>
+            <button type="button" class="secundario" (click)="abandonar()">
+              {{ 'partida.nueva' | translate }}
+            </button>
+          </div>
+        }
       </div>
     }
   </section>

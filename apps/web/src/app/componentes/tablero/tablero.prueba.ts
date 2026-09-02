@@ -125,4 +125,33 @@ describe('Tablero', () => {
 
     expect(pulsaciones).toHaveLength(0);
   });
+
+  /**
+   * Al acabar la partida el motor destapa el tablero entero. Las minas que no
+   * se llevo nadie no llevan color de jugador: se pintan apagadas para que se
+   * distingan de las que si puntuaron.
+   */
+  it('pinta sin duenno las minas que salen al acabar la partida', () => {
+    const partida = MotorJuego.crearPartida(3, 3, 2, 2, { aleatorio: () => 0 });
+    partida.clicCelda(2, 2); // J0, sin mina: cede
+    partida.clicCelda(0, 0); // J1 encuentra una mina
+    partida.rendirse(1); // se queda J0 solo: se acaba con una mina sin destapar
+
+    const fixture = crearComponente(partida.obtenerEstado(), true);
+    const celdas = fixture.nativeElement.querySelectorAll('.celda');
+
+    const encontrada = celdas[0] as HTMLElement;
+    expect(encontrada.classList).toContain('mina');
+    expect(encontrada.classList).toContain('jugador-1');
+    expect(encontrada.classList).not.toContain('sin-duenno');
+
+    // (1,0) escondia la otra mina y no la encontro nadie.
+    const huerfana = celdas[1] as HTMLElement;
+    expect(huerfana.classList).toContain('mina');
+    expect(huerfana.classList).toContain('sin-duenno');
+    expect(huerfana.querySelector('.glifo')).not.toBeNull();
+
+    // Y no queda ni una celda tapada.
+    expect(fixture.nativeElement.querySelectorAll('.celda.oculta')).toHaveLength(0);
+  });
 });

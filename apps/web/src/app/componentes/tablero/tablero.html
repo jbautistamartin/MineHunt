@@ -14,7 +14,7 @@
         (click)="pulsar(celda)"
         (contextmenu)="pulsarAlterna($event, celda)"
       >
-        @if (celda.estado === 'mina-encontrada') {
+        @if (celda.estado === 'mina-encontrada' || celda.estado === 'mina-sin-encontrar') {
           <span class="glifo" aria-hidden="true">✸</span>
         } @else {
           {{ textoDe(celda) }}

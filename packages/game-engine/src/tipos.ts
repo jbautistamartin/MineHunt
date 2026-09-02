@@ -1,13 +1,25 @@
 /**
  * Tipos publicos del motor de MineHunt.
  *
- * Regla de oro: nada de lo que sale de aqui revela si una celda OCULTA tiene
- * mina. Los jugadores humanos y la IA (Fase 2) consumen exactamente la misma
- * informacion, y esa informacion es la que describen estos tipos.
+ * Regla de oro: mientras la partida esta en curso, nada de lo que sale de aqui
+ * revela si una celda OCULTA tiene mina. Los jugadores humanos y la IA (Fase 2)
+ * consumen exactamente la misma informacion, y esa informacion es la que
+ * describen estos tipos. Al terminar la partida se destapa el tablero entero,
+ * que ya no hay ventaja que dar a nadie.
  */
 
-/** Estado visible de una celda. */
-export type EstadoCelda = 'oculta' | 'despejada' | 'mina-encontrada';
+/**
+ * Estado visible de una celda.
+ *
+ * 'mina-sin-encontrar' solo aparece con la partida ya terminada: al acabar se
+ * destapa el tablero entero y las minas que no se llevo nadie se ven, pero sin
+ * duenno. Mientras se juega ese estado no sale nunca.
+ */
+export type EstadoCelda =
+  | 'oculta'
+  | 'despejada'
+  | 'mina-encontrada'
+  | 'mina-sin-encontrar';
 
 /** Posicion en el tablero. El origen (0, 0) es la esquina superior izquierda. */
 export interface Coordenada {
@@ -69,7 +81,11 @@ export interface EstadoPartida {
   readonly totalMinas: number;
   readonly minasEncontradas: number;
   readonly minasRestantes: number;
-  /** Filas de celdas: celdas[y][x]. */
+  /**
+   * Filas de celdas: celdas[y][x].
+   * Con la partida terminada llegan todas destapadas: ya no hay nada que
+   * proteger y quien mira quiere ver como estaba el tablero.
+   */
   readonly celdas: readonly (readonly CeldaVisible[])[];
   readonly jugadores: readonly Jugador[];
   /** Id del jugador al que le toca mover. */
@@ -143,7 +159,8 @@ export type CodigoError =
   | 'PARTIDA_TERMINADA'
   | 'SIN_JUGADAS'
   | 'ONDA_NO_DISPONIBLE'
-  | 'YA_RENDIDO';
+  | 'YA_RENDIDO'
+  | 'NIVEL_INVALIDO';
 
 /**
  * Error del motor con codigo traducible.

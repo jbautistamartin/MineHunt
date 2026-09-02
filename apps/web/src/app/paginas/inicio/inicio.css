@@ -1,0 +1,133 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: min(34rem, 100%);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 2rem;
+}
+
+/* Portada: el icono del juego manda, el resto acompana */
+.portada {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  text-align: center;
+}
+
+.logo {
+  width: clamp(5rem, 28vw, 7rem);
+  height: auto;
+  filter: drop-shadow(0 0.5rem 1.25rem rgb(0 0 0 / 45%));
+}
+
+h1 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2rem, 9vw, 2.75rem);
+  letter-spacing: 0.02em;
+}
+
+.lema {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Menu de modos */
+.menu {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modo {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--mh-superficie);
+  border: 1px solid var(--mh-superficie-alta);
+  border-radius: 0.75rem;
+}
+
+a.modo:hover,
+a.modo:focus-visible {
+  background: var(--mh-superficie-alta);
+  border-color: var(--mh-acento);
+  outline: none;
+}
+
+.modo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.modo-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.modo-detalle,
+.modo-progreso {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+.modo-progreso {
+  color: var(--mh-acento);
+}
+
+.modo-flecha {
+  font-size: 1.25rem;
+  color: var(--mh-acento);
+}
+
+/* La ayuda no es un modo de juego: se ve que pesa menos */
+.modo.menor {
+  padding: 0.9rem 1.25rem;
+  background: transparent;
+}
+
+.modo.menor .modo-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Multijugador online: se ensena, pero no se entra hasta la Fase 7 */
+.modo.bloqueado {
+  cursor: not-allowed;
+  background: transparent;
+  opacity: 0.55;
+}
+
+.etiqueta {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  background: var(--mh-superficie-alta);
+  border-radius: 999px;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.version {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}

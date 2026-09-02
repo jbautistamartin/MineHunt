@@ -495,3 +495,44 @@ describe('MotorJuego: informacion oculta', () => {
     }
   });
 });
+describe('MotorJuego: revelado final', () => {
+  it('al terminar destapa el tablero entero', () => {
+    // 4x1 con SIN_AZAR y primer clic en (3,0): minas en (0,0) y (1,0).
+    const partida = MotorJuego.crearPartida(4, 1, 2, 2, { aleatorio: SIN_AZAR });
+
+    partida.clicCelda(3, 0); // J0, sin mina: cede
+    // Con la partida en marcha, lo que no se ha tocado sigue tapado.
+    expect(partida.obtenerEstado().celdas[0]?.[2]?.estado).toBe('oculta');
+
+    partida.clicCelda(0, 0); // J1, mina: repite
+    partida.clicCelda(1, 0); // J1, ultima mina: se acaba
+
+    const celdas = partida.obtenerEstado().celdas.flat();
+    expect(celdas.some((celda) => celda.estado === 'oculta')).toBe(false);
+
+    // La celda que nadie llego a tocar se ve con su numero.
+    const nuncaTocada = partida.obtenerEstado().celdas[0]?.[2];
+    expect(nuncaTocada?.estado).toBe('despejada');
+    expect(nuncaTocada?.minasAdyacentes).toBe(1);
+  });
+
+  it('ensena sin duenno las minas que no encontro nadie', () => {
+    // Se acaba por quedarse uno solo, asi que queda una mina sin destapar.
+    const partida = MotorJuego.crearPartida(4, 1, 2, 2, { aleatorio: SIN_AZAR });
+
+    partida.clicCelda(3, 0); // J0, sin mina: cede
+    partida.clicCelda(0, 0); // J1, mina
+    partida.rendirse(1);
+
+    expect(partida.estaTerminada()).toBe(true);
+
+    const encontrada = partida.obtenerEstado().celdas[0]?.[0];
+    expect(encontrada?.estado).toBe('mina-encontrada');
+    expect(encontrada?.encontradaPor).toBe(1);
+
+    const huerfana = partida.obtenerEstado().celdas[0]?.[1];
+    expect(huerfana?.estado).toBe('mina-sin-encontrar');
+    expect(huerfana?.encontradaPor).toBeNull();
+    expect(huerfana?.minasAdyacentes).toBeNull();
+  });
+});

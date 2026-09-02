@@ -4,6 +4,29 @@
     "lema": "Caza las minas: gana quien más encuentre",
     "version": "versión {{version}}"
   },
+  "inicio": {
+    "aria": {
+      "menu": "Modos de juego"
+    },
+    "entrenamiento": {
+      "titulo": "Modo entrenamiento",
+      "texto": "Partida suelta en este dispositivo, contra bots o pasándoos el turno."
+    },
+    "historia": {
+      "titulo": "Modo historia",
+      "texto": "Cincuenta niveles encadenados que aprietan poco a poco."
+    },
+    "online": {
+      "titulo": "Multijugador online",
+      "texto": "Crea una sala y juega con quien quieras, cada uno en su pantalla.",
+      "proximamente": "Próximamente"
+    },
+    "ayuda": {
+      "titulo": "Cómo se juega",
+      "texto": "Las reglas, la onda expansiva y el reloj de turno."
+    },
+    "volver": "← Volver al menú"
+  },
   "idioma": {
     "etiqueta": "Idioma",
     "es": "Español",
@@ -80,6 +103,15 @@
       "espectador": "Te has rendido: la partida sigue sin ti y solo puedes mirar."
     },
     "pensando": "Pensando…",
+    "historia": {
+      "nivel": "Historia · nivel {{numero}}",
+      "superado": "¡Nivel {{numero}} superado!",
+      "fallado": "No has ganado el nivel {{numero}}. Puedes repetirlo las veces que haga falta.",
+      "siguiente": "Ir al nivel {{numero}}",
+      "repetir": "Repetir el nivel {{numero}}",
+      "mapa": "Volver al mapa",
+      "final": "Has terminado el Modo Historia: los cincuenta niveles superados."
+    },
     "reloj": {
       "etiqueta": "Tiempo que queda para jugar",
       "restante": "{{segundos}} s"
@@ -97,8 +129,62 @@
       "atajo": "Atajo: clic derecho sobre la celda."
     }
   },
+  "historia": {
+    "titulo": "Modo historia",
+    "intro": "Cincuenta niveles que aprietan poco a poco: tablero, minas, rivales y reloj.",
+    "progreso": "{{superados}} de {{total}} niveles superados",
+    "completada": "¡Has superado los cincuenta niveles!",
+    "aria": {
+      "niveles": "Niveles de la zona"
+    },
+    "zona": {
+      "1": {
+        "nombre": "Campo de prácticas",
+        "texto": "Tableros pequeños, un rival que casi clica a ciegas y, en los cinco primeros niveles, ningún reloj."
+      },
+      "2": {
+        "nombre": "La cantera",
+        "texto": "El tablero crece, las minas se aprietan y el reloj ya corre. A mitad de zona se sienta un tercer jugador."
+      },
+      "3": {
+        "nombre": "Galerías profundas",
+        "texto": "Rivales que deducen de verdad, cruzando unos números con otros, y cada vez menos segundos por turno."
+      },
+      "4": {
+        "nombre": "El campo minado",
+        "texto": "Tableros grandes y, en la segunda mitad, cuatro jugadores peleando por las mismas minas."
+      },
+      "5": {
+        "nombre": "Zona cero",
+        "texto": "Lo más difícil: rivales de nivel 5, la mayor densidad de minas y seis segundos por turno al final."
+      }
+    },
+    "nivel": {
+      "titulo": "Nivel {{numero}}",
+      "superado": "Superado",
+      "bloqueado": "Gana el nivel anterior para abrir este.",
+      "tablero": "Tablero",
+      "tablero_valor": "{{ancho}} × {{alto}} · {{celdas}} celdas",
+      "minas": "Minas",
+      "minas_valor": "{{minas}} · {{densidad}} % del tablero",
+      "reloj": "Tiempo por turno",
+      "sin_reloj": "Sin reloj",
+      "segundos": "{{segundos}} s",
+      "onda": "Recarga de la onda",
+      "rivales": "Rivales"
+    },
+    "jugar": "Jugar el nivel {{numero}}",
+    "rejugar": "Repetir el nivel {{numero}}",
+    "reiniciar": "Borrar el progreso",
+    "reiniciar_ayuda": "Vuelve a dejar solo el primer nivel abierto. No se puede deshacer.",
+    "volver": "← Volver",
+    "confirmar": {
+      "seguro": "¿Seguro que quieres borrar el progreso?",
+      "si": "Sí, borrarlo",
+      "no": "Dejarlo como está"
+    }
+  },
   "ayuda": {
-    "enlace": "Cómo se juega",
     "titulo": "Cómo se juega",
     "intro": "Las reglas de MineHunt, tal y como las aplica el juego ahora mismo.",
     "volver": "← Volver",
@@ -124,11 +210,15 @@
     },
     "fin": {
       "titulo": "Cuándo se acaba",
-      "texto": "La partida dura hasta que se destapa la última mina, aunque el resultado esté decidido mucho antes. La otra forma de acabar es que se rindan todos menos uno: entonces gana ese, tenga las minas que tenga. Si al destapar la última mina hay empate en cabeza, no hay ganador."
+      "texto": "La partida dura hasta que se destapa la última mina, aunque el resultado esté decidido mucho antes. La otra forma de acabar es que se rindan todos menos uno: entonces gana ese, tenga las minas que tenga. Si al destapar la última mina hay empate en cabeza, no hay ganador. Termine como termine, al acabar se destapa el tablero entero: se ve dónde estaban las minas que quedaban y qué escondía cada casilla."
     },
     "bots": {
       "titulo": "Los bots",
       "texto": "Cada puesto de la IA juega a su propio nivel, del 1 (clica a ciegas) al 5 (deduce, calcula probabilidades y elige dónde gastar la onda). Se toman entre 0 y 2 segundos antes de mover, para que se les vea pensar."
+    },
+    "historia": {
+      "titulo": "El modo historia",
+      "texto": "Son cincuenta niveles con las mismas reglas y la dificultad subiendo por cuatro vías a la vez: tablero más grande, más minas, rivales más listos (y más numerosos) y menos tiempo por turno. Solo se avanza ganando: si pierdes repites el nivel, pero no pierdes nada de lo que ya llevabas. El progreso se guarda en este dispositivo."
     }
   },
   "error": {

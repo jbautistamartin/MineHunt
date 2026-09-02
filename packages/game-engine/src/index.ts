@@ -5,6 +5,7 @@
  * Fase 2: bots con cinco niveles de inteligencia.
  * Fase 3: onda expansiva con recarga, turno que se conserva al encontrar mina,
  * reloj de turno opcional y rendicion.
+ * Fase 4: tabla de niveles del Modo Historia y logica de progreso.
  */
 
 export {
@@ -24,6 +25,22 @@ export {
   type NivelIA,
   type OpcionesIA,
 } from './ia/jugador-ia.js';
+export {
+  NIVELES_HISTORIA,
+  NIVELES_POR_ZONA,
+  TOTAL_NIVELES,
+  TOTAL_ZONAS,
+  obtenerNivel,
+  type NivelHistoria,
+} from './historia/niveles.js';
+export {
+  estaDesbloqueado,
+  estaSuperado,
+  historiaCompletada,
+  progresoInicial,
+  registrarResultado,
+  type ProgresoHistoria,
+} from './historia/progreso.js';
 export { MotorJuego } from './motor.js';
 export { Tablero } from './tablero.js';
 export {
@@ -47,7 +64,7 @@ export {
 } from './tipos.js';
 
 /** Version del motor, util para comprobar que cliente y servidor comparten la misma. */
-export const VERSION_MOTOR = '0.5.0';
+export const VERSION_MOTOR = '0.6.0';
 
 /**
  * Saludo de comprobacion: confirma que el paquete compila, se exporta y se

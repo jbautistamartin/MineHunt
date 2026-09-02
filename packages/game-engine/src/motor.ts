@@ -323,7 +323,9 @@ export class MotorJuego {
       totalMinas: this.tablero.totalMinas,
       minasEncontradas: this.minasEncontradas,
       minasRestantes: this.minasRestantes(),
-      celdas: this.tablero.aVisible(),
+      // Terminada la partida se ensena el tablero entero: ya no hay
+      // informacion que proteger y quien mira quiere ver donde estaban.
+      celdas: this.tablero.aVisible(this.partidaTerminada),
       jugadores,
       turnoDe: this.turnoActual,
       tiempoPorTurnoMs: this.tiempoPorTurnoMs,
