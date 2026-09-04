@@ -44,13 +44,14 @@ describe('ServicioHistoria', () => {
    *
    * El primer clic de la partida nunca es mina (las minas se reparten
    * excluyendo esa celda), asi que despues de clicar una vez el turno esta
-   * siempre en manos del bot y se le puede rendir. Al quedar un solo jugador
-   * en pie la partida termina y gana el humano.
+   * siempre en manos del bot. Se le rinde por su id: sin argumento, rendirse
+   * saca de la partida al humano, que es el unico de la mesa. Al quedar un
+   * solo jugador en pie la partida termina y gana el humano.
    */
   function ganarElNivel(): void {
     partida.clicEnCelda(0, 0);
     expect(partida.esTurnoDeBot()).toBe(true);
-    partida.rendirse();
+    partida.rendirse(1);
     TestBed.tick();
   }
 

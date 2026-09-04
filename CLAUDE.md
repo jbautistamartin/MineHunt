@@ -4,7 +4,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 a 4 completadas.** El monorepo compila, tipa y pasa 192 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n. Pendientes: Capacitor (Fase 5) y servidor (Fases 6-7).
+**Fases 0 a 5 completadas.** El monorepo compila, tipa y pasa 213 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`. Pendientes: el servidor (Fases 6-7), el pulido (Fase 8) y la publicación en Google Play (Fase 9, separada del pulido a petición del usuario).
 
 Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
@@ -37,6 +37,8 @@ npm run probar:ver --workspace @minehunt/game-engine   # modo watch
 npm run arrancar --workspace @minehunt/web             # ng serve
 npm run arrancar:dev --workspace @minehunt/server      # nest start --watch
 npm run probar:e2e --workspace @minehunt/server
+npm run sincronizar-android --workspace @minehunt/web   # ng build + cap sync
+npm run apk-android --workspace @minehunt/web           # + gradlew assembleDebug
 ```
 
 Una sola prueba: `npx vitest run -t "nombre de la prueba"` dentro del paquete, o `npx vitest run ruta/al/fichero.prueba.ts`.
@@ -53,6 +55,10 @@ El plan las da por definidas de antes pero no las escribe. Se confirmaron con el
 2. **Se puede perder el turno por tiempo.** Si la partida tiene reloj, quien se queda pensando de más lo pierde sin jugar. Ver la sección del reloj más abajo.
 3. **La partida termina al destapar la última mina.** No hay final anticipado por marcador: aunque el líder saque una ventaja imposible de remontar, se sigue jugando. **Esto también cambió sobre la marcha**: hasta la Fase 3 existía un fin por «mayoría matemática» que cortaba la partida antes de tiempo; se quitó porque cerraba partidas que el jugador quería terminar. Para salir antes está rendirse. Empate a la cabeza ⇒ `obtenerGanador()` devuelve `null` y `empate` es `true`.
 4. **Rendirse saca del juego.** `rendirse(idJugador)` deja al jugador de espectador: no vuelve a recibir turnos (`pasarTurno()` los salta), sus minas dejan de contar y no puede ganar, aunque sigue viendo la partida. Es irreversible. **Si al rendirse queda un único jugador en pie, la partida acaba y gana ese**, tenga el marcador que tenga.
+
+   En la web, quien puede rendirse lo dice `ServicioPartida.humanoQuePuedeRendirse()`: el humano de turno o, **si es el único humano de la mesa, él siempre, también mientras piensa un bot** — atado al turno, una racha larga del rival le dejaba sin poder tirar la toalla justo cuando más ganas tenía. `rendirse()` sin argumento rinde a ese; con un id rinde el puesto que se le diga, bots incluidos (lo usan las pruebas y lo usará el servidor).
+
+   Por eso **con dos jugadores la partida no enseña «Abandonar»** mientras se pueda rendir: rendirse deja al rival solo, con lo que la partida termina igual, pero además destapa el tablero y enseña el marcador final. Con los dos botones eran dos formas de lo mismo, y en Historia todos los niveles hasta el 15 son de dos jugadores. Con tres o más sí son cosas distintas, y con la mesa entera de bots —donde no hay a quien rendir— «Abandonar» vuelve para no dejar al jugador encerrado en la pantalla. Con la partida terminada no sale ninguno de los dos: de ahí se sale por el recuadro del final.
 5. **Al terminar se destapa el tablero entero.** `obtenerEstado()` deja de filtrar en cuanto la partida acaba: las celdas que nadie tocó llegan despejadas con su número, y las minas que no encontró nadie —solo puede haberlas si se acabó por rendiciones— con el estado `mina-sin-encontrar`, que durante la partida no aparece jamás. Es una transformación de la vista (`Tablero.aVisible(revelarTodo)`): el tablero interno no se toca.
 6. **No hay cascada automática.** Un clic normal destapa **solo la celda clicada**, sea mina, número o celda vacía. Esto contradice la letra de la Fase 1 del plan y fue una decisión posterior del usuario: la cascada existe únicamente como efecto de la onda expansiva.
 
@@ -97,7 +103,7 @@ Es la **única** vía por la que se propaga la cascada. Cada jugador tiene la su
 - Tras gastarse entra en recarga, configurable en segundos.
 - Si el jugador pierde el turno por tiempo con la onda armada, **no la pierde**: no llegó a gastarla y le sigue esperando armada.
 
-**En la web, el clic derecho sobre una celda lanza la onda ahí mismo** sin pasar por el botón (`Tablero.celdaPulsadaAlterna` → `ServicioPartida.clicConOnda`). Si la onda no está disponible, ese clic **no destapa nada**: dejar caer el clic normal gastaría el turno en una celda que el jugador eligió pensando en la onda. El botón sigue existiendo porque en Android (Fase 5) no hay botón derecho. Su recuadro va **debajo del tablero**: solo se le enseña a quien puede usarla, y colocado encima hacía saltar el tablero cada vez que le tocaba a un bot.
+**En la web, el clic derecho sobre una celda lanza la onda ahí mismo** sin pasar por el botón (`Tablero.celdaPulsadaAlterna` → `ServicioPartida.clicConOnda`). Si la onda no está disponible, ese clic **no destapa nada**: dejar caer el clic normal gastaría el turno en una celda que el jugador eligió pensando en la onda. El botón sigue existiendo porque en Android (Fase 5) no hay botón derecho. Su recuadro va **debajo del tablero**: solo se le enseña a quien puede usarla, y colocado encima hacía saltar el tablero cada vez que le tocaba a un bot. Cuando no toca ya no se desmonta, se oculta conservando su hueco, que es lo que evita que baile lo que tiene debajo; ver «La pantalla de partida».
 
 ## El reloj de turno (Fase 3)
 
@@ -156,6 +162,42 @@ Por eso la configuración del Entrenamiento, que antes ocupaba la raíz, vive en
 
 El **Multijugador Online aparece en el menú apagado**, con su etiqueta de «próximamente», hasta la Fase 7. Es un `div` y no un enlace a propósito: la ruta comodín devolvería al propio menú sin explicar nada. Cuando llegue la Fase 7 se convierte en enlace y se le quita la etiqueta.
 
+## Android con Capacitor (Fase 5)
+
+La app de Android **es la misma web** dentro de un WebView: el APK lleva el bundle de `ng build`, no hay una segunda implementación de nada. El proyecto nativo está en **`apps/web/android/`** y va en el repositorio; lo generó `npx cap add android` una vez y a partir de ahí lo escribe `cap sync`.
+
+**`documentos/MineHunt-android.md` es el documento de referencia**: requisitos, ciclo de compilación, dónde queda el APK y el AAB, y firma. Aquí solo lo que hay que tener presente al tocar código:
+
+- **Hace falta el JDK 21, no el 25.** Gradle 8.14 y el plugin de Android 8.13 no lo admiten todavía y la compilación revienta al arrancar. El SDK tiene que traer la plataforma 36.
+- `npm run sincronizar-android`, `abrir-android`, `apk-android`, `aab-android` y `recursos-android` (en `apps/web`), más `android-apk.cmd` y `android-abrir.cmd` en la raíz.
+- **`webDir` de `capacitor.config.ts` tiene que seguir a `ng build`** (`dist/web/browser`). Si dejan de coincidir, la app se instala y arranca en blanco sin que falle nada antes; `empaquetado.prueba.ts` lo comprueba, junto con que el color de arranque sea el de la paleta.
+- **Los iconos y la pantalla de arranque salen del icono maestro**, nunca a mano: `npm run recursos-android` rasteriza `documentos/MineHunt-icon.svg` a `apps/web/resources/` y reparte las densidades. Si se retoca el icono, se relanza.
+- **En el WebView el idioma se pregunta dos veces.** `ServicioIdioma` arranca con `navigator.language` para que la primera pantalla salga traducida y luego repasa con `@capacitor/device`, porque en Android el WebView puede no llevar el idioma del teléfono. Solo en nativo, y nunca por encima de la elección manual del jugador.
+- **En Android no hay clic derecho**, así que el botón de la onda expansiva es la única vía: no lo quites del tablero pensando que el atajo basta.
+- **La pantalla va bloqueada en vertical y sin la barra de navegación**: `android:screenOrientation="portrait"` en el manifest y `MainActivity` escondiéndola con `WindowInsetsControllerCompat` (de `androidx.core`, que ya entra por `appcompat`). Los dos ficheros son fuente del proyecto nativo y `cap sync` no los pisa. Se esconden las dos, la de navegación y la de estado, con `WindowInsetsCompat.Type.systemBars()`. **No se pueden quitar del todo**: deslizando desde el borde vuelven un momento, y hay que reesconderlas en `onWindowFocusChanged` porque también vuelven al recuperar el foco. `empaquetado.prueba.ts` vigila las dos cosas, que de otro modo solo se notan con el teléfono en la mano.
+
+Los ajustes de interfaz para el móvil viven donde toca y no en un CSS aparte: el lado de la celda se reparte entre el ancho de la ventana (`--columnas` lo publica el componente del tablero, así que el tablero entra siempre en la pantalla), y en `styles.css` están `env(safe-area-inset-*)` para la muesca, `overscroll-behavior` para el rebote y la selección de texto apagada salvo en la ayuda.
+
+## La pantalla de partida
+
+**Nada de lo que hay por encima del tablero puede cambiar de tamaño mientras se juega.** Si algo se monta o se desmonta ahí arriba, el tablero pega un salto justo cuando el jugador iba a clicar y el clic acaba donde no era. De ahí el reparto de la pantalla:
+
+- La cabecera **solo informa**: de qué nivel es la partida, de quién es el turno, cuántas minas quedan y el reloj. Nada de botones.
+- **Rendirse y abandonar van al pie**, después del aviso. Aparecen y desaparecen según de quién sea el turno, y la confirmación de rendirse ocupa mucho más que el botón; ahí abajo puede crecer sin mover nada, y además queda lejos de donde se clica.
+- Lo que deja de tener sentido a mitad de partida **no se desmonta**: se le pone la clase **`.hueco`** (`visibility: hidden`), que conserva su caja exacta y lo saca del foco y del árbol de accesibilidad, sin tener que adivinar el alto en un `min-height`. La llevan el reloj cuando la partida termina y el recuadro de la onda cuando no le toca a un humano.
+
+Queda un caso sin cubrir: en el marcador, la etiqueta «rendido» puede hacer crecer una línea la ficha del que se rinde y empujar el tablero. Solo pasa con tres o cuatro jugadores —a dos, rendirse acaba la partida— y una sola vez por rendición.
+
+## El botón de atrás del teléfono
+
+`ServicioBotonAtras` (`nucleo/atras.servicio.ts`) decide a dónde lleva, y se engancha una sola vez desde el componente raíz. Hay que decidirlo a mano: por defecto Capacitor tira del historial del WebView, donde están todas las idas y venidas entre el mapa de niveles y la partida, así que «atrás» acababa en pantallas que no tenían nada que ver con lo que el jugador estaba mirando.
+
+- Desde cualquier pantalla se vuelve **al menú principal**, que es de donde se sale a todo lo demás.
+- Desde el menú principal se **sale de la aplicación** (`App.exitApp()`).
+- Desde una partida **se pregunta antes de dejarla**, con un diálogo encima de todo. Esto el servicio no lo decide: publica `salidaPedida` y la atiende la pantalla de partida, que es la que sabe si hay algo que perder —con la partida ya terminada se sale sin preguntar— y a dónde volver después.
+
+El diálogo es **solo para el atrás**: el botón «Abandonar» de la pantalla no pregunta, porque hay que ir a buscarlo, mientras que el gesto de atrás se hace sin mirar y se lleva la partida por delante. Usa `@capacitor/app`, que es el plugin que expone el evento; en el navegador `escuchar()` no hace nada y atrás sigue siendo el del navegador.
+
 ## La pantalla de ayuda
 
 `apps/web/src/app/paginas/ayuda/` explica las reglas al jugador, en la ruta `/ayuda`. Sus secciones son una lista declarativa (`SECCIONES` en `ayuda.ts`) y cada una se traduce en `ayuda.<seccion>.titulo` y `ayuda.<seccion>.texto` de los dos ficheros de idioma.
@@ -166,7 +208,7 @@ Se entra **solo desde el menú principal**, como el selector de idioma. Nunca de
 
 ## Versiones fijadas
 
-Angular 22 exige **TypeScript >=6.0 <6.1**, así que el monorepo va con **TypeScript 6.0.3** — no lo subas a la 7 (el compilador nativo) sin comprobar antes que Angular lo acepta. Node 24 LTS, Angular 22.1, NestJS 12, Vitest 4.1. Los tres paquetes usan Vitest; Angular lo hace con jsdom, así que no hace falta Chrome ni Karma.
+Angular 22 exige **TypeScript >=6.0 <6.1**, así que el monorepo va con **TypeScript 6.0.3** — no lo subas a la 7 (el compilador nativo) sin comprobar antes que Angular lo acepta. Node 24 LTS, Angular 22.1, NestJS 12, Vitest 4.1, Capacitor 8.5. Los tres paquetes usan Vitest; Angular lo hace con jsdom, así que no hace falta Chrome ni Karma.
 
 ## Qué es MineHunt
 

@@ -1,7 +1,18 @@
 :host {
-  /* El lado se reduce en pantallas pequenas para que quepan tableros anchos. */
-  --lado-celda: 2rem;
+  /*
+   * Columnas del tablero: lo pone el componente con cada partida.
+   *
+   * El lado de la celda sale de repartir el ancho de la ventana entre ellas,
+   * con un tope para que en el escritorio no salgan celdas gigantes. Asi el
+   * tablero entra siempre en la pantalla del movil, tenga el tamanno que
+   * tenga el nivel, en vez de desbordarse o exigir hacer zoom.
+   */
+  --columnas: 9;
+  --lado-maximo: 2rem;
+  --lado-celda: min(var(--lado-maximo), calc((100vw - 3rem) / var(--columnas)));
+
   display: block;
+  max-width: 100%;
 }
 
 .tablero {
@@ -28,6 +39,10 @@
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
+
+  /* Sin esto, el navegador del movil espera al doble toque para hacer zoom y
+     cada jugada llega tarde. */
+  touch-action: manipulation;
   transition:
     background-color 120ms ease,
     transform 80ms ease;
@@ -121,14 +136,15 @@
   color: #7a7a7a;
 }
 
+/* En pantallas pequenas el tope baja, que ahi el dedo tapa media rejilla. */
 @media (width <= 700px) {
   :host {
-    --lado-celda: 1.6rem;
+    --lado-maximo: 1.8rem;
   }
 }
 
 @media (width <= 420px) {
   :host {
-    --lado-celda: 1.35rem;
+    --lado-maximo: 1.6rem;
   }
 }

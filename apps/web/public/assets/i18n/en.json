@@ -81,7 +81,9 @@
     "evento": {
       "MINA_ENCONTRADA": "{{jugador}} found a mine and keeps playing",
       "CELDA_DESPEJADA": "{{jugador}} cleared {{celdas}} cells and passes the turn",
+      "CELDA_DESPEJADA_UNA": "{{jugador}} cleared one cell and passes the turn",
       "ONDA_EXPANSIVA": "{{jugador}}'s shockwave opened {{celdas}} cells",
+      "ONDA_EXPANSIVA_UNA": "{{jugador}}'s shockwave opened a single cell",
       "TURNO_PERDIDO": "{{jugador}} ran out of time and loses the turn",
       "JUGADOR_RENDIDO": "{{jugador}} surrendered and left the game"
     },
@@ -89,18 +91,26 @@
       "titulo": "Game over",
       "gana": "{{jugador}} wins",
       "empate": "Draw",
-      "ultimo_en_pie": "It ended with a single player left standing: {{minas}} mines were still unfound."
+      "ultimo_en_pie": "It ended with a single player left standing: {{minas}} mines were still unfound.",
+      "ultimo_en_pie_una": "It ended with a single player left standing: one mine was still unfound."
     },
     "bot": "Bot {{numero}}",
     "nivel_bot": "lv. {{nivel}}",
     "rendirse": {
       "boton": "Surrender",
-      "ayuda": "You leave the game and stay as a spectator. It cannot be undone.",
+      "ayuda": "You leave the game: if others are left, play goes on without you and you only watch; if that leaves a single player standing, it ends there. It cannot be undone.",
       "seguro": "Surrender for good?",
       "si": "Yes, I surrender",
       "no": "Keep playing",
       "marca": "out",
       "espectador": "You surrendered: the game goes on without you and you can only watch."
+    },
+    "salir": {
+      "titulo": "Leave the game",
+      "pregunta": "Leave the game?",
+      "aviso": "What you played is lost and counts for nothing.",
+      "si": "Yes, leave it",
+      "no": "Keep playing"
     },
     "pensando": "Thinking…",
     "historia": {
@@ -206,7 +216,7 @@
     },
     "rendirse": {
       "titulo": "Surrendering",
-      "texto": "You can leave the game on your turn. You are out: no more turns come your way, your mines stop counting and you can no longer win, but you still get to watch how it ends. It cannot be undone."
+      "texto": "You can leave the game on your turn and, if you are the only human at the table, while the bots think too. You are out: no more turns come your way, your mines stop counting and you can no longer win, but you still get to watch how it ends. If your surrender leaves a single player standing, the game ends there and that player wins, so in two-player games surrendering is also the way out."
     },
     "fin": {
       "titulo": "How it ends",

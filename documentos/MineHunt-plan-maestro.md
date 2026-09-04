@@ -194,15 +194,27 @@ activo del cliente, usando las mismas claves de es.json/en.json. Maneja estados 
 desconexión/reconexión en la UI.
 ```
 
-### Fase 8 — Pulido y publicación
+### Fase 8 — Pulido
 ```
 Añade sonidos, animaciones de detonación/cascada, pantalla de resultados con
 estadísticas por jugador, y prepara los assets finales de icono y splash screen en
 todas las resoluciones necesarias para Android (mipmap) y PWA/web (manifest.json en
 ambos idiomas, con "name"/"description" según el idioma detectado). Revisa que no
 quede ningún texto hardcodeado sin pasar por ngx-translate. Documenta el proceso de
-build de producción y publicación en Google Play (con ficha de la tienda en español e
-inglés) y despliegue del servidor (Docker + variables de entorno).
+build de producción y el despliegue del servidor (Docker + variables de entorno).
+```
+
+### Fase 9 — Publicación en Google Play
+```
+Deja el juego publicado. Genera el AAB de release firmado con una clave de subida
+propia (guardada fuera del repositorio, con su documentación de dónde vive y cómo se
+recupera), sube la aplicación a Google Play Console y prepara la ficha de la tienda
+en español e inglés: título, descripción corta y larga, capturas de las pantallas del
+juego en teléfono y tablet, icono de alta resolución y gráfico destacado. Completa lo
+que la consola exige aparte de la ficha: política de privacidad, cuestionario de
+clasificación de contenido, declaración de seguridad de los datos y público objetivo.
+Publica primero en un canal cerrado de prueba, comprueba la instalación desde la
+tienda en un teléfono real, y solo entonces promociona a producción.
 ```
 
 ---
@@ -473,3 +485,50 @@ Cada pantalla llevaba en su cabecera el selector de idioma y un enlace a la
 ayuda, y la ayuda colgaba además del final de la partida. Con un menú principal
 que se abre al arrancar y al que se vuelve entre partidas, repetirlos solo era
 ruido: los dos viven ahora únicamente en el menú.
+
+### El proyecto de Android se versiona (Fase 5)
+
+El `.gitignore` que se escribió en la Fase 0 dejaba fuera `apps/web/android/`
+entero, dando por hecho que era producto de la compilación. No lo es: ahí viven
+el manifiesto, la configuración de firma y los iconos ya repartidos por
+densidades, y rehacerlo con `cap add` en cada clon perdería todo eso. Ahora se
+versiona, y lo compilado lo filtra el `.gitignore` que trae el propio proyecto
+nativo, que además deja fuera la copia de la web (`assets/public`).
+
+### El JDK 21, no el 25 (Fase 5)
+
+La máquina tiene el JDK 25, pero Gradle 8.14 y el plugin de Android 8.13 —los
+que fija Capacitor 8— todavía no lo admiten. La compilación de Android necesita
+un JDK 21; queda escrito en `documentos/MineHunt-android.md` y el `.cmd` lo
+recuerda cuando falla.
+
+### El tamaño de la celda se reparte, no se fija (Fase 5)
+
+Hasta aquí el lado de la celda era un valor fijo que bajaba por tramos con
+media queries. En un móvil eso no basta: los niveles altos del Modo Historia
+traen tableros anchos y se salían de la pantalla. Ahora el componente publica
+cuántas columnas tiene el tablero y el CSS reparte entre ellas el ancho de la
+ventana, con un tope para que en el escritorio no salgan celdas enormes. El
+tablero entra siempre, sea cual sea el nivel.
+
+### La publicación es su propia fase (posterior a la Fase 5)
+
+La Fase 8 del plan mezclaba dos trabajos que no se parecen en nada: pulir el juego
+(sonidos, animaciones, estadísticas, assets, repaso de textos) y publicarlo en Google
+Play. El pulido es código y se prueba con las herramientas de siempre; la publicación
+es una firma que no se puede perder, una ficha de tienda en dos idiomas, capturas,
+formularios de la consola y un canal de pruebas antes de producción, y nada de eso se
+verifica con `npm run verificar`.
+
+Separadas, la Fase 8 termina cuando el juego está terminado y la 9 cuando está en la
+tienda, que es la única forma de que ninguna de las dos arrastre a la otra. El
+despliegue del servidor se queda en la 8, con el resto del build de producción: es
+infraestructura del proyecto, no del escaparate.
+
+### El idioma se pregunta dos veces en Android (Fase 5)
+
+El plan ya avisaba de que `navigator.language` podía no ser fiable dentro del
+WebView. Se resuelve sin renunciar a arrancar traducido: la detección síncrona
+de siempre pinta la primera pantalla, y después `ServicioIdioma` le pregunta al
+sistema con `@capacitor/device` y corrige si no coincidían. Solo en nativo, y
+nunca por encima de lo que el jugador eligiera a mano.

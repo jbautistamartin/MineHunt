@@ -16,6 +16,8 @@ rem    probar.cmd             Todas las pruebas de los tres paquetes.
 rem    probar-motor.cmd       Pruebas del motor de juego.      [arg: ver]
 rem    probar-web.cmd         Pruebas de la web.               [arg: ver]
 rem    probar-servidor.cmd    Pruebas del servidor.            [arg: ver | e2e]
+rem    android-apk.cmd        Compila el APK de prueba para Android.
+rem    android-abrir.cmd      Abre el proyecto Android en Android Studio.
 rem    limpiar.cmd            Borra lo compilado del motor.
 rem
 rem  Cada uno explica al ejecutarse lo que hace. Este comentario es solo para
@@ -85,7 +87,8 @@ echo    probar-servidor.cmd e2e   pruebas de punta a punta: arrancan la
 echo                              aplicacion entera y la llaman de verdad.
 echo.
 echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, verificar, compilar,
-echo  verificar-tipos, probar, probar-motor, probar-web, probar-servidor y limpiar.
+echo  verificar-tipos, probar, probar-motor, probar-web, probar-servidor,
+echo  android-apk, android-abrir y limpiar.
 echo ======================================================================
 echo.
 goto :eof

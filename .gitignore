@@ -14,7 +14,10 @@ coverage/
 *.lcov
 
 # Capacitor / Android (Fase 5)
-/apps/web/android/
+# El proyecto nativo apps/web/android/ SI se versiona: es donde viven el
+# manifiesto, los iconos generados y la configuracion de firma, y rehacerlo con
+# "cap add" en cada clon perderia todo eso. Lo compilado lo ignora su propio
+# .gitignore, que ademas deja fuera la copia de la web (assets/public).
 /apps/web/ios/
 *.apk
 *.aab

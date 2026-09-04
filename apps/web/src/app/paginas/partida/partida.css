@@ -8,6 +8,12 @@
   padding: 1.5rem 1rem 3rem;
 }
 
+/*
+ * La cabecera solo informa: de quien es el turno, cuantas minas quedan y el
+ * reloj. Los botones estan al pie a proposito. Todo lo que hay por encima del
+ * tablero tiene que medir siempre lo mismo mientras dura la partida, o el
+ * tablero pega un salto justo cuando el jugador va a clicar.
+ */
 .cabecera {
   display: flex;
   flex-wrap: wrap;
@@ -15,6 +21,16 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+/*
+ * Hueco reservado: el elemento sigue ocupando su sitio exacto, pero no se ve
+ * ni se puede enfocar. Es lo que mantiene quieto lo que hay debajo cuando algo
+ * deja de tener sentido a mitad de partida (el reloj al acabar, la onda
+ * mientras piensa un bot) sin tener que adivinar su alto en un min-height.
+ */
+.hueco {
+  visibility: hidden;
 }
 
 h1 {
@@ -260,12 +276,20 @@ h1 {
   opacity: 0.7;
 }
 
-/* Rendicion */
-.acciones-cabecera {
+/*
+ * Rendicion y abandono, al pie de la pantalla.
+ *
+ * Estaban arriba a la derecha, pero aparecen y desaparecen segun de quien sea
+ * el turno y la confirmacion de rendirse ocupa mucho mas que el boton, asi que
+ * cada cambio empujaba el tablero hacia abajo. Aqui pueden crecer sin mover
+ * nada, y ademas quedan lejos de donde se clica.
+ */
+.acciones-partida {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+  justify-content: center;
 }
 
 .confirmar {
@@ -289,6 +313,47 @@ button.peligro {
   background: var(--mh-acento);
   border: 1px solid var(--mh-acento);
   border-radius: 0.4rem;
+}
+
+/*
+ * Dejar la partida con el boton de atras del telefono se pregunta encima de
+ * todo y no al pie: el gesto se hace sin mirar, asi que la pregunta tiene que
+ * salir al paso. La de rendirse sigue siendo de las de abajo, que ahi hay que
+ * ir a buscar el boton.
+ */
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 60%);
+}
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  width: min(22rem, 100%);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 45%);
+}
+
+.dialogo .pregunta {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mh-texto);
+}
+
+.dialogo .detalle {
+  margin: 0;
 }
 
 .ficha.rendido {

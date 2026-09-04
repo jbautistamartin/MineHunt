@@ -3,7 +3,9 @@
   flex-direction: column;
   gap: 2rem;
   width: min(34rem, 100%);
-  min-height: 100dvh;
+  min-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+  );
   margin: 0 auto;
   padding: 2.5rem 1rem 2rem;
 }

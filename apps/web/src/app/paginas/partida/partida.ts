@@ -1,14 +1,37 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import type { Coordenada } from '@minehunt/game-engine';
+import type { CodigoSuceso, Coordenada } from '@minehunt/game-engine';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Tablero } from '../../componentes/tablero/tablero';
+import { ServicioBotonAtras } from '../../nucleo/atras.servicio';
 import { JUGADOR_HUMANO, ServicioHistoria } from '../../nucleo/historia.servicio';
-import { ServicioPartida } from '../../nucleo/partida.servicio';
+import { ServicioPartida, type UltimoSuceso } from '../../nucleo/partida.servicio';
 
 /** A partir de aqui la cuenta atras del turno se pinta en rojo. */
 const SEGUNDOS_DE_AVISO = 5;
+
+/**
+ * Sucesos cuyo texto lleva la cuenta de celdas, que son los unicos que
+ * necesitan una version en singular.
+ *
+ * MINA_ENCONTRADA se queda fuera aunque revele una sola celda: su texto no la
+ * cuenta.
+ */
+const SUCESOS_QUE_CUENTAN: readonly CodigoSuceso[] = ['CELDA_DESPEJADA', 'ONDA_EXPANSIVA'];
+
+/**
+ * Clave del texto de un suceso, en singular cuando lo que se cuenta es una
+ * sola celda.
+ *
+ * Hace falta porque no hay cascada automatica: un clic normal destapa siempre
+ * una celda, asi que «ha despejado 1 celdas» salia en cada jugada.
+ * @ngx-translate no trae plurales, de ahi el sufijo.
+ */
+export function claveDeSuceso(suceso: UltimoSuceso): string {
+  const una = suceso.celdas === 1 && SUCESOS_QUE_CUENTAN.includes(suceso.codigo);
+  return `partida.evento.${suceso.codigo}${una ? '_UNA' : ''}`;
+}
 
 /**
  * Pantalla de juego, la misma para el Entrenamiento y para la Historia.
@@ -31,6 +54,7 @@ const SEGUNDOS_DE_AVISO = 5;
 export class Partida {
   private readonly servicio = inject(ServicioPartida);
   private readonly historia = inject(ServicioHistoria);
+  private readonly atras = inject(ServicioBotonAtras);
   private readonly router = inject(Router);
 
   readonly estado = this.servicio.estado;
@@ -43,8 +67,18 @@ export class Partida {
   readonly fraccionDeTurno = this.servicio.fraccionDeTurno;
   readonly soloMiran = this.servicio.soloMiran;
 
+  /** La funcion de arriba, para que la plantilla pueda llamarla. */
+  readonly claveDeSuceso = claveDeSuceso;
+
   /** Rendirse es irreversible, asi que se pide confirmacion. */
   readonly confirmandoRendicion = signal(false);
+
+  /**
+   * Dejar la partida a medias con el boton de atras del telefono tambien se
+   * pregunta: es un gesto que se hace sin mirar y se lleva la partida por
+   * delante. El de la pantalla no, porque hay que ir a buscarlo.
+   */
+  readonly confirmandoSalida = signal(false);
 
   /** Ultimos segundos del turno: la barra avisa cambiando de color. */
   readonly relojApurado = computed(() => {
@@ -62,8 +96,30 @@ export class Partida {
     () => !this.terminada() && !this.esTurnoDeBot() && this.ondaDelTurno() !== null,
   );
 
-  /** Solo se puede rendir quien tiene el turno, y solo si es humano. */
-  readonly puedeRendirse = computed(() => !this.terminada() && !this.esTurnoDeBot());
+  /**
+   * Hay alguien a quien rendir: el humano de turno o, si es el unico humano de
+   * la mesa, el aunque en ese momento este pensando un bot.
+   */
+  readonly puedeRendirse = computed(() => this.servicio.humanoQuePuedeRendirse() !== null);
+
+  /**
+   * «Abandonar» tira la partida entera y vuelve por donde se entro.
+   *
+   * Con dos jugadores no se enseña mientras se pueda rendir: rendirse deja al
+   * rival solo, con lo que la partida termina igual, pero ademas destapa el
+   * tablero y enseña el marcador final. Teniendo los dos botones, eran dos
+   * formas de lo mismo. Con tres o mas si son cosas distintas —rendirse deja
+   * la partida viva y a quien se rinde de espectador— y con la mesa entera de
+   * bots, donde no hay a quien rendir, es la unica salida.
+   *
+   * Con la partida terminada no sale ninguno de los dos: de ahi se sale por el
+   * recuadro del final, que ya ofrece revancha, nivel siguiente o volver.
+   */
+  readonly puedeAbandonar = computed(
+    () =>
+      !this.terminada() &&
+      ((this.estado()?.jugadores.length ?? 0) > 2 || !this.puedeRendirse()),
+  );
 
   readonly terminada = computed(() => this.estado()?.terminada ?? false);
 
@@ -102,6 +158,30 @@ export class Partida {
         void this.router.navigate(['/']);
       }
     });
+
+    // El boton de atras solo pide salir; quien sabe si hay algo que perder es
+    // esta pantalla. Con la partida ya terminada no hay nada que preguntar.
+    effect(() => {
+      if (!this.atras.salidaPedida()) {
+        return;
+      }
+      this.atras.salidaAtendida();
+      if (this.terminada()) {
+        this.abandonar();
+      } else {
+        this.confirmandoSalida.set(true);
+      }
+    });
+  }
+
+  /** Deja la partida de verdad: es lo mismo que el boton de abandonar. */
+  confirmarSalida(): void {
+    this.confirmandoSalida.set(false);
+    this.abandonar();
+  }
+
+  cancelarSalida(): void {
+    this.confirmandoSalida.set(false);
   }
 
   jugar(coordenada: Coordenada): void {

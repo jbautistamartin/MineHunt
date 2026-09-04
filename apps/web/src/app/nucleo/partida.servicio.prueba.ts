@@ -342,6 +342,46 @@ describe('ServicioPartida: rendicion', () => {
     expect(servicio.esTurnoDeBot()).toBe(true);
   });
 
+  it('con un solo humano se puede rendir mientras piensa el bot', () => {
+    servicio.iniciar(configuracion({ numJugadores: 3, numHumanos: 1 }));
+    servicio.clicEnCelda(0, 0); // el primer clic nunca es mina: cede al bot
+
+    expect(servicio.esTurnoDeBot()).toBe(true);
+    expect(servicio.humanoQuePuedeRendirse()).toBe(0);
+    expect(servicio.rendirse()).toBe(true);
+    expect(servicio.estado()?.jugadores[0]?.rendido).toBe(true);
+    expect(servicio.ultimoSuceso()?.jugador).toBe(0);
+  });
+
+  it('con varios humanos no se rinde a nadie en el turno de un bot', () => {
+    servicio.iniciar(configuracion({ numJugadores: 3, numHumanos: 2 }));
+    // Con Math.random a 0 las minas caen todas en la primera fila, asi que
+    // clicar por la ultima no acierta ninguna: los dos humanos ceden el turno
+    // uno detras de otro y acaba tocandole al bot.
+    servicio.clicEnCelda(4, 4);
+    servicio.clicEnCelda(3, 4);
+
+    expect(servicio.esTurnoDeBot()).toBe(true);
+    expect(servicio.humanoQuePuedeRendirse()).toBeNull();
+    expect(servicio.rendirse()).toBe(false);
+    expect(servicio.estado()?.jugadores.some((jugador) => jugador.rendido)).toBe(false);
+  });
+
+  it('sin humanos en la mesa no hay a quien rendir', () => {
+    servicio.iniciar(configuracion({ numJugadores: 2, numHumanos: 0 }));
+
+    expect(servicio.humanoQuePuedeRendirse()).toBeNull();
+    expect(servicio.rendirse()).toBe(false);
+  });
+
+  it('con el id explicito se rinde ese puesto, aunque no sea el suyo', () => {
+    servicio.iniciar(configuracion({ numJugadores: 3, numHumanos: 3 }));
+
+    expect(servicio.rendirse(2)).toBe(true);
+    expect(servicio.estado()?.jugadores[2]?.rendido).toBe(true);
+    expect(servicio.estado()?.turnoDe).toBe(0);
+  });
+
   it('no se puede rendir con la partida terminada', () => {
     servicio.iniciar(configuracion({ numJugadores: 2, numHumanos: 2 }));
     servicio.rendirse(); // termina la partida

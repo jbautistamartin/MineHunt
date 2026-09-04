@@ -81,7 +81,9 @@
     "evento": {
       "MINA_ENCONTRADA": "{{jugador}} ha encontrado una mina y sigue jugando",
       "CELDA_DESPEJADA": "{{jugador}} ha despejado {{celdas}} celdas y cede el turno",
+      "CELDA_DESPEJADA_UNA": "{{jugador}} ha despejado una celda y cede el turno",
       "ONDA_EXPANSIVA": "La onda de {{jugador}} ha abierto {{celdas}} celdas",
+      "ONDA_EXPANSIVA_UNA": "La onda de {{jugador}} ha abierto una sola celda",
       "TURNO_PERDIDO": "A {{jugador}} se le acabó el tiempo y pierde el turno",
       "JUGADOR_RENDIDO": "{{jugador}} se ha rendido y deja la partida"
     },
@@ -89,18 +91,26 @@
       "titulo": "Partida terminada",
       "gana": "Gana {{jugador}}",
       "empate": "Empate",
-      "ultimo_en_pie": "Se acabó al quedar un solo jugador en pie: quedaban {{minas}} minas sin encontrar."
+      "ultimo_en_pie": "Se acabó al quedar un solo jugador en pie: quedaban {{minas}} minas sin encontrar.",
+      "ultimo_en_pie_una": "Se acabó al quedar un solo jugador en pie: quedaba una mina sin encontrar."
     },
     "bot": "Bot {{numero}}",
     "nivel_bot": "nv. {{nivel}}",
     "rendirse": {
       "boton": "Rendirse",
-      "ayuda": "Sales de la partida y te quedas mirando. No se puede deshacer.",
+      "ayuda": "Sales de la partida: si quedan otros, se juega sin ti y solo miras; si al irte queda uno solo, se acaba ahí. No se puede deshacer.",
       "seguro": "¿Seguro que te rindes?",
       "si": "Sí, me rindo",
       "no": "Seguir jugando",
       "marca": "rendido",
       "espectador": "Te has rendido: la partida sigue sin ti y solo puedes mirar."
+    },
+    "salir": {
+      "titulo": "Dejar la partida",
+      "pregunta": "¿Dejas la partida?",
+      "aviso": "Se pierde lo jugado y no cuenta para nada.",
+      "si": "Sí, dejarla",
+      "no": "Seguir jugando"
     },
     "pensando": "Pensando…",
     "historia": {
@@ -206,7 +216,7 @@
     },
     "rendirse": {
       "titulo": "Rendirse",
-      "texto": "Puedes dejar la partida en tu turno. Sales del juego: no vuelven a llegarte turnos, tus minas dejan de contar y ya no puedes ganar, pero sigues viendo cómo acaba. No se puede deshacer."
+      "texto": "Puedes dejar la partida en tu turno y, si eres el único humano en la mesa, también mientras juegan los bots. Sales del juego: no vuelven a llegarte turnos, tus minas dejan de contar y ya no puedes ganar, pero sigues viendo cómo acaba. Si al rendirte queda un solo jugador en pie, la partida termina ahí y gana ese, así que en las partidas de dos rendirse es también la forma de salir."
     },
     "fin": {
       "titulo": "Cuándo se acaba",

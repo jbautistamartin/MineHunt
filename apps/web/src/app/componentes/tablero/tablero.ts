@@ -15,6 +15,10 @@ import type { CeldaVisible, Coordenada, EstadoPartida } from '@minehunt/game-eng
   templateUrl: './tablero.html',
   styleUrl: './tablero.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    // Lo lee el CSS para calcular el lado de la celda y que el tablero quepa.
+    '[style.--columnas]': 'estado().ancho',
+  },
 })
 export class Tablero {
   readonly estado = input.required<EstadoPartida>();

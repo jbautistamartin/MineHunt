@@ -1,4 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { Device } from '@capacitor/device';
 import { TranslateService } from '@ngx-translate/core';
 
 /** Idiomas que ofrece la interfaz. */
@@ -26,6 +28,11 @@ function leerIdiomaGuardado(): Idioma | null {
   }
 }
 
+/** Traduce una etiqueta de idioma ('es-MX', 'en', 'pt-BR') a uno de los soportados. */
+export function idiomaDeLaEtiqueta(etiqueta: string): Idioma {
+  return etiqueta.toLowerCase().startsWith('es') ? 'es' : IDIOMA_POR_DEFECTO;
+}
+
 /**
  * Idioma con el que arranca la aplicacion.
  *
@@ -33,8 +40,9 @@ function leerIdiomaGuardado(): Idioma | null {
  * configuracion regional del dispositivo: es-* usa espanol y cualquier otra
  * cosa cae en ingles.
  *
- * En Android dentro del WebView (Fase 5) puede hacer falta @capacitor/device
- * si navigator.language no resulta fiable.
+ * Es sincrono a proposito, para que la primera pantalla ya salga traducida.
+ * Dentro del WebView de Android navigator.language puede no ser el idioma del
+ * telefono, asi que el servicio lo repasa despues preguntandole al sistema.
  */
 export function detectarIdiomaInicial(): Idioma {
   const guardado = leerIdiomaGuardado();
@@ -42,8 +50,7 @@ export function detectarIdiomaInicial(): Idioma {
     return guardado;
   }
 
-  const delDispositivo = globalThis.navigator?.language ?? '';
-  return delDispositivo.toLowerCase().startsWith('es') ? 'es' : IDIOMA_POR_DEFECTO;
+  return idiomaDeLaEtiqueta(globalThis.navigator?.language ?? '');
 }
 
 /** Gestiona el idioma de la interfaz y recuerda la eleccion del jugador. */
@@ -60,6 +67,36 @@ export class ServicioIdioma {
     this.traductor.addLangs([...IDIOMAS_SOPORTADOS]);
     this.traductor.setFallbackLang(IDIOMA_POR_DEFECTO);
     this.traductor.use(this.idioma());
+    void this.repasarConElIdiomaDelSistema();
+  }
+
+  /**
+   * Segunda opinion sobre el idioma, solo en Android (Fase 5).
+   *
+   * El WebView puede arrancar en el idioma del propio WebView y no en el del
+   * telefono, asi que se le pregunta al sistema con @capacitor/device y se
+   * corrige si no coincide. En la web no se pregunta nada: alli
+   * navigator.language es de fiar.
+   *
+   * Nunca pisa una eleccion manual: si el jugador ya eligio idioma, manda el
+   * suyo. Y si el plugin no contesta, se queda lo que detecto el WebView, que
+   * es mejor que quedarse sin traducir.
+   */
+  private async repasarConElIdiomaDelSistema(): Promise<void> {
+    if (!Capacitor.isNativePlatform() || leerIdiomaGuardado() !== null) {
+      return;
+    }
+
+    try {
+      const { value } = await Device.getLanguageCode();
+      const delSistema = idiomaDeLaEtiqueta(value);
+      if (delSistema !== this.idioma()) {
+        this.idioma.set(delSistema);
+        this.traductor.use(delSistema);
+      }
+    } catch {
+      // Sin respuesta del plugin se sigue con el idioma que dijo el WebView.
+    }
   }
 
   /** Cambia el idioma a mano y lo recuerda para las proximas sesiones. */

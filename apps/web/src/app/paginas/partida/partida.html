@@ -26,50 +26,22 @@
           {{ 'partida.minas_restantes' | translate }}: <strong>{{ partida.minasRestantes }}</strong>
         </p>
 
-        @if (!partida.terminada && segundosDeTurno() !== null) {
+        @if (partida.tiempoPorTurnoMs > 0) {
           <div
             class="reloj"
             [class.apurado]="relojApurado()"
+            [class.hueco]="partida.terminada"
             role="timer"
             [attr.aria-label]="'partida.reloj.etiqueta' | translate"
           >
             <span class="reloj-tiempo">
-              {{ 'partida.reloj.restante' | translate: { segundos: segundosDeTurno() } }}
+              {{ 'partida.reloj.restante' | translate: { segundos: segundosDeTurno() ?? 0 } }}
             </span>
             <span class="reloj-barra" aria-hidden="true">
               <span class="reloj-relleno" [style.width.%]="porcentajeDeTurno()"></span>
             </span>
           </div>
         }
-      </div>
-
-      <div class="acciones-cabecera">
-        @if (puedeRendirse()) {
-          @if (confirmandoRendicion()) {
-            <span class="confirmar">
-              <span class="pregunta">{{ 'partida.rendirse.seguro' | translate }}</span>
-              <button type="button" class="peligro" (click)="confirmarRendicion()">
-                {{ 'partida.rendirse.si' | translate }}
-              </button>
-              <button type="button" class="secundario" (click)="cancelarRendicion()">
-                {{ 'partida.rendirse.no' | translate }}
-              </button>
-            </span>
-          } @else {
-            <button
-              type="button"
-              class="secundario"
-              [attr.title]="'partida.rendirse.ayuda' | translate"
-              (click)="pedirRendicion()"
-            >
-              {{ 'partida.rendirse.boton' | translate }}
-            </button>
-          }
-        }
-
-        <button type="button" class="secundario" (click)="abandonar()">
-          {{ 'partida.abandonar' | translate }}
-        </button>
       </div>
     </header>
 
@@ -122,8 +94,12 @@
       (celdaPulsadaAlterna)="jugarConOnda($event)"
     />
 
-    @if (puedeManejarOnda()) {
-      <div class="onda" [class.armado]="ondaDelTurno()?.estado === 'activo'">
+    @if (!partida.terminada && ondaDelTurno() !== null) {
+      <div
+        class="onda"
+        [class.armado]="ondaDelTurno()?.estado === 'activo'"
+        [class.hueco]="!puedeManejarOnda()"
+      >
         <button
           type="button"
           class="boton-onda"
@@ -166,7 +142,7 @@
         <span class="error">{{ 'error.' + codigo | translate }}</span>
       } @else if (ultimoSuceso(); as suceso) {
         {{
-          'partida.evento.' + suceso.codigo
+          claveDeSuceso(suceso)
             | translate
               : {
                   jugador:
@@ -176,6 +152,39 @@
         }}
       }
     </p>
+
+    @if (!partida.terminada) {
+      <div class="acciones-partida">
+        @if (puedeRendirse()) {
+          @if (confirmandoRendicion()) {
+            <span class="confirmar">
+              <span class="pregunta">{{ 'partida.rendirse.seguro' | translate }}</span>
+              <button type="button" class="peligro" (click)="confirmarRendicion()">
+                {{ 'partida.rendirse.si' | translate }}
+              </button>
+              <button type="button" class="secundario" (click)="cancelarRendicion()">
+                {{ 'partida.rendirse.no' | translate }}
+              </button>
+            </span>
+          } @else {
+            <button
+              type="button"
+              class="secundario"
+              [attr.title]="'partida.rendirse.ayuda' | translate"
+              (click)="pedirRendicion()"
+            >
+              {{ 'partida.rendirse.boton' | translate }}
+            </button>
+          }
+        }
+
+        @if (puedeAbandonar()) {
+          <button type="button" class="secundario" (click)="abandonar()">
+            {{ 'partida.abandonar' | translate }}
+          </button>
+        }
+      </div>
+    }
 
     @if (partida.terminada) {
       <div class="fin">
@@ -196,7 +205,12 @@
 
         @if (partida.minasRestantes > 0) {
           <p class="detalle">
-            {{ 'partida.fin.ultimo_en_pie' | translate: { minas: partida.minasRestantes } }}
+            {{
+              (partida.minasRestantes === 1
+                ? 'partida.fin.ultimo_en_pie_una'
+                : 'partida.fin.ultimo_en_pie'
+              ) | translate: { minas: partida.minasRestantes }
+            }}
           </p>
         }
 
@@ -239,6 +253,28 @@
             </button>
           </div>
         }
+      </div>
+    }
+
+    @if (confirmandoSalida()) {
+      <div
+        class="velo"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'partida.salir.titulo' | translate"
+      >
+        <div class="dialogo">
+          <p class="pregunta">{{ 'partida.salir.pregunta' | translate }}</p>
+          <p class="detalle">{{ 'partida.salir.aviso' | translate }}</p>
+          <div class="acciones">
+            <button type="button" class="peligro" (click)="confirmarSalida()">
+              {{ 'partida.salir.si' | translate }}
+            </button>
+            <button type="button" class="principal" (click)="cancelarSalida()">
+              {{ 'partida.salir.no' | translate }}
+            </button>
+          </div>
+        </div>
       </div>
     }
   </section>

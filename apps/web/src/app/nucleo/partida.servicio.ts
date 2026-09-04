@@ -131,6 +131,30 @@ export class ServicioPartida {
     return !estado.terminada && this.jugadoresActivos().every((jugador) => this.esBot(jugador.id));
   });
 
+  /**
+   * Humano que puede tirar la toalla ahora mismo, o null si no hay ninguno.
+   *
+   * Normalmente es quien tiene el turno. Con un unico humano en la mesa es el
+   * siempre, tambien mientras juega un bot: si no, una racha larga del rival
+   * lo dejaria sin poder rendirse justo cuando mas ganas tiene. Con varios
+   * humanos hay que esperar al turno propio, porque rendir al que no toca
+   * seria rendir a otra persona.
+   */
+  readonly humanoQuePuedeRendirse = computed(() => {
+    const estado = this.estadoInterno();
+    const configuracion = this.configuracionInterna();
+    if (estado === null || configuracion === null || estado.terminada) {
+      return null;
+    }
+    if (!this.esBot(estado.turnoDe)) {
+      return estado.turnoDe;
+    }
+    if (configuracion.numHumanos !== 1) {
+      return null;
+    }
+    return estado.jugadores[0]?.rendido === true ? null : 0;
+  });
+
   /** Parte del turno que queda, de 1 a 0, para pintar la barra. */
   readonly fraccionDeTurno = computed(() => {
     const estado = this.estadoInterno();
@@ -198,17 +222,26 @@ export class ServicioPartida {
   }
 
   /**
-   * El jugador de turno tira la toalla: sale de la partida y se queda solo
-   * mirando. Si con eso queda un unico jugador en pie, la partida se acaba y
-   * ese gana.
+   * El jugador tira la toalla: sale de la partida y se queda solo mirando. Si
+   * con eso queda un unico jugador en pie, la partida se acaba y ese gana.
+   *
+   * Sin argumento se rinde `humanoQuePuedeRendirse()`, que es lo que hace el
+   * boton. El id explicito rinde un puesto concreto, bots incluidos.
    */
-  rendirse(): boolean {
+  rendirse(idJugador: number | null = this.humanoQuePuedeRendirse()): boolean {
     const estado = this.estadoInterno();
     if (this.motor === null || estado === null) {
       return false;
     }
+    if (idJugador === null) {
+      // No hay a quien rendir: o la partida acabo, o le toca a otro humano.
+      if (estado.terminada) {
+        this.errorInterno.set('PARTIDA_TERMINADA');
+      }
+      return false;
+    }
 
-    const jugador = estado.turnoDe;
+    const jugador = idJugador;
     try {
       this.motor.rendirse(jugador);
       this.sucesoInterno.set({ codigo: 'JUGADOR_RENDIDO', jugador, celdas: 0 });

@@ -36,4 +36,27 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", roboto, sans-serif;
   color: var(--mh-texto);
   background: var(--mh-fondo);
+
+  /* Android (Fase 5): el WebView pinta de borde a borde, asi que el hueco de
+     la muesca y el de la barra de gestos los deja el propio documento. */
+  padding:
+    env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+    env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+
+  /* Nada de rebote ni de "tirar para recargar": esto es un juego, no una web. */
+  overscroll-behavior: none;
+}
+
+/* En un juego de clics, seleccionar texto sin querer solo estorba; los numeros
+   del tablero se seleccionaban al pulsar rapido. El texto largo de la ayuda si
+   se deja copiar. */
+body,
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.regla p {
+  user-select: text;
 }
