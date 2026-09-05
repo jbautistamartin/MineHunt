@@ -6,7 +6,32 @@
  * Fase 3: onda expansiva con recarga, turno que se conserva al encontrar mina,
  * reloj de turno opcional y rendicion.
  * Fase 4: tabla de niveles del Modo Historia y logica de progreso.
+ * Fase 6: el protocolo con el que cliente y servidor se hablan en las partidas
+ * online, que vive aqui por ser el vocabulario comun de los dos.
  */
+
+export {
+  MENSAJES_DEL_CLIENTE,
+  MENSAJES_DEL_SERVIDOR,
+  VERSION_PROTOCOLO,
+  versionesCompatibles,
+  type CodigoErrorProtocolo,
+  type CodigoErrorSala,
+  type ConfiguracionSala,
+  type Entrada,
+  type EstadoSala,
+  type PeticionClic,
+  type PeticionConVersion,
+  type PeticionCrearSala,
+  type PeticionOnda,
+  type PeticionReconectar,
+  type PeticionUnirse,
+  type PuestoSala,
+  type Reentrada,
+  type Resultado,
+  type SucesoPartida,
+  type VistaSala,
+} from './red/protocolo.js';
 
 export {
   celdasOcultas,
@@ -63,8 +88,9 @@ export {
   type ResultadoClic,
 } from './tipos.js';
 
-/** Version del motor, util para comprobar que cliente y servidor comparten la misma. */
-export const VERSION_MOTOR = '0.6.0';
+import { VERSION_MOTOR } from './version.js';
+
+export { VERSION_MOTOR } from './version.js';
 
 /**
  * Saludo de comprobacion: confirma que el paquete compila, se exporta y se

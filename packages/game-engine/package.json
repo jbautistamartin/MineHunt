@@ -1,6 +1,6 @@
 {
   "name": "@minehunt/game-engine",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Motor de juego de MineHunt: logica pura en TypeScript, sin Angular ni DOM",
   "license": "UNLICENSED",
   "type": "module",

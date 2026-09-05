@@ -4,7 +4,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 a 5 completadas.** El monorepo compila, tipa y pasa 213 pruebas. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`. Pendientes: el servidor (Fases 6-7), el pulido (Fase 8) y la publicación en Google Play (Fase 9, separada del pulido a petición del usuario).
+**Fases 0 a 6 completadas.** El monorepo compila, tipa y pasa 240 pruebas, más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; y el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae. Pendientes: el cliente del Multijugador Online (Fase 7), el pulido (Fase 8), el despliegue del servidor con Docker (Fase 9) y la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
 
 Se trabaja **directamente sobre `develop`**, sin abrir ramas `feature/`.
 
@@ -188,6 +188,21 @@ Los ajustes de interfaz para el móvil viven donde toca y no en un CSS aparte: e
 
 Queda un caso sin cubrir: en el marcador, la etiqueta «rendido» puede hacer crecer una línea la ficha del que se rinde y empujar el tablero. Solo pasa con tres o cuatro jugadores —a dos, rendirse acaba la partida— y una sola vez por rendición.
 
+## El servidor (Fase 6)
+
+`apps/server/src/salas/` tiene el multijugador online. **`documentos/MineHunt-servidor.md` es el documento de referencia** —protocolo completo, decisiones y lo que necesitará la Fase 7—; aquí solo lo que hay que tener presente al tocar código.
+
+- **El servidor es la autoridad.** Dentro de cada sala hay un `MotorJuego` de verdad, el mismo paquete que usa el cliente. Los clientes mandan intenciones y reciben el estado que salga; nadie juega fuera de su turno porque el servidor comprueba de quién es, y nadie ve una mina antes de tiempo porque el estado que se manda es el que el motor deja ver a cualquiera.
+- **`Sala` no sabe nada de Socket.IO ni de Nest**, y así se queda: recibe llamadas y devuelve `Resultado<T>`, lo que permite probar las reglas enteras sin levantar un servidor. La pasarela solo conecta cables y difunde.
+- **Las respuestas van por el acuse de recibo** de Socket.IO, no por un mensaje aparte, y siempre con la misma forma: `{ ok: true, datos }` o `{ ok: false, error }`.
+- **Ni un texto traducido sale de aquí**, igual que manda la convención 3: códigos de suceso y de error, y datos crudos. Las claves con las que el cliente los traduce son las mismas del Modo Entrenamiento.
+- **El reloj y el azar se inyectan** (`RELOJ` y `AZAR`, en `salas/dependencias.ts`), por lo mismo que en el motor. Ojo: **el código de sala usa el azar del sistema y no el inyectado**, porque las pruebas fijan el suyo en una constante y todas las salas pedirían el mismo código.
+- **El motor sigue sin temporizadores propios.** La pasarela repasa las salas cada 250 ms y les pregunta por el reloj del turno; ese mismo repaso hace jugar a los bots sustitutos y recoge las salas vacías. No metas un `setInterval` dentro de `Sala` ni del motor.
+- **Quien entra dice con qué versión viene** y si no encaja se queda fuera (`VERSION_INCOMPATIBLE`). Se comparan `major.minor` de `VERSION_PROTOCOLO`, que es `VERSION_MOTOR`: **si tocas el protocolo, sube la minor del motor**, o un cliente viejo entrará creyendo que se entiende.
+- **La pasarela valida lo que entra** antes de pasarlo a la sala (`PETICION_INVALIDA`). No es paranoia: sin eso, una coordenada que no es un entero revienta dentro del manejador y quien preguntó se queda esperando un acuse de recibo que no llega. Si añades un mensaje, valida su carga.
+- Terminada la partida, `volver-al-lobby` deja la sala lista para otra y **echa a los que no volvieron**, o la siguiente empezaría con puestos fantasma a los que un bot juega desde el primer turno.
+- Las pruebas e2e (`npm run probar:e2e --workspace @minehunt/server`) levantan la aplicación y juegan partidas completas de 2, 3 y 4 jugadores con clientes de `socket.io-client` de verdad. **No van en `npm run verificar`**, que solo lanza las unitarias.
+
 ## El botón de atrás del teléfono
 
 `ServicioBotonAtras` (`nucleo/atras.servicio.ts`) decide a dónde lleva, y se engancha una sola vez desde el componente raíz. Hay que decidirlo a mano: por defecto Capacitor tira del historial del WebView, donde están todas las idas y venidas entre el mapa de niveles y la partida, así que «atrás» acababa en pantallas que no tenían nada que ver con lo que el jugador estaba mirando.
@@ -226,7 +241,7 @@ Buscaminas **invertido**: el objetivo es *encontrar* minas, no evitarlas. Multij
 
 Monorepo con npm workspaces (o pnpm):
 
-- `packages/game-engine` — librería TypeScript **pura**: sin Angular, sin DOM, sin dependencias de runtime del navegador. Contiene generación de tablero, revelado y cascada, cálculo de adyacencias, turnos, marcador, ítem de despeje, módulo de IA y la tabla declarativa de niveles del Modo Historia.
+- `packages/game-engine` — librería TypeScript **pura**: sin Angular, sin DOM, sin dependencias de runtime del navegador. Contiene generación de tablero, revelado y cascada, cálculo de adyacencias, turnos, marcador, ítem de despeje, módulo de IA y la tabla declarativa de niveles del Modo Historia. En `src/red/protocolo.ts` está además **el contrato del multijugador online** (nombres de los mensajes y forma de los datos): ahí no hay reglas ni nada que se ejecute, y vive aquí porque es el vocabulario común de cliente y servidor, igual que `CodigoSuceso`. Lo importan los dos desde `@minehunt/game-engine`; ni se redeclara en la web ni se saca a un cuarto paquete.
 - `apps/web` — Angular 18+ con standalone components; consume `game-engine` como dependencia de workspace. Se empaqueta a Android con Capacitor (Fase 5).
 - `apps/server` — NestJS + Socket.IO; consume **la misma** `game-engine` como fuente de verdad autoritativa (valida cada clic y difunde el estado).
 

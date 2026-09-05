@@ -95,7 +95,7 @@ claves. Para publicar en Google Play hace falta crear uno (`keytool -genkey`) y
 declararlo; Capacitor lo lee de `capacitor.config.ts`, en
 `android.buildOptions`, o se configura en `android/app/build.gradle`. **La
 clave no se guarda en el repositorio**: va fuera, y en la máquina que compile.
-Esto es de la Fase 9 (publicación en Google Play), aquí solo queda apuntado.
+Esto es de la Fase 10 (publicación en Google Play), aquí solo queda apuntado.
 
 ## Iconos y pantalla de arranque
 
@@ -219,5 +219,5 @@ En el navegador no se engancha nada: el atrás es el del navegador y ya funciona
 ## Lo que todavía no está
 
 De la Fase 8 (pulido): los recursos finales en todas las densidades de `mipmap`
-y el `manifest.json` de PWA en los dos idiomas. De la Fase 9 (publicación en
+y el `manifest.json` de PWA en los dos idiomas. De la Fase 10 (publicación en
 Google Play): la firma de subida, el AAB de release y la ficha de la tienda.

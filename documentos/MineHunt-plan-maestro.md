@@ -192,6 +192,17 @@ componentes visuales ya creados en Modo Entrenamiento. Traduce cada código de e
 recibido del servidor (ej. "MINA_ENCONTRADA") a un texto legible según el idioma
 activo del cliente, usando las mismas claves de es.json/en.json. Maneja estados de
 desconexión/reconexión en la UI.
+
+Añade socket.io-client a /apps/web e importa el protocolo de @minehunt/game-engine,
+que ya lo exporta: no lo redeclares. La URL del servidor vive en nucleo/servidor.ts
+con un valor por defecto, como VERSION_APP, y se puede sobrescribir con un ajuste
+guardado en localStorage y validado entero al leerlo, igual que los ajustes del
+Entrenamiento y el progreso de Historia; ese campo hace falta de verdad, porque para
+jugar desde el móvil hay que apuntar a la IP del PC en la red local y sin él habría
+que recompilar el APK cada vez. Guarda también la credencial que devuelve el servidor
+al entrar en la sala: es lo único que recupera el puesto si se cae la conexión. Para
+probar contra un servidor local desde Android hace falta permitir tráfico en claro,
+solo en la compilación de depuración.
 ```
 
 ### Fase 8 — Pulido
@@ -201,10 +212,29 @@ estadísticas por jugador, y prepara los assets finales de icono y splash screen
 todas las resoluciones necesarias para Android (mipmap) y PWA/web (manifest.json en
 ambos idiomas, con "name"/"description" según el idioma detectado). Revisa que no
 quede ningún texto hardcodeado sin pasar por ngx-translate. Documenta el proceso de
-build de producción y el despliegue del servidor (Docker + variables de entorno).
+build de producción del cliente.
 ```
 
-### Fase 9 — Publicación en Google Play
+### Fase 9 — Despliegue del servidor
+```
+Pon el servidor en producción. Empaqueta /apps/server en una imagen Docker por etapas
+que compile primero game-engine y deje en la imagen final solo lo necesario para
+ejecutar, con un usuario sin privilegios. En esa misma imagen va el ng build del
+cliente, servido por el propio Nest: un despliegue, un dominio y un certificado, y la
+versión de navegador queda en el mismo origen que el WebSocket. Los orígenes
+permitidos siguen haciendo falta igual, porque la app de Android no descarga la web
+—lleva el bundle dentro del APK— y nunca va a estar en el mismo origen. Saca a variables de entorno lo que hoy está
+fijo en el código: el puerto y los orígenes que acepta el CORS de la pasarela, que
+ahora admite cualquiera. Añade un docker-compose para levantarlo en local igual que
+en el servidor de verdad, una comprobación de salud que use la ruta que ya responde,
+y política de reinicio. Ponlo detrás de un proxy inverso con HTTPS: el cliente se
+sirve por https y el WebView de Android bloquea el tráfico en claro, así que las
+partidas online tienen que ir por wss. Documenta el despliegue, las variables y cómo
+se recupera el servicio, y comprueba que un cliente de verdad juega una partida
+completa contra el servidor desplegado.
+```
+
+### Fase 10 — Publicación en Google Play
 ```
 Deja el juego publicado. Genera el AAB de release firmado con una clave de subida
 propia (guardada fuera del repositorio, con su documentación de dónde vive y cómo se
@@ -511,19 +541,87 @@ cuántas columnas tiene el tablero y el CSS reparte entre ellas el ancho de la
 ventana, con un tope para que en el escritorio no salgan celdas enormes. El
 tablero entra siempre, sea cual sea el nivel.
 
-### La publicación es su propia fase (posterior a la Fase 5)
+### El protocolo del servidor: acuses de recibo y credencial (Fase 6)
 
-La Fase 8 del plan mezclaba dos trabajos que no se parecen en nada: pulir el juego
-(sonidos, animaciones, estadísticas, assets, repaso de textos) y publicarlo en Google
-Play. El pulido es código y se prueba con las herramientas de siempre; la publicación
-es una firma que no se puede perder, una ficha de tienda en dos idiomas, capturas,
-formularios de la consola y un canal de pruebas antes de producción, y nada de eso se
-verifica con `npm run verificar`.
+El plan pedía que el servidor emitiera códigos de evento, y eso se cumple, pero
+no decía cómo se contesta a una petición. Se hace por el **acuse de recibo** de
+Socket.IO y no por un mensaje aparte: quien pide jugar sabe en el momento si le
+salió bien, sin tener que deducirlo de lo que se difunde a toda la sala. Todas
+las respuestas tienen la misma forma, `{ ok: true, datos }` o
+`{ ok: false, error }`, con el error siempre en código.
 
-Separadas, la Fase 8 termina cuando el juego está terminado y la 9 cuando está en la
-tienda, que es la única forma de que ninguna de las dos arrastre a la otra. El
-despliegue del servidor se queda en la 8, con el resto del build de producción: es
-infraestructura del proyecto, no del escaparate.
+Cada jugador recibe al entrar una **credencial** que le devuelve su puesto si se
+le cae la conexión. No viaja en cada mensaje: el servidor la ata al socket al
+entrar, así que nadie puede jugar por otro aunque se la sepa. Solo se manda otra
+vez al reconectar, que es cuando hay que demostrar quién eres desde un socket
+nuevo.
+
+El detalle completo está en `documentos/MineHunt-servidor.md`, que es lo que hay
+que leer antes de empezar la Fase 7.
+
+### El protocolo vive en el motor (Fase 6)
+
+Cliente y servidor tienen que estar de acuerdo en cómo se llaman los mensajes y
+en qué va dentro de cada uno. Había tres sitios donde poner eso, y cada uno
+tenía su pega: en `apps/server` obliga al cliente a redeclararlo, que es la
+única de las tres opciones que puede desincronizarse en silencio; en un cuarto
+workspace hay que duplicar toda la fontanería del monorepo (build, tsconfig,
+enlaces, los scripts y los `.cmd` que hablan de «los tres paquetes») para un
+fichero de declaraciones; y en el motor chirría un poco, porque el motor es
+lógica de juego pura y `crear-sala` no lo es.
+
+Está en el motor, en `src/red/protocolo.ts`. Pesa más el hecho de que **el motor
+ya era el sitio del vocabulario común**: `CodigoSuceso` y `CodigoError` viven
+ahí desde la Fase 3 exactamente por esto, con el comentario que lo dice. El
+protocolo son tipos y unas cadenas constantes, sin Socket.IO, sin Nest y sin
+nada que se ejecute, así que no compromete la pureza que importa (ni DOM, ni
+framework, ni dependencias de runtime), y los dos lados ya dependen del paquete.
+
+Con eso, `VERSION_MOTOR` pasa a **0.7.0** y deja de ser decorativa: era «útil
+para comprobar que cliente y servidor comparten la misma», y ahora se comprueba
+de verdad. Quien entra en una sala dice con qué versión viene y, si no encaja
+con la del servidor, no entra: el cliente puede ser un APK instalado hace meses,
+y dejarles hablar creyendo que se entienden da partidas a medias, que el jugador
+vive como un fallo del juego en lugar de como lo que es. Se comparan
+`major.minor`, porque un parche no cambia lo que va por el cable.
+
+### Una sola imagen, y dónde vive la URL del servidor (Fases 7 y 9)
+
+**Web y servidor van juntos en la misma imagen**, con Nest sirviendo los estáticos del
+cliente. Separarlos es más limpio de manual, pero aquí solo añade piezas: dos
+despliegues, dos dominios y dos certificados para un juego cuyas salas viven en
+memoria. Ese último detalle es el que decide: acoplar los ciclos de vida se paga con
+que actualizar la web reinicie el servidor de partidas, y un reinicio se lleva las
+salas de todas formas, junte o no las dos cosas.
+
+Lo que no arregla juntarlos es el CORS: **la app de Android no descarga la web**, lleva
+el bundle dentro del APK, así que el móvil nunca está en el mismo origen que el
+servidor. Los orígenes permitidos hacen falta igual.
+
+**La URL del servidor vive en `nucleo/servidor.ts`**, con un valor por defecto, como ya
+hace `VERSION_APP`; y se puede cambiar con un ajuste guardado en localStorage y
+validado entero al leerlo, como los ajustes del Entrenamiento y el progreso de
+Historia. Ese campo no es un lujo: para jugar desde el móvil hay que apuntar a la IP
+del PC en la red local, que cambia sola, y sin él tocaría recompilar el APK cada vez.
+En navegador el valor por defecto puede ser el propio origen, que es justo lo que la
+imagen única deja servido.
+
+### El final del plan se parte en tres (posterior a la Fase 5)
+
+La Fase 8 del plan metía en un mismo saco tres trabajos que no se parecen en nada:
+pulir el juego (sonidos, animaciones, estadísticas, assets, repaso de textos), poner
+el servidor en producción y publicar en Google Play. El pulido es código y se prueba
+con las herramientas de siempre; el despliegue es infraestructura, con su Docker, sus
+variables de entorno y su HTTPS; y la publicación es una firma que no se puede
+perder, una ficha de tienda en dos idiomas, capturas, formularios de la consola y un
+canal de pruebas antes de producción. De esas tres, solo la primera la verifica
+`npm run verificar`.
+
+Quedan como **Fase 8 (pulido)**, **Fase 9 (despliegue del servidor)** y **Fase 10
+(publicación en Google Play)**, en ese orden y por dependencia real: el juego tiene
+que estar terminado antes de subirlo a ninguna parte, y el servidor tiene que estar
+en pie y accesible por `wss` antes de publicar una aplicación cuyo modo online
+apunte a él. Separadas, ninguna arrastra a las otras cuando una se atasca.
 
 ### El idioma se pregunta dos veces en Android (Fase 5)
 
