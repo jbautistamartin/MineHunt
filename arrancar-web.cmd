@@ -9,6 +9,7 @@ rem  Catalogo completo (todos estos .cmd estan en la raiz del repo):
 rem
 rem    arrancar-web.cmd       La app Angular en modo desarrollo, con navegador.
 rem    arrancar-servidor.cmd  El servidor NestJS con recarga en caliente.
+rem    arrancar-online.cmd    Servidor + web a la vez, para el multijugador.
 rem    verificar.cmd          Compilar + tipos + pruebas de los tres paquetes.
 rem    compilar.cmd           Solo compilar los tres paquetes.
 rem    verificar-tipos.cmd    Solo comprobar tipos, sin generar nada.
@@ -79,9 +80,9 @@ echo  PUERTO
 echo    Por defecto el 4200. Se puede pasar otro:  arrancar-web.cmd 4300
 echo    Util si el 4200 se quedo ocupado por un arranque anterior.
 echo.
-echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, verificar, compilar,
-echo  verificar-tipos, probar, probar-motor, probar-web, probar-servidor,
-echo  android-apk, android-abrir y limpiar.
+echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, arrancar-online,
+echo  verificar, compilar, verificar-tipos, probar, probar-motor, probar-web,
+echo  probar-servidor, android-apk, android-abrir y limpiar.
 echo ======================================================================
 echo.
 goto :eof

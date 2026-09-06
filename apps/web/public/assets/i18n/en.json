@@ -18,8 +18,7 @@
     },
     "online": {
       "titulo": "Online multiplayer",
-      "texto": "Open a room and play with anyone, each on their own screen.",
-      "proximamente": "Coming soon"
+      "texto": "Open a room and play with anyone, each on their own screen."
     },
     "ayuda": {
       "titulo": "How to play",
@@ -194,6 +193,67 @@
       "no": "Leave it as it is"
     }
   },
+  "online": {
+    "titulo": "Online multiplayer",
+    "lema": "One room, one code, up to four players.",
+    "nombre": "Your name",
+    "crear": "Create a room",
+    "codigo": "Room code",
+    "unirse": "Join",
+    "volver": "Back to my room",
+    "menu": "Back to the menu",
+    "salir": "Leave the room",
+    "tu": "you",
+    "tu_turno": "Your turn!",
+    "esperando_turno": "Waiting for the other player…",
+    "sustituido": "played by a bot",
+    "caido": "No connection to the server. Retrying…",
+    "otra": "Play again",
+    "espera_otra": "The host decides whether to play again.",
+    "sala": {
+      "codigo": "Room code",
+      "comparte": "Give it to whoever you want to play with.",
+      "jugadores": "Players in the room",
+      "anfitrion": "host",
+      "ausente": "offline",
+      "ajustes": "{{ancho}} × {{alto}} board with {{minas}} mines",
+      "empezar": "Start the game",
+      "faltan": "At least two players are needed.",
+      "esperando": "Waiting for the host to start…"
+    },
+    "servidor": {
+      "boton": "Change server",
+      "ayuda": "To play from your phone against your computer, put its address on the local network here (for example http://192.168.1.20:3000).",
+      "guardar": "Save",
+      "restablecer": "Default"
+    },
+    "copiar": "Copy code",
+    "copiado": "Copied!",
+    "sin_servidor": "Cannot reach the server. Check that it is running, or change it below.",
+    "compartir": {
+      "boton": "Share",
+      "titulo": "MineHunt game",
+      "texto": "Play MineHunt with me: join room {{codigo}}."
+    },
+    "abiertas": {
+      "titulo": "Rooms waiting for players",
+      "actualizar": "Refresh",
+      "ninguna": "None right now. Create one and pass the code around.",
+      "detalle": "{{anfitrion}}'s · {{jugadores}} of {{maximo}}",
+      "con_bots": "· {{bots}} bot(s)"
+    },
+    "ajustes": {
+      "boton": "Room settings",
+      "publica": "Public room",
+      "publica_ayuda": "It will be listed so anyone can join.",
+      "privada_ayuda": "Not listed: only people with the code get in.",
+      "bots": "Bots at the table",
+      "sin_bots": "None: only the people who join will play.",
+      "anadir_bot": "Add a bot",
+      "quitar": "Remove"
+    },
+    "bot": "bot"
+  },
   "ayuda": {
     "titulo": "How to play",
     "intro": "The rules of MineHunt, exactly as the game applies them right now.",
@@ -241,6 +301,18 @@
     "DESCONOCIDO": "Something went wrong.",
     "SIN_JUGADAS": "There are no cells left to uncover.",
     "ONDA_NO_DISPONIBLE": "The shockwave is not ready yet.",
-    "YA_RENDIDO": "That player had already surrendered."
+    "YA_RENDIDO": "That player had already surrendered.",
+    "SALA_NO_ENCONTRADA": "There is no room with that code.",
+    "SALA_LLENA": "That room is already full.",
+    "SALA_EN_JUEGO": "The game has already started.",
+    "SALA_EN_LOBBY": "The game has not started yet.",
+    "NO_ES_EL_ANFITRION": "Only the host can do that.",
+    "NO_ES_TU_TURNO": "It is not your turn.",
+    "JUGADOR_DESCONOCIDO": "You are no longer in that room.",
+    "FALTAN_JUGADORES": "At least two players are needed.",
+    "CONFIGURACION_INVALIDA": "Those settings do not make a playable board.",
+    "NOMBRE_INVALIDO": "That name is not valid: use between 1 and 16 characters.",
+    "PETICION_INVALIDA": "The server did not understand the request.",
+    "VERSION_INCOMPATIBLE": "Your version of the game is not compatible with the server. Update the app."
   }
 }

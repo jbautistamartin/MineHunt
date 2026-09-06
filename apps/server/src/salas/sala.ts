@@ -12,6 +12,7 @@ import {
   type NivelIA,
   type PuestoSala,
   type Resultado,
+  type SalaAbierta,
   type SucesoPartida,
   type VistaSala,
 } from '@minehunt/game-engine';
@@ -23,8 +24,8 @@ import {
  */
 const GRACIA_ANTES_DEL_SUSTITUTO_MS = 3000;
 
-/** Lo que tarda el bot sustituto entre jugada y jugada, para poder seguirle. */
-const RITMO_DEL_SUSTITUTO_MS = 700;
+/** Lo que tarda un bot entre jugada y jugada, para poder seguirle. */
+const RITMO_DEL_BOT_MS = 700;
 
 /**
  * Nivel del bot que sustituye a quien se cae: medio a proposito.
@@ -47,15 +48,47 @@ export const CONFIGURACION_POR_DEFECTO: ConfiguracionSala = {
   minas: 12,
   tiempoPorTurnoSegundos: 20,
   recargaOndaSegundos: 30,
+  publica: true,
+  nivelesIA: [],
 };
 
-/** Un jugador de la sala, con lo que el servidor necesita saber de el. */
+/**
+ * Un puesto de la sala: una persona o un bot.
+ *
+ * Los bots no tienen credencial —no hay nadie a quien devolverle el puesto— y
+ * se sientan siempre **detras de los humanos**, para que los ids que ve el
+ * motor sigan siendo correlativos cuando entra alguien nuevo.
+ */
 interface Puesto {
   nombre: string;
-  /** Credencial con la que recupera su puesto si se cae. */
-  readonly token: string;
+  /** Credencial con la que recupera su puesto si se cae; null en los bots. */
+  readonly token: string | null;
   conectado: boolean;
   sustituido: boolean;
+  /** Nivel del bot que ocupa el puesto, o null si es de una persona. */
+  readonly nivelIA: NivelIA | null;
+}
+
+/**
+ * Una sala vista desde fuera de la partida, para el panel del servidor.
+ *
+ * No es lo mismo que `SalaAbierta`: aquella es lo que se le ofrece a un
+ * jugador que busca sitio —y por eso deja fuera las privadas y las que ya
+ * empezaron—, y esto es lo que necesita quien mira como va el servidor, que
+ * son justo todas.
+ */
+export interface InformeSala {
+  readonly codigo: string;
+  /** Quien la abrio; una sala no tiene mas nombre que ese. */
+  readonly anfitrion: string;
+  readonly estado: EstadoSala;
+  readonly publica: boolean;
+  readonly jugadores: number;
+  readonly bots: number;
+  /** Personas que siguen ahi; los bots no cuentan. */
+  readonly conectados: number;
+  readonly maximo: number;
+  readonly abiertaHaceMs: number;
 }
 
 /**
@@ -84,19 +117,27 @@ export class Sala {
   /** Instante a partir del cual el bot puede jugar por un ausente. */
   private sustitutoJuegaEn: number | null = null;
 
+  /** Cuando se abrio, para poder decir cuanto lleva viva. */
+  private readonly abiertaEn: number;
+
   constructor(
     readonly codigo: string,
     private readonly ahora: () => number,
     private readonly aleatorio: () => number,
-  ) {}
+  ) {
+    this.abiertaEn = ahora();
+  }
 
   get estado(): EstadoSala {
     return this.estadoInterno;
   }
 
-  /** Nadie conectado: la pasarela usa esto para recoger salas muertas. */
+  /**
+   * No queda ninguna persona conectada: la pasarela usa esto para recoger salas
+   * muertas. Los bots no cuentan, que una mesa de bots sola no espera a nadie.
+   */
   get vacia(): boolean {
-    return this.puestos.every((puesto) => !puesto.conectado);
+    return this.puestos.every((puesto) => puesto.nivelIA !== null || !puesto.conectado);
   }
 
   /** La sala tal y como se le ensena a sus jugadores. */
@@ -112,8 +153,60 @@ export class Sala {
           conectado: puesto.conectado,
           anfitrion: id === 0,
           sustituido: puesto.sustituido,
+          bot: puesto.nivelIA !== null,
+          nivel: puesto.nivelIA,
         }),
       ),
+    };
+  }
+
+  /**
+   * Como se ve esta sala en la lista de las que esperan gente, o null si no
+   * pinta nada ahi.
+   *
+   * Solo salen las que estan en el lobby, con sitio y con alguien dentro: una
+   * sala llena, una partida ya empezada o una que se quedo vacia no son sitios
+   * a los que mandar a nadie.
+   */
+  resumen(): SalaAbierta | null {
+    const anfitrion = this.puestos[0];
+    if (
+      !this.configuracionInterna.publica ||
+      this.estadoInterno !== 'lobby' ||
+      anfitrion === undefined ||
+      this.puestos.length >= MAX_JUGADORES ||
+      this.vacia
+    ) {
+      return null;
+    }
+
+    return {
+      codigo: this.codigo,
+      anfitrion: anfitrion.nombre,
+      jugadores: this.puestos.length,
+      maximo: MAX_JUGADORES,
+      bots: this.puestos.filter((puesto) => puesto.nivelIA !== null).length,
+    };
+  }
+
+  /**
+   * Como se ve esta sala desde el panel del servidor.
+   *
+   * Aqui salen todas, tambien las privadas y las que estan jugando: quien mira
+   * el panel es quien lleva el servidor, no alguien buscando partida.
+   */
+  informe(): InformeSala {
+    return {
+      codigo: this.codigo,
+      anfitrion: this.puestos[0]?.nombre ?? '',
+      estado: this.estadoInterno,
+      publica: this.configuracionInterna.publica,
+      jugadores: this.puestos.length,
+      bots: this.puestos.filter((puesto) => puesto.nivelIA !== null).length,
+      conectados: this.puestos.filter((puesto) => puesto.nivelIA === null && puesto.conectado)
+        .length,
+      maximo: MAX_JUGADORES,
+      abiertaHaceMs: this.ahora() - this.abiertaEn,
     };
   }
 
@@ -136,8 +229,23 @@ export class Sala {
       return { ok: false, error: 'NOMBRE_INVALIDO' };
     }
 
-    this.puestos.push({ nombre: limpio, token: randomUUID(), conectado: true, sustituido: false });
-    return { ok: true, datos: this.puestos.length - 1 };
+    // Delante de los bots, que van siempre al final.
+    const sitio = this.puestos.findIndex((puesto) => puesto.nivelIA !== null);
+    const suyo: Puesto = {
+      nombre: limpio,
+      token: randomUUID(),
+      conectado: true,
+      sustituido: false,
+      nivelIA: null,
+    };
+
+    if (sitio === -1) {
+      this.puestos.push(suyo);
+      return { ok: true, datos: this.puestos.length - 1 };
+    }
+
+    this.puestos.splice(sitio, 0, suyo);
+    return { ok: true, datos: sitio };
   }
 
   /** Credencial del puesto, para devolversela a quien acaba de entrar. */
@@ -200,8 +308,12 @@ export class Sala {
     if (!esConfiguracionValida(configuracion)) {
       return { ok: false, error: 'CONFIGURACION_INVALIDA' };
     }
+    if (this.humanos().length + configuracion.nivelesIA.length > MAX_JUGADORES) {
+      return { ok: false, error: 'SALA_LLENA' };
+    }
 
     this.configuracionInterna = configuracion;
+    this.sentarBots();
     return { ok: true, datos: null };
   }
 
@@ -211,6 +323,8 @@ export class Sala {
     if (problema !== null) {
       return problema;
     }
+    // Los bots cuentan: con un humano y un bot ya hay partida, que es la
+    // gracia de poder meterlos.
     if (this.puestos.length < MIN_JUGADORES) {
       return { ok: false, error: 'FALTAN_JUGADORES' };
     }
@@ -262,7 +376,9 @@ export class Sala {
     }
 
     for (let indice = this.puestos.length - 1; indice >= 0; indice -= 1) {
-      if (this.puestos[indice]?.conectado !== true) {
+      const puesto = this.puestos[indice];
+      // Los bots no se van: los puso el anfitrion y siguen puestos.
+      if (puesto !== undefined && puesto.nivelIA === null && !puesto.conectado) {
         this.puestos.splice(indice, 1);
       }
     }
@@ -346,7 +462,7 @@ export class Sala {
       this.sustitutoJuegaEn = null;
     }
 
-    const jugada = this.turnoDelSustituto();
+    const jugada = this.turnoAutomatico();
     if (jugada !== null) {
       sucesos.push(jugada);
     }
@@ -356,35 +472,43 @@ export class Sala {
   }
 
   /**
-   * Juega el bot por el ausente, si es que toca.
+   * Juega quien no puede jugar por si mismo: un puesto de bot, o el de alguien
+   * que se ha caido.
    *
-   * Espera un poco antes de la primera jugada por si vuelve, y luego lleva su
-   * propio ritmo: encadenando minas, un bot puede jugar muchas veces seguidas
-   * y a toda velocidad nadie se enteraria de lo que ha pasado.
+   * Al ausente se le espera un poco por si vuelve; al bot no, que esta ahi para
+   * jugar. Los dos llevan luego el mismo ritmo: encadenando minas se juega
+   * muchas veces seguidas, y a toda velocidad nadie se entera de lo que ha
+   * pasado.
    */
-  private turnoDelSustituto(): SucesoPartida | null {
+  private turnoAutomatico(): SucesoPartida | null {
     const estado = this.motor?.obtenerEstado();
     if (estado === undefined || estado.terminada) {
       return null;
     }
 
     const puesto = this.puestos[estado.turnoDe];
-    if (puesto === undefined || puesto.conectado) {
+    if (puesto === undefined) {
+      return null;
+    }
+
+    const esBot = puesto.nivelIA !== null;
+    if (!esBot && puesto.conectado) {
       this.sustitutoJuegaEn = null;
       return null;
     }
 
-    this.sustitutoJuegaEn ??= this.ahora() + GRACIA_ANTES_DEL_SUSTITUTO_MS;
+    this.sustitutoJuegaEn ??=
+      this.ahora() + (esBot ? RITMO_DEL_BOT_MS : GRACIA_ANTES_DEL_SUSTITUTO_MS);
     if (this.ahora() < this.sustitutoJuegaEn) {
       return null;
     }
 
-    puesto.sustituido = true;
-    this.sustitutoJuegaEn = this.ahora() + RITMO_DEL_SUSTITUTO_MS;
+    puesto.sustituido = !esBot;
+    this.sustitutoJuegaEn = this.ahora() + RITMO_DEL_BOT_MS;
 
     const bot =
       this.sustitutos.get(estado.turnoDe) ??
-      new JugadorIA(NIVEL_DEL_SUSTITUTO, { aleatorio: this.aleatorio });
+      new JugadorIA(puesto.nivelIA ?? NIVEL_DEL_SUSTITUTO, { aleatorio: this.aleatorio });
     this.sustitutos.set(estado.turnoDe, bot);
 
     let decision;
@@ -466,6 +590,34 @@ export class Sala {
     return null;
   }
 
+  /** Los puestos que ocupan personas. */
+  private humanos(): readonly Puesto[] {
+    return this.puestos.filter((puesto) => puesto.nivelIA === null);
+  }
+
+  /**
+   * Rehace los puestos de bot para que cuadren con la configuracion.
+   *
+   * Se tiran todos y se vuelven a poner detras de los humanos: es mas simple
+   * que ir emparejando cual sobra y cual falta, y en el lobby no hay nada que
+   * conservar de un bot.
+   */
+  private sentarBots(): void {
+    const humanos = [...this.humanos()];
+    const bots = this.configuracionInterna.nivelesIA.map(
+      (nivel, indice): Puesto => ({
+        nombre: `Bot ${String(indice + 1)}`,
+        token: null,
+        conectado: false,
+        sustituido: false,
+        nivelIA: nivel,
+      }),
+    );
+
+    this.puestos.length = 0;
+    this.puestos.push(...humanos, ...bots);
+  }
+
   private puestoDe(token: string): number | null {
     const puesto = this.puestos.findIndex((candidato) => candidato.token === token);
     return puesto === -1 ? null : puesto;
@@ -476,6 +628,19 @@ export class Sala {
 function esConfiguracionValida(configuracion: ConfiguracionSala): boolean {
   const { ancho, alto, minas, tiempoPorTurnoSegundos, recargaOndaSegundos } = configuracion;
   const enteros = [ancho, alto, minas, tiempoPorTurnoSegundos, recargaOndaSegundos];
+
+  if (typeof configuracion.publica !== 'boolean' || !Array.isArray(configuracion.nivelesIA)) {
+    return false;
+  }
+  // Los bots solos no hacen una sala: siempre hay al menos un humano dentro.
+  if (
+    configuracion.nivelesIA.length > MAX_JUGADORES - 1 ||
+    !configuracion.nivelesIA.every(
+      (nivel) => Number.isInteger(nivel) && nivel >= 1 && nivel <= 5,
+    )
+  ) {
+    return false;
+  }
 
   return (
     enteros.every((valor) => Number.isInteger(valor)) &&

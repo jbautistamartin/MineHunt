@@ -1,3 +1,4 @@
+import type { NivelIA } from '../ia/jugador-ia.js';
 import type { CodigoError, CodigoSuceso, EstadoPartida } from '../tipos.js';
 import { VERSION_MOTOR } from '../version.js';
 
@@ -23,6 +24,8 @@ import { VERSION_MOTOR } from '../version.js';
 
 /** Mensajes que manda el cliente. */
 export const MENSAJES_DEL_CLIENTE = {
+  /** Que salas estan esperando gente, para quien no tiene ningun codigo. */
+  salasAbiertas: 'salas-abiertas',
   crearSala: 'crear-sala',
   unirseASala: 'unirse-a-sala',
   reconectar: 'reconectar',
@@ -46,7 +49,13 @@ export const MENSAJES_DEL_SERVIDOR = {
   suceso: 'suceso',
 } as const;
 
-/** Ajustes con los que el anfitrion monta la partida. */
+/**
+ * Ajustes con los que el anfitrion monta la partida.
+ *
+ * Son los mismos que los del Modo Entrenamiento, y a proposito: quien ya sabe
+ * montar una partida local no tiene que aprender otra cosa para montar una
+ * online.
+ */
 export interface ConfiguracionSala {
   readonly ancho: number;
   readonly alto: number;
@@ -54,6 +63,21 @@ export interface ConfiguracionSala {
   /** Segundos por turno; 0 deja la partida sin reloj. */
   readonly tiempoPorTurnoSegundos: number;
   readonly recargaOndaSegundos: number;
+  /**
+   * La sala sale en la lista de salas abiertas.
+   *
+   * Privada no significa cerrada: se entra igual con el codigo. Lo que cambia
+   * es que no se anuncia, que es lo que hace falta para jugar solo con quien
+   * uno quiere.
+   */
+  readonly publica: boolean;
+  /**
+   * Bots que se sientan a jugar, en orden de asiento y detras de los humanos.
+   *
+   * Es lo que permite empezar sin esperar a nadie, o completar una mesa a la
+   * que le falta gente.
+   */
+  readonly nivelesIA: readonly NivelIA[];
 }
 
 /**
@@ -73,6 +97,10 @@ export interface PuestoSala {
   readonly anfitrion: boolean;
   /** Se cayo y le esta jugando un bot hasta que vuelva. */
   readonly sustituido: boolean;
+  /** El puesto lo ocupa un bot, no una persona. */
+  readonly bot: boolean;
+  /** Nivel del bot, o null si el puesto es de una persona. */
+  readonly nivel: NivelIA | null;
 }
 
 /** La sala tal y como la ven sus jugadores. */
@@ -81,6 +109,21 @@ export interface VistaSala {
   readonly estado: EstadoSala;
   readonly configuracion: ConfiguracionSala;
   readonly puestos: readonly PuestoSala[];
+}
+
+/**
+ * Una sala esperando gente.
+ *
+ * Es lo poco que hace falta para decidir si entrar: quien la abrio y cuanto
+ * sitio queda. No lleva nada de la partida porque todavia no hay ninguna.
+ */
+export interface SalaAbierta {
+  readonly codigo: string;
+  readonly anfitrion: string;
+  readonly jugadores: number;
+  readonly maximo: number;
+  /** Cuantos de esos puestos los llevan bots. */
+  readonly bots: number;
 }
 
 /** Suceso de la partida, en codigo y datos: lo mismo que guarda el cliente. */

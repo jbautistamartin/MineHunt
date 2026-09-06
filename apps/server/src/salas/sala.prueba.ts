@@ -14,6 +14,8 @@ const CONFIGURACION: ConfiguracionSala = {
   minas: 3,
   tiempoPorTurnoSegundos: 0,
   recargaOndaSegundos: 30,
+  publica: true,
+  nivelesIA: [],
 };
 
 /** Sala con reloj y azar de mentira, que es como se puede probar. */
@@ -129,6 +131,175 @@ describe('Sala: lobby', () => {
     ]);
     // El tercero sigue siendo el mismo jugador, ahora en el puesto 1.
     expect(sala.reconectar(tercero ?? '')).toEqual({ ok: true, datos: 1 });
+  });
+});
+
+describe('Sala: bots en la mesa', () => {
+  it('el anfitrion sienta bots y cuentan como jugadores', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 1);
+
+    expect(sala.configurar(anfitrion ?? '', { ...CONFIGURACION, nivelesIA: [3, 5] }).ok).toBe(
+      true,
+    );
+
+    const puestos = sala.vista().puestos;
+    expect(puestos).toHaveLength(3);
+    expect(puestos[0]?.bot).toBe(false);
+    expect(puestos[1]).toMatchObject({ bot: true, nivel: 3 });
+    expect(puestos[2]).toMatchObject({ bot: true, nivel: 5 });
+    // Con un humano y dos bots ya hay partida.
+    expect(sala.empezar(anfitrion ?? '').ok).toBe(true);
+  });
+
+  /** Los ids del motor tienen que ser correlativos y los humanos van delante. */
+  it('quien entra se sienta delante de los bots', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 1);
+    sala.configurar(anfitrion ?? '', { ...CONFIGURACION, nivelesIA: [3] });
+
+    const unido = sala.unirse('Bruno');
+
+    expect(unido).toEqual({ ok: true, datos: 1 });
+    expect(sala.vista().puestos.map((puesto) => puesto.bot)).toEqual([false, false, true]);
+  });
+
+  it('no caben mas de cuatro entre humanos y bots', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 2);
+
+    expect(sala.configurar(anfitrion ?? '', { ...CONFIGURACION, nivelesIA: [3, 3, 3] })).toEqual({
+      ok: false,
+      error: 'SALA_LLENA',
+    });
+  });
+
+  it('rechaza un nivel de bot que no existe', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 1);
+
+    expect(
+      sala.configurar(anfitrion ?? '', {
+        ...CONFIGURACION,
+        nivelesIA: [9 as unknown as 5],
+      }),
+    ).toEqual({ ok: false, error: 'CONFIGURACION_INVALIDA' });
+  });
+
+  it('el bot juega su turno sin que nadie se lo pida', () => {
+    const reloj = { ahora: 0 };
+    const sala = crearSala(reloj);
+    const [anfitrion] = sentar(sala, 1);
+    sala.configurar(anfitrion ?? '', { ...CONFIGURACION, nivelesIA: [3] });
+    sala.empezar(anfitrion ?? '');
+    sala.clic(anfitrion ?? '', 3, 3); // cede el turno al bot
+
+    // Lleva su ritmo: no juega en el mismo instante.
+    expect(sala.atender()).toEqual([]);
+
+    reloj.ahora = 1000;
+    const sucesos = sala.atender();
+
+    expect(sucesos).toHaveLength(1);
+    expect(sucesos[0]?.jugador).toBe(1);
+  });
+
+  it('una sala de un humano y bots no esta vacia cuando el humano esta', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 1);
+    sala.configurar(anfitrion ?? '', { ...CONFIGURACION, nivelesIA: [3] });
+
+    expect(sala.vacia).toBe(false);
+
+    sala.desconectar(anfitrion ?? '');
+    // Con la partida sin empezar el humano se va del todo y solo quedan bots.
+    expect(sala.vacia).toBe(true);
+  });
+});
+
+describe('Sala: la lista de salas abiertas', () => {
+  it('una sala esperando gente sale con quien la abrio y cuantos hay', () => {
+    const sala = crearSala();
+    sentar(sala, 2);
+
+    expect(sala.resumen()).toEqual({
+      codigo: 'PRUE',
+      anfitrion: 'Jugador 1',
+      jugadores: 2,
+      maximo: 4,
+      bots: 0,
+    });
+  });
+
+  /** Privada no es cerrada: se entra con el codigo, pero no se anuncia. */
+  it('una sala privada no sale en la lista', () => {
+    const sala = crearSala();
+    const [anfitrion] = sentar(sala, 2);
+
+    sala.configurar(anfitrion ?? '', { ...CONFIGURACION, publica: false });
+
+    expect(sala.resumen()).toBeNull();
+  });
+
+  /** Mandar a alguien a una sala donde no puede entrar es peor que no verla. */
+  it('no sale si esta llena, jugando o sin nadie dentro', () => {
+    const llena = crearSala();
+    sentar(llena, 4);
+    expect(llena.resumen()).toBeNull();
+
+    const { sala: jugando } = salaJugando();
+    expect(jugando.resumen()).toBeNull();
+
+    const vacia = crearSala();
+    const tokens = sentar(vacia, 2);
+    for (const token of tokens) {
+      vacia.desconectar(token);
+    }
+    expect(vacia.resumen()).toBeNull();
+  });
+});
+
+describe('Sala: el informe del panel', () => {
+  it('cuenta quien la abrio, como va y cuanto lleva abierta', () => {
+    const reloj = { ahora: 1000 };
+    const sala = crearSala(reloj);
+    sentar(sala, 2);
+    reloj.ahora = 61_000;
+
+    const informe = sala.informe();
+
+    expect(informe.codigo).toBe('PRUE');
+    expect(informe.anfitrion).toBe('Jugador 1');
+    expect(informe.estado).toBe('lobby');
+    expect(informe.jugadores).toBe(2);
+    expect(informe.conectados).toBe(2);
+    expect(informe.abiertaHaceMs).toBe(60_000);
+  });
+
+  /** Lo que `resumen()` esconde a los jugadores, el panel si lo ensena. */
+  it('sale tambien si es privada o si ya esta jugando', () => {
+    const { sala, tokens } = salaJugando();
+    expect(sala.configurar(tokens[0] ?? '', { publica: false }).ok).toBe(false);
+
+    const informe = sala.informe();
+
+    expect(sala.resumen()).toBeNull();
+    expect(informe.estado).toBe('jugando');
+    expect(informe.codigo).toBe('PRUE');
+  });
+
+  it('separa los bots de las personas, y a estas de las que se cayeron', () => {
+    const sala = crearSala();
+    const tokens = sentar(sala, 2);
+    expect(sala.configurar(tokens[0] ?? '', { ...CONFIGURACION, nivelesIA: [2] }).ok).toBe(true);
+    expect(sala.empezar(tokens[0] ?? '').ok).toBe(true);
+    sala.desconectar(tokens[1] ?? '');
+
+    const informe = sala.informe();
+
+    expect(informe.jugadores).toBe(3);
+    expect(informe.bots).toBe(1);
+    expect(informe.conectados).toBe(1);
   });
 });
 

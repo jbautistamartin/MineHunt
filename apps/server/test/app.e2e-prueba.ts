@@ -23,8 +23,22 @@ describe('Servidor MineHunt (e2e)', () => {
     await aplicacion.close();
   });
 
-  it('responde en la raiz que el servidor esta operativo', () => {
-    return request(aplicacion.getHttpServer()).get('/').expect(200).expect(/operativo/);
+  it('ensena el panel de salas en la raiz', async () => {
+    const respuesta = await request(aplicacion.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Content-Type', /html/);
+
+    expect(respuesta.text).toContain('MineHunt');
+    expect(respuesta.text).toContain('No hay ninguna sala abierta');
+  });
+
+  /** La que quedara cuando en la Fase 9 la raiz la ocupe la web del juego. */
+  it('el panel tambien responde en /panel, y su lista aparte', async () => {
+    await request(aplicacion.getHttpServer()).get('/panel').expect(200);
+
+    const lista = await request(aplicacion.getHttpServer()).get('/panel/salas').expect(200);
+    expect(lista.text).toContain('salas activas');
   });
 
   it('expone el saludo del motor de juego', () => {

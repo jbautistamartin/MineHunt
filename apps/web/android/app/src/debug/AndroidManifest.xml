@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Solo para la compilacion de depuracion.
+
+  El WebView bloquea el trafico en claro con targetSdk 36, y para probar el
+  Multijugador Online contra el servidor del PC hace falta http:// a una IP de
+  la red local. En la compilacion de publicacion NO se mezcla este fichero, asi
+  que la aplicacion que llega a la tienda sigue exigiendo https.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:usesCleartextTraffic="true" />
+</manifest>

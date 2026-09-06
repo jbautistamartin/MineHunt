@@ -6,11 +6,6 @@ import { ServicioPrincipal } from './app.service.js';
 export class ControladorPrincipal {
   constructor(private readonly servicioPrincipal: ServicioPrincipal) {}
 
-  @Get()
-  obtenerEstado(): string {
-    return this.servicioPrincipal.obtenerEstado();
-  }
-
   @Get('motor')
   obtenerSaludoDelMotor(): string {
     return this.servicioPrincipal.obtenerSaludoDelMotor();

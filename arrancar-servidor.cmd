@@ -9,6 +9,7 @@ rem  Catalogo completo (todos estos .cmd estan en la raiz del repo):
 rem
 rem    arrancar-web.cmd       La app Angular en modo desarrollo, con navegador.
 rem    arrancar-servidor.cmd  El servidor NestJS con recarga en caliente.
+rem    arrancar-online.cmd    Servidor + web a la vez, para el multijugador.
 rem    verificar.cmd          Compilar + tipos + pruebas de los tres paquetes.
 rem    compilar.cmd           Solo compilar los tres paquetes.
 rem    verificar-tipos.cmd    Solo comprobar tipos, sin generar nada.
@@ -63,9 +64,9 @@ echo    Compila el motor y levanta el servidor NestJS con recarga en
 echo    caliente. Se queda corriendo hasta que lo pares con Ctrl+C.
 echo.
 echo  CUANDO USARLO
-echo    Solo hace falta cuando se trabaje el multijugador. Hoy el servidor
-echo    es el esqueleto de la Fase 0: responde, pero no hay partidas en red
-echo    hasta la Fase 6 del plan maestro.
+echo    Solo hace falta para el Multijugador Online: los otros dos modos
+echo    llevan el motor dentro del navegador. Si ademas quieres la web,
+echo    usa arrancar-online.cmd, que levanta las dos cosas.
 echo.
 echo  EQUIVALE A
 echo    npm run compilar --workspace @minehunt/game-engine
@@ -77,9 +78,9 @@ echo    dist/ ya compilado. Por eso este script compila el motor antes de nada:
 echo    si no, se probaria contra la version anterior y los fallos no tendrian
 echo    ningun sentido.
 echo.
-echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, verificar, compilar,
-echo  verificar-tipos, probar, probar-motor, probar-web, probar-servidor,
-echo  android-apk, android-abrir y limpiar.
+echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, arrancar-online,
+echo  verificar, compilar, verificar-tipos, probar, probar-motor, probar-web,
+echo  probar-servidor, android-apk, android-abrir y limpiar.
 echo ======================================================================
 echo.
 goto :eof

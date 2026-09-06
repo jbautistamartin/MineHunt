@@ -6,7 +6,8 @@ import { Routes } from '@angular/router';
  * La raiz es el menu principal: desde ahi se elige modo. La configuracion del
  * Entrenamiento, que antes ocupaba la raiz, vive en /entrenamiento; el mapa de
  * niveles del Modo Historia en /historia, y los dos entran a la misma pantalla
- * de partida. El Multijugador Online (Fase 7) colgara de aqui.
+ * de partida. El Multijugador Online vive en /online, y ahi caben sus tres
+ * momentos —entrar, esperar en el lobby y jugar—, porque son el mismo sitio.
  */
 export const routes: Routes = [
   {
@@ -25,6 +26,10 @@ export const routes: Routes = [
   {
     path: 'historia',
     loadComponent: () => import('./paginas/historia/historia').then((modulo) => modulo.Historia),
+  },
+  {
+    path: 'online',
+    loadComponent: () => import('./paginas/online/online').then((modulo) => modulo.Online),
   },
   {
     path: 'ayuda',

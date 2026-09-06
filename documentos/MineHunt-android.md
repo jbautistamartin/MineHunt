@@ -203,6 +203,26 @@ estaba puesto.
 `empaquetado.prueba.ts` comprueba las dos cosas: son ajustes que solo se notan
 con el teléfono en la mano y que no se ven al revisar un cambio.
 
+## Tráfico en claro, solo en depuración
+
+`android/app/src/debug/AndroidManifest.xml` pone `usesCleartextTraffic="true"`.
+Hace falta para probar el Multijugador Online contra el servidor del PC, que en
+la red local se sirve por `http://` a una IP; con `targetSdk 36` el WebView lo
+bloquea por defecto.
+
+Ese fichero **solo se mezcla en la compilación de depuración**: el APK y el AAB
+de publicación siguen exigiendo `https`, que es lo que tocará en la Fase 9.
+
+**A qué servidor apunta la app instalada:** por defecto, a la IP fija del PC de
+desarrollo (`SERVIDOR_DE_DESARROLLO`, en `apps/web/src/app/nucleo/servidor.ts`),
+hoy `http://192.168.100.101:3000`. Dentro del WebView no sirve `localhost`, que
+ahí es el propio teléfono. Se puede cambiar sin recompilar desde «Cambiar de
+servidor», en la pantalla del Multijugador Online, y lo que se guarde manda sobre
+el valor por defecto. Si el teléfono no conecta, casi siempre es el cortafuegos
+de Windows bloqueando el puerto 3000 en la red privada. Para ver de un vistazo
+que el servidor está ahí, esa misma dirección abierta en el navegador enseña el
+panel de salas.
+
 ## El botón de atrás
 
 Lo reparte `ServicioBotonAtras` (`nucleo/atras.servicio.ts`), que se engancha al

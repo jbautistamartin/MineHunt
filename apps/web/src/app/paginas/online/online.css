@@ -1,0 +1,600 @@
+/*
+ * El Multijugador Online reaprovecha el lenguaje visual de la partida local:
+ * las mismas fichas de marcador, el mismo reloj y los mismos botones. Lo unico
+ * propio de aqui es la entrada a la sala y el lobby.
+ *
+ * Igual que en la pantalla de partida, **nada de lo que hay por encima del
+ * tablero cambia de tamano mientras se juega**: lo que deja de tener sentido
+ * conserva su hueco con `.hueco` en vez de desmontarse.
+ */
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  width: min(60rem, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.hueco {
+  visibility: hidden;
+}
+
+.cabecera {
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.lema,
+.ayuda {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Entrada: nombre, crear o unirse con codigo */
+.entrada,
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: min(24rem, 100%);
+  padding: 1.25rem;
+  text-align: center;
+  background: var(--mh-superficie);
+  border-radius: 0.75rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: left;
+}
+
+.etiqueta {
+  font-size: 0.8rem;
+  color: var(--mh-texto-tenue);
+}
+
+input {
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  color: var(--mh-texto);
+  background: var(--mh-superficie-alta);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+input:focus-visible {
+  border-color: var(--mh-acento);
+  outline: none;
+}
+
+input.codigo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.union {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+/*
+ * `min-width: 0` no es adorno: un `input` no encoge por debajo de su ancho
+ * natural —veinte caracteres, y aqui ademas a 1.3rem y con espaciado—, asi que
+ * sin esto el campo del codigo empujaba al boton de entrar fuera de la tarjeta.
+ */
+.union .campo {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.union input {
+  width: 100%;
+}
+
+.union button {
+  flex: 0 0 auto;
+}
+
+/* Lobby */
+.codigo-sala {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+}
+
+.codigo-sala strong {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--mh-acento);
+}
+
+.puestos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.puesto {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  background: var(--mh-superficie-alta);
+  border-left: 4px solid currentcolor;
+  border-radius: 0.4rem;
+}
+
+.puesto .nombre {
+  flex: 1 1 auto;
+  color: var(--mh-texto);
+}
+
+.marca {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mh-texto-tenue);
+}
+
+.marca.ausente {
+  color: var(--mh-peligro);
+}
+
+.ajustes {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Partida */
+.cabecera-partida {
+  display: flex;
+  width: 100%;
+}
+
+.restantes {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+}
+
+.marcador {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  background: var(--mh-superficie);
+  border-left: 4px solid currentcolor;
+  border-radius: 0.4rem;
+}
+
+.ficha.activo {
+  background: var(--mh-superficie-alta);
+  box-shadow: 0 0 0 2px currentcolor;
+}
+
+.ficha.rendido {
+  opacity: 0.55;
+}
+
+.ficha .nombre {
+  font-size: 0.9rem;
+  color: var(--mh-texto);
+}
+
+.ficha .minas {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.onda-estado {
+  display: flex;
+  flex: 1 0 100%;
+  gap: 0.3rem;
+  align-items: center;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto-tenue);
+}
+
+.onda-estado.recargando {
+  opacity: 0.7;
+}
+
+/* Reloj del turno, igual que en la partida local */
+.reloj {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.reloj-tiempo {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto-tenue);
+}
+
+.reloj-barra {
+  display: block;
+  flex: 1 1 6rem;
+  max-width: 12rem;
+  height: 0.4rem;
+  overflow: hidden;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.2rem;
+}
+
+.reloj-relleno {
+  display: block;
+  height: 100%;
+  background: var(--mh-acento);
+  transition: width 250ms linear;
+}
+
+.reloj.apurado .reloj-tiempo {
+  font-weight: 700;
+  color: var(--mh-peligro);
+}
+
+.reloj.apurado .reloj-relleno {
+  background: var(--mh-peligro);
+}
+
+/* Onda expansiva */
+.onda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.boton-onda {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--mh-texto);
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.boton-onda:disabled {
+  color: var(--mh-texto-tenue);
+  cursor: not-allowed;
+}
+
+.onda.armado .boton-onda {
+  color: #fff;
+  background: var(--mh-acento);
+  border-color: var(--mh-acento);
+}
+
+.aviso {
+  min-height: 1.4rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mh-texto-tenue);
+  text-align: center;
+}
+
+.aviso .pensando {
+  font-style: italic;
+}
+
+.error {
+  margin: 0;
+  color: var(--mh-peligro);
+}
+
+.acciones-partida,
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.confirmar .pregunta {
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Fin de partida */
+.fin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  width: min(28rem, 100%);
+  padding: 1.25rem;
+  text-align: center;
+  background: var(--mh-superficie);
+  border-radius: 0.75rem;
+}
+
+.resultado {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.clasificacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clasificacion li {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+/* Botones */
+.principal,
+.secundario {
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.principal {
+  color: #fff;
+  background: var(--mh-acento);
+}
+
+.secundario {
+  color: var(--mh-texto-tenue);
+  background: var(--mh-superficie-alta);
+}
+
+.principal:disabled,
+.secundario:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button.peligro {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: var(--mh-acento);
+  border: 1px solid var(--mh-acento);
+  border-radius: 0.4rem;
+}
+
+/*
+ * Enlace para lo que pasa dentro de una linea, como quitar un bot de la lista.
+ * Lo que abre un panel o lleva a otra pantalla lleva `.discreto`: subrayado
+ * parecia texto y no se veia que se pudiera pulsar.
+ */
+.enlace {
+  padding: 0.2rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* Boton de verdad, pero de segunda fila: se ve el contorno y no pesa. */
+.discreto {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+.discreto:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Ajuste del servidor: se abre solo si hace falta */
+.servidor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ajuste {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+/* Cada jugador arrastra su color */
+.jugador-0 {
+  color: var(--mh-jugador-0);
+}
+
+.jugador-1 {
+  color: var(--mh-jugador-1);
+}
+
+.jugador-2 {
+  color: var(--mh-jugador-2);
+}
+
+.jugador-3 {
+  color: var(--mh-jugador-3);
+}
+
+/* Salas esperando gente: para quien no tiene ningun codigo */
+.abiertas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.titulo-lista {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.lista-salas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sala-abierta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.4rem;
+}
+
+.sala-abierta .datos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sala-abierta .ayuda {
+  overflow-wrap: anywhere;
+}
+
+.sala-abierta button {
+  flex: 0 0 auto;
+}
+
+.sala-abierta strong {
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--mh-acento);
+}
+
+/*
+ * El codigo se deja seleccionar aunque el resto de la aplicacion no: es lo
+ * unico de la pantalla que alguien quiere copiar a mano, y ahi la seleccion no
+ * estorba a ningun clic.
+ */
+.codigo-sala strong,
+.sala-abierta strong {
+  user-select: text;
+}
+
+/* Ajustes de la sala al crearla: los mismos que el Modo Entrenamiento */
+.ajustes-sala {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.numeros {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.numeros .campo {
+  flex: 1 1 0;
+}
+
+.numeros input {
+  width: 100%;
+}
+
+.opcion {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  text-align: left;
+}
+
+.bot {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.bot .nombre {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+select {
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  color: var(--mh-texto);
+  background: var(--mh-superficie);
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+}

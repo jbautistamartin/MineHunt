@@ -29,6 +29,7 @@ export {
   type PuestoSala,
   type Reentrada,
   type Resultado,
+  type SalaAbierta,
   type SucesoPartida,
   type VistaSala,
 } from './red/protocolo.js';

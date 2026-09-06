@@ -1,10 +1,11 @@
 # El servidor de MineHunt
 
 Documento de referencia del multijugador online: cómo está montado el servidor,
-qué mensajes se intercambian y qué decisiones hay detrás. **La Fase 7 (el
-cliente online) se escribe contra lo que hay aquí.**
+qué mensajes se intercambian y qué decisiones hay detrás.
 
-Fase 6, terminada. El código vive en `apps/server/src/salas/`.
+Fases 6 y 7, terminadas. El servidor vive en `apps/server/src/salas/` y el
+cliente que lo consume en `apps/web/src/app/paginas/online/` con
+`nucleo/online.servicio.ts`.
 
 ## La idea de fondo: el servidor es la autoridad
 
@@ -54,6 +55,7 @@ La respuesta es siempre un `Resultado<T>`:
 
 | Mensaje | Lleva | Devuelve |
 |---|---|---|
+| `salas-abiertas` | — | las salas públicas esperando gente |
 | `crear-sala` | `{ nombre, version, configuracion? }` | `Entrada` (código, credencial, puesto, sala y versión) |
 | `unirse-a-sala` | `{ codigo, nombre, version }` | `Entrada` |
 | `reconectar` | `{ codigo, token, version }` | `Reentrada` (lo de arriba más la partida en curso) |
@@ -119,6 +121,31 @@ Cuando alguien se cae:
   ser correlativos cuando empiece la partida, porque son los del motor.
 - **Con la partida en marcha**, el puesto se queda esperando: es lo que le permite
   volver, y quitarlo cambiaría de dueño las minas que ya encontró.
+
+## Salas públicas, privadas y con bots
+
+`ConfiguracionSala` lleva los mismos ajustes que el Modo Entrenamiento —tablero,
+minas, reloj y recarga— más dos cosas propias de jugar con gente:
+
+- **`publica`**: sale en la lista que devuelve `salas-abiertas`. Privada **no es
+  cerrada**: se entra igual con el código, lo que cambia es que no se anuncia,
+  que es lo que hace falta para jugar solo con quien uno quiere.
+- **`nivelesIA`**: bots que se sientan a la mesa, con su nivel. Permiten empezar
+  sin esperar a nadie o completar una mesa a la que le falta gente. **Cuentan
+  como jugadores**: con un humano y un bot ya hay partida.
+
+Los bots se sientan **siempre detrás de los humanos**, y quien entra se coloca
+delante de ellos: los ids que ve el motor tienen que ser correlativos, y son los
+mismos con los que se creará la partida. Al reconfigurarlos se tiran todos y se
+vuelven a poner, que en el lobby no hay nada que conservar de un bot.
+
+Un puesto de bot **no cuenta para saber si la sala está vacía** —una mesa de bots
+sola no espera a nadie— y **no se va al volver al lobby**, al revés que un humano
+que no volvió: los puso el anfitrión y siguen puestos.
+
+En la partida los mueve el mismo repaso periódico que sustituye a los caídos, con
+una diferencia: al ausente se le espera tres segundos por si vuelve, y al bot no,
+que está ahí para jugar. Los dos llevan luego el mismo ritmo.
 
 ## La revancha
 
@@ -218,30 +245,84 @@ versión de navegador en el mismo origen que el WebSocket. Los orígenes
 permitidos hacen falta igual, porque la app de Android lleva el bundle dentro del
 APK y nunca está en el mismo origen.
 
-## Lo que queda para la Fase 7
+## El panel del servidor
 
-Lo que el cliente va a necesitar, apuntado ahora que está fresco:
+Al abrir la dirección del servidor en el navegador (`/`, y también `/panel`) sale
+**el panel de salas**, no la línea de texto de la Fase 0 que solo decía que el
+proceso estaba vivo. Enseña, de cada sala: el código con el que se entra, quién
+la abrió, cuántos jugadores hay —separando bots y sitios de gente que se cayó—,
+si es pública o privada, si está en el lobby o en partida, y cuánto lleva
+abierta. Arriba, el recuento de salas activas, partidas en curso y jugadores
+conectados.
 
-- **`socket.io-client` en `apps/web`**, que todavía no está.
-- **A dónde se conecta.** Ya está decidido: la URL vive en `nucleo/servidor.ts`
-  con un valor por defecto, como `VERSION_APP`, y se puede cambiar con un ajuste
-  guardado en localStorage y validado al leerlo. Hace falta de verdad porque
-  desde el móvil hay que apuntar a la IP del PC en la red local. Los tipos del
-  protocolo no son problema: salen de `@minehunt/game-engine`, que la web ya
-  consume.
-- **Guardar la credencial** que devuelve el servidor al entrar en la sala: es lo
-  único que recupera el puesto si se cae la conexión.
-- **Mandar `VERSION_PROTOCOLO`** en los tres mensajes de entrada, y tener una
-  pantalla para cuando el servidor conteste `VERSION_INCOMPATIBLE`: es lo que
-  verá quien no haya actualizado.
-- **Tráfico en claro en Android.** El WebView bloquea `http://` con
-  `targetSdk 36` y el manifest no trae `usesCleartextTraffic`, así que para
-  probar contra un servidor local habrá que permitirlo (solo en depuración) o
-  servir por HTTPS.
-- **El estado del cliente.** `ServicioPartida` es el único que habla con el
-  motor, así que es la pieza que se sustituye por el estado que llega del
-  servidor. Los componentes del tablero, el marcador y la onda no se tocan.
-- **Lo que el servidor no hace todavía**: no hay lista de salas públicas (se
-  entra por código), ni expulsar a nadie, ni pasar el mando de anfitrión a
-  propósito, ni límite de salas por conexión. Nada de eso hace falta para jugar;
-  lo primero que se echará en falta, la revancha, ya está.
+Decisiones que conviene no deshacer:
+
+- **Salen todas las salas, también las privadas y las que ya están jugando.** No
+  es la misma lista que `salas-abiertas`: aquella es lo que se le ofrece a quien
+  busca sitio, y esta es la que necesita quien lleva el servidor. Por eso
+  `Sala.informe()` es distinto de `Sala.resumen()`.
+- **Los textos van en español y sin `ngx-translate`**, que es la única excepción
+  a la convención de no escribir texto en el código y lo único con texto que sale
+  del servidor. No la contradice en el fondo: la convención protege lo que ve el
+  *jugador*, y esta página no la pide jamás la aplicación —que habla por el
+  socket—, sino la persona que administra el servidor.
+- **Lo pinta entero el servidor**, sin plantillas ni dependencias nuevas: es una
+  cadena en `panel/panel.ts`. Lo único que hace el navegador es volver a pedir
+  `/panel/salas` —la lista sola, sin el resto de la página— cada tres segundos y
+  ponerla en su sitio. Así no hay dos versiones del mismo HTML, una en TypeScript
+  y otra dentro de un script, ni la página parpadea al recargarse.
+- **El nombre del anfitrión se escapa.** Lo teclea quien entra en la sala: sin
+  escapar, alguien que se llame `<script>` ejecuta lo que quiera en el navegador
+  de quien mire el panel. Hay una prueba que lo comprueba.
+- La paleta está copiada de `apps/web/src/styles.css`. Si allí se retoca, aquí se
+  queda atrás a propósito: arrastrar el CSS del cliente al servidor por una
+  página de una pantalla no compensa.
+
+En la Fase 9 la raíz la ocupará la web del juego servida por el propio Nest, y el
+panel se quedará solo en `/panel`, que ya responde hoy.
+
+## El cliente (Fase 7)
+
+`ServicioOnline` es el gemelo de `ServicioPartida`: publica señales con la misma
+forma, pero **sin motor**. El tablero llega hecho y lo único que se manda son
+intenciones, así que el cliente no valida ni una regla; si una jugada no vale, lo
+dice el servidor.
+
+- El protocolo se importa de `@minehunt/game-engine`, nombres de mensajes
+  incluidos. No hay una segunda declaración que se pueda desincronizar.
+- Al entrar se manda `VERSION_PROTOCOLO`, y `VERSION_INCOMPATIBLE` tiene su texto
+  en los dos idiomas: es lo que verá quien no haya actualizado.
+- La credencial se guarda en `localStorage` (`minehunt.online`) validada al
+  leerla, y si el servidor deja de reconocerla se olvida.
+- **Las cuentas atrás las baja el cliente.** El servidor solo difunde cuando pasa
+  algo, así que el reloj del turno y la recarga de la onda se calculan restando
+  lo transcurrido desde que llegó el último estado.
+- **El código de la sala se copia y se comparte con botones.** No se puede
+  seleccionar con el dedo: la aplicación apaga la selección de texto para que no
+  estorbe al clicar celdas. En Android, además de copiar, se abre la hoja de
+  compartir del sistema (`@capacitor/share`), que es por donde se pasa un código
+  de verdad.
+- **La lista de salas no bloquea la pantalla.** Es lo primero que se pide al
+  abrir, y tiene su propio límite de espera: si el servidor no contesta, no puede
+  dejar apagado el botón de crear una sala, que es justo lo que uno intentaría a
+  continuación.
+- **La dirección del servidor por defecto es la IP fija del PC de desarrollo**
+  (`SERVIDOR_DE_DESARROLLO`, en `nucleo/servidor.ts`), tanto en Android como con
+  `ng serve`. Dentro del APK no vale `localhost`: ahí es el propio teléfono.
+  Sirviéndose desde un origen que no sea el `ng serve`, sigue mandando el propio
+  origen, que es lo que acertará en la Fase 9. Es provisional y no cierra nada:
+  el ajuste de «Cambiar de servidor» sigue estando y lo guardado gana.
+- Las pruebas del cliente usan un socket de mentira: levantar el servidor de
+  verdad ahí sería probarlo dos veces, y de eso ya se encargan sus e2e.
+
+## Lo que el servidor no hace todavía
+
+No se puede expulsar a nadie, ni pasar el mando de anfitrión a propósito, ni hay
+límite de salas por conexión. Los ajustes de la sala se eligen al crearla: el
+servidor acepta cambiarlos después desde el lobby, pero la pantalla todavía no lo
+ofrece.
+
+Lo que sí conviene tener en cuenta: **las salas viven en memoria**, así que un
+reinicio del servidor se las lleva. Es la razón por la que juntar web y servidor
+en una imagen (Fase 9) no cuesta nada, y lo que habría que resolver el día que
+una partida deba sobrevivir a un despliegue.

@@ -23,6 +23,7 @@ import {
   type PeticionUnirse,
   type Reentrada,
   type Resultado,
+  type SalaAbierta,
   type SucesoPartida,
 } from '@minehunt/game-engine';
 import type { Sala } from './sala.js';
@@ -135,6 +136,23 @@ export class PasarelaPartida implements OnGatewayInit, OnGatewayDisconnect, OnMo
       return;
     }
     this.difundirSala(sala);
+  }
+
+  /**
+   * Que salas estan esperando gente.
+   *
+   * Se pregunta, no se difunde: quien mira la lista todavia no esta en ninguna
+   * sala, asi que no hay a quien difundirsela sin inventar una sala global solo
+   * para eso.
+   */
+  @SubscribeMessage(MENSAJES_DEL_CLIENTE.salasAbiertas)
+  salasAbiertas(): Resultado<readonly SalaAbierta[]> {
+    const abiertas = this.salas
+      .todas()
+      .map((sala) => sala.resumen())
+      .filter((resumen): resumen is SalaAbierta => resumen !== null);
+
+    return { ok: true, datos: abiertas };
   }
 
   @SubscribeMessage(MENSAJES_DEL_CLIENTE.crearSala)

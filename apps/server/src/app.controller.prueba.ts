@@ -16,10 +16,6 @@ describe('ControladorPrincipal', () => {
     controlador = modulo.get<ControladorPrincipal>(ControladorPrincipal);
   });
 
-  it('informa de que el servidor esta operativo', () => {
-    expect(controlador.obtenerEstado()).toContain('operativo');
-  });
-
   it('consume el motor de juego enlazado en el monorepo', () => {
     expect(controlador.obtenerSaludoDelMotor()).toBe(saludar());
   });

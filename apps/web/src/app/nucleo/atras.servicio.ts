@@ -17,7 +17,9 @@ export type DestinoAtras = 'menu' | 'partida' | 'salir-de-la-app';
  * ver con lo que el jugador estaba viendo.
  *
  * - Desde cualquier pantalla se vuelve **al menu principal**, que es de donde
- *   se sale a todo lo demas.
+ *   se sale a todo lo demas. Tambien desde el Multijugador Online: ahi no se
+ *   pregunta, porque la sala sigue esperando con la credencial guardada y se
+ *   puede volver a ella.
  * - Desde el menu principal se **sale de la aplicacion**, que es lo que espera
  *   cualquiera en Android.
  * - Desde una partida no se decide aqui: se pide la salida y la atiende la

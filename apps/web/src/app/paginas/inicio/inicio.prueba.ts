@@ -39,24 +39,21 @@ describe('Inicio', () => {
     expect(destinos(fixture.nativeElement as HTMLElement)).toEqual([
       '/historia',
       '/entrenamiento',
+      '/online',
       '/ayuda',
     ]);
   });
 
   /**
-   * El Multijugador Online se ensena para que se vea que el modo existe, pero
-   * hasta la Fase 7 no hay a donde ir: si se convirtiera en enlace, llevaria a
-   * la ruta comodin y devolveria al propio menu sin explicar nada.
+   * Hasta la Fase 7 el Multijugador Online se ensenaba apagado, porque no habia
+   * a donde ir. Ya lo hay, asi que es un enlace mas y no queda nada bloqueado.
    */
-  it('ensena el multijugador online sin dejar entrar', () => {
+  it('el multijugador online ya no esta apagado', () => {
     const fixture = TestBed.createComponent(Inicio);
     fixture.detectChanges();
     const elemento = fixture.nativeElement as HTMLElement;
 
-    const bloqueado = elemento.querySelector('.modo.bloqueado');
-    expect(bloqueado).not.toBeNull();
-    expect(bloqueado?.tagName).not.toBe('A');
-    expect(bloqueado?.getAttribute('aria-disabled')).toBe('true');
+    expect(elemento.querySelector('.modo.bloqueado')).toBeNull();
   });
 
   it('resume el progreso del Modo Historia', () => {
@@ -82,7 +79,6 @@ describe('Inicio', () => {
         expect(bloque?.['titulo']?.length ?? 0).toBeGreaterThan(0);
         expect(bloque?.['texto']?.length ?? 0).toBeGreaterThan(0);
       }
-      expect((textos['online'] as Record<string, string>)['proximamente']).toBeTruthy();
       expect(textos['volver']).toBeTruthy();
       expect((textos['aria'] as Record<string, string>)['menu']).toBeTruthy();
     }

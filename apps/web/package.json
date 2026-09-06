@@ -26,11 +26,13 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.1",
     "@capacitor/device": "^8.0.3",
+    "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
     "@minehunt/game-engine": "*",
     "@ngx-translate/core": "^18.0.0",
     "@ngx-translate/http-loader": "^18.0.0",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.8.3",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

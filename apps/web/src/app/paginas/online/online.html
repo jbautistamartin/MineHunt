@@ -1,0 +1,542 @@
+<section class="pantalla">
+  @if (!enPartida()) {
+    <header class="cabecera">
+      <h1>{{ 'online.titulo' | translate }}</h1>
+      <p class="lema">{{ 'online.lema' | translate }}</p>
+    </header>
+  }
+
+  <!-- 1. Todavia no hay sala: se crea una o se entra en la de alguien. -->
+  @if (sala() === null) {
+    <div class="entrada">
+      <label class="campo">
+        <span class="etiqueta">{{ 'online.nombre' | translate }}</span>
+        <input
+          type="text"
+          maxlength="16"
+          autocomplete="nickname"
+          [ngModel]="nombre()"
+          (ngModelChange)="nombre.set($event)"
+        />
+      </label>
+
+      <button type="button" class="principal" [disabled]="!puedeCrear()" (click)="crearSala()">
+        {{ 'online.crear' | translate }}
+      </button>
+
+      <div class="ajustes-sala">
+        <button type="button" class="discreto" (click)="alternarAjustesDeSala()">
+          {{ 'online.ajustes.boton' | translate }}
+        </button>
+
+        @if (ajustandoSala()) {
+          <div class="ajuste">
+            <label class="opcion">
+              <input
+                type="checkbox"
+                [checked]="publica()"
+                (change)="publica.set($any($event.target).checked)"
+              />
+              <span>{{ 'online.ajustes.publica' | translate }}</span>
+            </label>
+            <p class="ayuda">
+              {{
+                (publica() ? 'online.ajustes.publica_ayuda' : 'online.ajustes.privada_ayuda')
+                  | translate
+              }}
+            </p>
+
+            <div class="numeros">
+              <label class="campo">
+                <span class="etiqueta">{{ 'configuracion.ancho' | translate }}</span>
+                <input
+                  type="number"
+                  [min]="ladoMinimo"
+                  [max]="ladoMaximo"
+                  [value]="ancho()"
+                  (input)="cambiarNumero(ancho, $any($event.target).value)"
+                />
+              </label>
+              <label class="campo">
+                <span class="etiqueta">{{ 'configuracion.alto' | translate }}</span>
+                <input
+                  type="number"
+                  [min]="ladoMinimo"
+                  [max]="ladoMaximo"
+                  [value]="alto()"
+                  (input)="cambiarNumero(alto, $any($event.target).value)"
+                />
+              </label>
+              <label class="campo">
+                <span class="etiqueta">{{ 'configuracion.minas' | translate }}</span>
+                <input
+                  type="number"
+                  min="1"
+                  [max]="minasMaximas()"
+                  [value]="minas()"
+                  (input)="cambiarNumero(minas, $any($event.target).value)"
+                />
+              </label>
+            </div>
+
+            @if (ajustesValidos()) {
+              <p class="ayuda">
+                {{
+                  'configuracion.resumen'
+                    | translate: { celdas: totalCeldas(), densidad: densidad() }
+                }}
+              </p>
+            } @else {
+              <p class="error">
+                {{
+                  'configuracion.error.dimensiones'
+                    | translate: { minimo: ladoMinimo, maximo: ladoMaximo }
+                }}
+              </p>
+            }
+
+            <div class="numeros">
+              <label class="campo">
+                <span class="etiqueta">{{ 'configuracion.tiempo_turno' | translate }}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="300"
+                  [value]="tiempoPorTurno()"
+                  (input)="cambiarNumero(tiempoPorTurno, $any($event.target).value)"
+                />
+              </label>
+              <label class="campo">
+                <span class="etiqueta">{{ 'configuracion.recarga_segundos' | translate }}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="300"
+                  [value]="recargaOnda()"
+                  (input)="cambiarNumero(recargaOnda, $any($event.target).value)"
+                />
+              </label>
+            </div>
+
+            <span class="etiqueta">{{ 'online.ajustes.bots' | translate }}</span>
+            @if (nivelesIA().length === 0) {
+              <p class="ayuda">{{ 'online.ajustes.sin_bots' | translate }}</p>
+            }
+            @for (nivel of nivelesIA(); track $index) {
+              <div class="bot">
+                <span class="nombre">{{ 'partida.bot' | translate: { numero: $index + 1 } }}</span>
+                <select
+                  [value]="nivel"
+                  (change)="cambiarNivelDeBot($index, $any($event.target).value)"
+                >
+                  @for (posible of niveles; track posible) {
+                    <option [value]="posible">
+                      {{ 'partida.nivel_bot' | translate: { nivel: posible } }}
+                    </option>
+                  }
+                </select>
+                <button type="button" class="enlace" (click)="quitarBot($index)">
+                  {{ 'online.ajustes.quitar' | translate }}
+                </button>
+              </div>
+            }
+            @if (nivelesIA().length < maxBots) {
+              <button type="button" class="secundario" (click)="anadirBot()">
+                {{ 'online.ajustes.anadir_bot' | translate }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="union">
+        <label class="campo">
+          <span class="etiqueta">{{ 'online.codigo' | translate }}</span>
+          <input
+            type="text"
+            class="codigo"
+            maxlength="4"
+            autocapitalize="characters"
+            [ngModel]="codigo()"
+            (ngModelChange)="codigo.set($event)"
+          />
+        </label>
+        <button
+          type="button"
+          class="secundario"
+          [disabled]="nombre().trim().length === 0 || codigo().trim().length === 0 || ocupado()"
+          (click)="unirse()"
+        >
+          {{ 'online.unirse' | translate }}
+        </button>
+      </div>
+
+      @if (hayCredencial()) {
+        <button type="button" class="secundario" [disabled]="ocupado()" (click)="volverALaSala()">
+          {{ 'online.volver' | translate }}
+        </button>
+      }
+
+      @if (sinServidor()) {
+        <p class="error" role="status">{{ 'online.sin_servidor' | translate }}</p>
+      } @else if (ultimoError(); as codigo) {
+        <p class="error" role="status">{{ 'error.' + codigo | translate }}</p>
+      }
+
+      <div class="abiertas">
+        <div class="titulo-lista">
+          <span class="etiqueta">{{ 'online.abiertas.titulo' | translate }}</span>
+          <button
+            type="button"
+            class="discreto"
+            [disabled]="cargandoSalas()"
+            (click)="actualizarSalas()"
+          >
+            {{ 'online.abiertas.actualizar' | translate }}
+          </button>
+        </div>
+
+        @if (salasAbiertas().length === 0) {
+          <p class="ayuda">{{ 'online.abiertas.ninguna' | translate }}</p>
+        } @else {
+          <ol class="lista-salas">
+            @for (abierta of salasAbiertas(); track abierta.codigo) {
+              <li class="sala-abierta">
+                <span class="datos">
+                  <strong>{{ abierta.codigo }}</strong>
+                  <span class="ayuda">
+                    {{
+                      'online.abiertas.detalle'
+                        | translate
+                          : {
+                              anfitrion: abierta.anfitrion,
+                              jugadores: abierta.jugadores,
+                              maximo: abierta.maximo,
+                            }
+                    }}
+                    @if (abierta.bots > 0) {
+                      {{ 'online.abiertas.con_bots' | translate: { bots: abierta.bots } }}
+                    }
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  class="secundario"
+                  [disabled]="nombre().trim().length === 0 || ocupado()"
+                  (click)="entrarEn(abierta.codigo)"
+                >
+                  {{ 'online.unirse' | translate }}
+                </button>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+
+      <div class="servidor">
+        <button type="button" class="discreto" (click)="alternarAjusteDelServidor()">
+          {{ 'online.servidor.boton' | translate }}
+        </button>
+        @if (ajustandoServidor()) {
+          <div class="ajuste">
+            <p class="ayuda">{{ 'online.servidor.ayuda' | translate }}</p>
+            <input
+              type="url"
+              inputmode="url"
+              [ngModel]="urlDelServidor()"
+              (ngModelChange)="urlDelServidor.set($event)"
+            />
+            <div class="acciones">
+              <button type="button" class="principal" (click)="guardarServidor()">
+                {{ 'online.servidor.guardar' | translate }}
+              </button>
+              <button type="button" class="secundario" (click)="restablecerServidor()">
+                {{ 'online.servidor.restablecer' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button type="button" class="secundario" (click)="salir()">
+        {{ 'online.menu' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- 2. Sala montada, esperando a que llegue gente. -->
+  @if (enLobby()) {
+    @if (sala(); as sala) {
+      <div class="lobby">
+        <p class="codigo-sala">
+          <span class="etiqueta">{{ 'online.sala.codigo' | translate }}</span>
+          <strong>{{ sala.codigo }}</strong>
+        </p>
+        <p class="ayuda">{{ 'online.sala.comparte' | translate }}</p>
+
+        <div class="acciones">
+          <button type="button" class="secundario" (click)="copiarCodigo()">
+            {{ (copiado() ? 'online.copiado' : 'online.copiar') | translate }}
+          </button>
+          @if (sePuedeCompartir) {
+            <button type="button" class="secundario" (click)="compartirCodigo()">
+              {{ 'online.compartir.boton' | translate }}
+            </button>
+          }
+        </div>
+
+        <ol class="puestos" [attr.aria-label]="'online.sala.jugadores' | translate">
+          @for (puestoDeLaSala of sala.puestos; track puestoDeLaSala.id) {
+            <li class="puesto" [class]="'jugador-' + puestoDeLaSala.id">
+              <span class="nombre">{{ puestoDeLaSala.nombre }}</span>
+              @if (puestoDeLaSala.anfitrion) {
+                <span class="marca">{{ 'online.sala.anfitrion' | translate }}</span>
+              }
+              @if (puestoDeLaSala.bot) {
+                <span class="marca">
+                  {{ 'partida.nivel_bot' | translate: { nivel: puestoDeLaSala.nivel } }}
+                </span>
+              } @else if (!puestoDeLaSala.conectado) {
+                <span class="marca ausente">{{ 'online.sala.ausente' | translate }}</span>
+              }
+            </li>
+          }
+        </ol>
+
+        <p class="ajustes">
+          {{
+            'online.sala.ajustes'
+              | translate
+                : {
+                    ancho: sala.configuracion.ancho,
+                    alto: sala.configuracion.alto,
+                    minas: sala.configuracion.minas,
+                  }
+          }}
+        </p>
+
+        @if (soyAnfitrion()) {
+          <button
+            type="button"
+            class="principal"
+            [disabled]="faltaGente() || ocupado()"
+            (click)="empezar()"
+          >
+            {{ 'online.sala.empezar' | translate }}
+          </button>
+          @if (faltaGente()) {
+            <p class="ayuda">{{ 'online.sala.faltan' | translate }}</p>
+          }
+        } @else {
+          <p class="ayuda">{{ 'online.sala.esperando' | translate }}</p>
+        }
+
+        @if (ultimoError(); as codigo) {
+          <p class="error" role="status">{{ 'error.' + codigo | translate }}</p>
+        }
+
+        <button type="button" class="secundario" (click)="salir()">
+          {{ 'online.salir' | translate }}
+        </button>
+      </div>
+    }
+  }
+
+  <!-- 3. Partida en marcha: el tablero es el mismo de siempre. -->
+  @if (enPartida()) {
+    @if (partida(); as partida) {
+      <header class="cabecera-partida">
+        <div class="turno">
+          @if (partida.terminada) {
+            <h1>{{ 'partida.fin.titulo' | translate }}</h1>
+          } @else if (esMiTurno()) {
+            <h1 [class]="'jugador-' + partida.turnoDe">{{ 'online.tu_turno' | translate }}</h1>
+          } @else {
+            <h1 [class]="'jugador-' + partida.turnoDe">
+              {{ 'partida.turno_de' | translate: { jugador: nombreDe(partida.turnoDe) } }}
+            </h1>
+          }
+          <p class="restantes">
+            {{ 'partida.minas_restantes' | translate }}:
+            <strong>{{ partida.minasRestantes }}</strong>
+          </p>
+
+          @if (partida.tiempoPorTurnoMs > 0) {
+            <div
+              class="reloj"
+              [class.apurado]="relojApurado()"
+              [class.hueco]="partida.terminada"
+              role="timer"
+              [attr.aria-label]="'partida.reloj.etiqueta' | translate"
+            >
+              <span class="reloj-tiempo">
+                {{ 'partida.reloj.restante' | translate: { segundos: segundosDeTurno() ?? 0 } }}
+              </span>
+              <span class="reloj-barra" aria-hidden="true">
+                <span class="reloj-relleno" [style.width.%]="porcentajeDeTurno()"></span>
+              </span>
+            </div>
+          }
+        </div>
+      </header>
+
+      <ol class="marcador" [attr.aria-label]="'partida.marcador' | translate">
+        @for (jugador of partida.jugadores; track jugador.id) {
+          <li
+            class="ficha"
+            [class]="'jugador-' + jugador.id"
+            [class.activo]="!partida.terminada && jugador.id === partida.turnoDe"
+            [class.rendido]="jugador.rendido"
+          >
+            <span class="nombre">
+              {{ nombreDe(jugador.id) }}
+              @if (jugador.id === puesto()) {
+                <span class="marca">{{ 'online.tu' | translate }}</span>
+              }
+              @if (esBot(jugador.id)) {
+                <span class="marca">{{ 'online.bot' | translate }}</span>
+              } @else if (sustituido(jugador.id)) {
+                <span class="marca ausente">{{ 'online.sustituido' | translate }}</span>
+              } @else if (!conectado(jugador.id)) {
+                <span class="marca ausente">{{ 'online.sala.ausente' | translate }}</span>
+              }
+              @if (jugador.rendido) {
+                <span class="marca">{{ 'partida.rendirse.marca' | translate }}</span>
+              }
+            </span>
+            <span class="minas">{{ jugador.minasEncontradas }}</span>
+            <span class="onda-estado" [class.recargando]="jugador.onda.estado === 'recargando'">
+              <span class="glifo" aria-hidden="true">&#10039;</span>
+              @switch (jugador.onda.estado) {
+                @case ('recargando') {
+                  {{
+                    'partida.onda.recarga_corta'
+                      | translate: { segundos: segundosDeRecargaDe(jugador.onda.recargaRestanteMs) }
+                  }}
+                }
+                @case ('activo') {
+                  {{ 'partida.onda.armada' | translate }}
+                }
+                @default {
+                  {{ 'partida.onda.lista' | translate }}
+                }
+              }
+            </span>
+          </li>
+        }
+      </ol>
+
+      <mh-tablero
+        [estado]="partida"
+        [bloqueado]="partida.terminada || !esMiTurno()"
+        (celdaPulsada)="jugar($event)"
+        (celdaPulsadaAlterna)="jugarConOnda($event)"
+      />
+
+      @if (!partida.terminada && miOnda() !== null) {
+        <div
+          class="onda"
+          [class.armado]="miOnda()?.estado === 'activo'"
+          [class.hueco]="!puedeManejarOnda()"
+        >
+          <button
+            type="button"
+            class="boton-onda"
+            [disabled]="miOnda()?.estado === 'recargando'"
+            [attr.aria-pressed]="miOnda()?.estado === 'activo'"
+            (click)="alternarOnda()"
+          >
+            <span class="glifo" aria-hidden="true">✷</span>
+            @switch (miOnda()?.estado) {
+              @case ('activo') {
+                {{ 'partida.onda.cancelar' | translate }}
+              }
+              @case ('recargando') {
+                {{ 'partida.onda.recarga' | translate: { segundos: segundosDeRecarga() } }}
+              }
+              @default {
+                {{ 'partida.onda.usar' | translate }}
+              }
+            }
+          </button>
+        </div>
+      }
+
+      <p class="aviso" role="status">
+        @if (conexion() === 'caido') {
+          <span class="error">{{ 'online.caido' | translate }}</span>
+        } @else if (ultimoError(); as codigo) {
+          <span class="error">{{ 'error.' + codigo | translate }}</span>
+        } @else if (ultimoSuceso(); as suceso) {
+          {{
+            'partida.evento.' + suceso.codigo + (suceso.celdas === 1 ? '_UNA' : '')
+              | translate: { jugador: nombreDe(suceso.jugador), celdas: suceso.celdas }
+          }}
+        } @else if (!esMiTurno()) {
+          <span class="pensando">{{ 'online.esperando_turno' | translate }}</span>
+        }
+      </p>
+
+      @if (!partida.terminada) {
+        <div class="acciones-partida">
+          @if (confirmandoRendicion()) {
+            <span class="confirmar">
+              <span class="pregunta">{{ 'partida.rendirse.seguro' | translate }}</span>
+              <button type="button" class="peligro" (click)="confirmarRendicion()">
+                {{ 'partida.rendirse.si' | translate }}
+              </button>
+              <button type="button" class="secundario" (click)="cancelarRendicion()">
+                {{ 'partida.rendirse.no' | translate }}
+              </button>
+            </span>
+          } @else {
+            <button
+              type="button"
+              class="secundario"
+              [attr.title]="'partida.rendirse.ayuda' | translate"
+              (click)="pedirRendicion()"
+            >
+              {{ 'partida.rendirse.boton' | translate }}
+            </button>
+          }
+        </div>
+      }
+
+      @if (partida.terminada) {
+        <div class="fin">
+          @if (partida.empate) {
+            <p class="resultado">{{ 'partida.fin.empate' | translate }}</p>
+          } @else if (partida.ganador !== null) {
+            <p class="resultado" [class]="'jugador-' + partida.ganador">
+              {{ 'partida.fin.gana' | translate: { jugador: nombreDe(partida.ganador) } }}
+            </p>
+          }
+
+          <ol class="clasificacion">
+            @for (jugador of clasificacion(); track jugador.id) {
+              <li [class]="'jugador-' + jugador.id">
+                <span class="nombre">{{ nombreDe(jugador.id) }}</span>
+                <span class="minas">
+                  {{ 'partida.minas_de' | translate: { minas: jugador.minasEncontradas } }}
+                </span>
+              </li>
+            }
+          </ol>
+
+          <div class="acciones">
+            @if (soyAnfitrion()) {
+              <button type="button" class="principal" [disabled]="ocupado()" (click)="otraPartida()">
+                {{ 'online.otra' | translate }}
+              </button>
+            } @else {
+              <p class="ayuda">{{ 'online.espera_otra' | translate }}</p>
+            }
+            <button type="button" class="secundario" (click)="salir()">
+              {{ 'online.salir' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    }
+  }
+</section>

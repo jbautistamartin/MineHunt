@@ -18,8 +18,7 @@
     },
     "online": {
       "titulo": "Multijugador online",
-      "texto": "Crea una sala y juega con quien quieras, cada uno en su pantalla.",
-      "proximamente": "Próximamente"
+      "texto": "Crea una sala y juega con quien quieras, cada uno en su pantalla."
     },
     "ayuda": {
       "titulo": "Cómo se juega",
@@ -194,6 +193,67 @@
       "no": "Dejarlo como está"
     }
   },
+  "online": {
+    "titulo": "Multijugador online",
+    "lema": "Una sala, un código y hasta cuatro jugadores.",
+    "nombre": "Tu nombre",
+    "crear": "Crear una sala",
+    "codigo": "Código de la sala",
+    "unirse": "Entrar",
+    "volver": "Volver a mi sala",
+    "menu": "Volver al menú",
+    "salir": "Dejar la sala",
+    "tu": "tú",
+    "tu_turno": "¡Te toca!",
+    "esperando_turno": "Esperando al otro jugador…",
+    "sustituido": "lo lleva un bot",
+    "caido": "Sin conexión con el servidor. Reintentando…",
+    "otra": "Otra partida",
+    "espera_otra": "El anfitrión decide si se juega otra.",
+    "sala": {
+      "codigo": "Código de la sala",
+      "comparte": "Dáselo a quien quieras que juegue contigo.",
+      "jugadores": "Jugadores en la sala",
+      "anfitrion": "anfitrión",
+      "ausente": "sin conexión",
+      "ajustes": "Tablero de {{ancho}} × {{alto}} con {{minas}} minas",
+      "empezar": "Empezar la partida",
+      "faltan": "Hacen falta al menos dos jugadores.",
+      "esperando": "Esperando a que el anfitrión empiece…"
+    },
+    "servidor": {
+      "boton": "Cambiar de servidor",
+      "ayuda": "Para jugar desde el móvil contra tu ordenador, pon aquí su dirección en la red local (por ejemplo http://192.168.1.20:3000).",
+      "guardar": "Guardar",
+      "restablecer": "Por defecto"
+    },
+    "copiar": "Copiar código",
+    "copiado": "¡Copiado!",
+    "sin_servidor": "No se llega al servidor. Comprueba que está arrancado, o cámbialo aquí abajo.",
+    "compartir": {
+      "boton": "Compartir",
+      "titulo": "Partida de MineHunt",
+      "texto": "Juega conmigo a MineHunt: entra en la sala {{codigo}}."
+    },
+    "abiertas": {
+      "titulo": "Salas esperando gente",
+      "actualizar": "Actualizar",
+      "ninguna": "Ahora mismo no hay ninguna. Crea una y pasa el código.",
+      "detalle": "de {{anfitrion}} · {{jugadores}} de {{maximo}}",
+      "con_bots": "· {{bots}} bot(s)"
+    },
+    "ajustes": {
+      "boton": "Ajustes de la sala",
+      "publica": "Sala pública",
+      "publica_ayuda": "Saldrá en la lista para que entre quien quiera.",
+      "privada_ayuda": "No se anuncia: solo entra quien tenga el código.",
+      "bots": "Bots en la mesa",
+      "sin_bots": "Ninguno: solo jugarán las personas que entren.",
+      "anadir_bot": "Añadir un bot",
+      "quitar": "Quitar"
+    },
+    "bot": "bot"
+  },
   "ayuda": {
     "titulo": "Cómo se juega",
     "intro": "Las reglas de MineHunt, tal y como las aplica el juego ahora mismo.",
@@ -241,6 +301,18 @@
     "DESCONOCIDO": "Ha ocurrido un error inesperado.",
     "SIN_JUGADAS": "No queda ninguna celda por descubrir.",
     "ONDA_NO_DISPONIBLE": "La onda expansiva todavía no está lista.",
-    "YA_RENDIDO": "Ese jugador ya se había rendido."
+    "YA_RENDIDO": "Ese jugador ya se había rendido.",
+    "SALA_NO_ENCONTRADA": "No hay ninguna sala con ese código.",
+    "SALA_LLENA": "Esa sala ya está completa.",
+    "SALA_EN_JUEGO": "La partida ya ha empezado.",
+    "SALA_EN_LOBBY": "La partida todavía no ha empezado.",
+    "NO_ES_EL_ANFITRION": "Eso solo puede hacerlo el anfitrión.",
+    "NO_ES_TU_TURNO": "No es tu turno.",
+    "JUGADOR_DESCONOCIDO": "Ya no estás en esa sala.",
+    "FALTAN_JUGADORES": "Hacen falta al menos dos jugadores.",
+    "CONFIGURACION_INVALIDA": "Esos ajustes no dan un tablero jugable.",
+    "NOMBRE_INVALIDO": "Ese nombre no vale: escribe entre 1 y 16 caracteres.",
+    "PETICION_INVALIDA": "El servidor no ha entendido la petición.",
+    "VERSION_INCOMPATIBLE": "Tu versión del juego no es compatible con la del servidor. Actualiza la aplicación."
   }
 }

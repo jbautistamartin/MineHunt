@@ -585,6 +585,66 @@ y dejarles hablar creyendo que se entienden da partidas a medias, que el jugador
 vive como un fallo del juego en lugar de como lo que es. Se comparan
 `major.minor`, porque un parche no cambia lo que va por el cable.
 
+### El Online tiene pantalla propia, no la de la partida local (Fase 7)
+
+`CLAUDE.md` decía que en la Fase 7 se sustituiría `ServicioPartida` por el estado
+del servidor «sin tocar los componentes». Se ha hecho a medias y a propósito: el
+**tablero sí es el mismo componente**, y las claves de sucesos y errores también,
+pero la pantalla es otra.
+
+La de `/partida` está atada a `ServicioPartida` y a `ServicioHistoria` —bots,
+niveles, revancha del nivel, a dónde se vuelve al salir—, y lo que el Online
+enseña encima del tablero no es lo mismo: nombres de personas en vez de «Jugador
+2», quién está sin conexión, a quién le juega un bot, el código de la sala. Para
+que una sola pantalla sirviera a los dos habría que invertirla detrás de una
+interfaz común, y eso es refactorizar lo que ya funciona para ahorrar unas líneas
+de plantilla que además dicen cosas distintas.
+
+Lo que sí quedó compartido es lo que valía la pena: el tablero, el lenguaje visual
+y los textos. Si algún día el Online y el Entrenamiento acaban enseñando lo mismo,
+entonces sí toca extraer el marcador a un componente.
+
+### La raíz del servidor enseña las salas (posterior a la Fase 7)
+
+La raíz del servidor devolvía «Servidor de MineHunt operativo», que servía para
+saber que el proceso estaba vivo y para nada más. Ahora enseña **el panel de
+salas**: código, quién la abrió, cuántos juegan, si es pública o privada, si está
+en el lobby o en partida y cuánto lleva abierta.
+
+Es información que hasta ahora solo existía dentro del proceso, y hacía falta
+precisamente al probar con dos dispositivos: saber si la sala que uno cree haber
+creado está ahí, con qué código y con cuánta gente dentro, sin tener que leer los
+registros.
+
+Dos cosas que decide esta página y conviene no deshacer. La primera es que
+**salen todas las salas, también las privadas y las que ya están jugando**: no es
+la lista que se le ofrece a quien busca partida —esa sigue siendo
+`salas-abiertas`, y esconde justo esas dos— sino la que necesita quien lleva el
+servidor. La segunda es que **sus textos van en español escritos a mano**, lo que
+en cualquier otro sitio del proyecto sería saltarse la convención 2. Aquí no la
+contradice: la convención protege lo que ve el jugador, y esta página no la pide
+jamás la aplicación, que habla por el socket. Traducirla habría significado meter
+un segundo sistema de i18n en el servidor para una pantalla que solo ve quien lo
+administra.
+
+En la Fase 9 la raíz la ocupará la web del juego servida por el propio Nest, así
+que el panel responde también en `/panel`, que es donde se quedará.
+
+### La IP del PC de desarrollo, fijada como valor por defecto (posterior a la Fase 7)
+
+La dirección del servidor por defecto era el propio origen, y `localhost:3000` en
+el `ng serve`. **Dentro del APK eso estaba mal**: el origen de la aplicación de
+Android es `http://localhost`, que ahí es el propio teléfono, así que la app se
+conectaba a sí misma y no encontraba servidor. Ahora, en nativo y en el `ng
+serve`, el valor por defecto es `SERVIDOR_DE_DESARROLLO`: la IP fija del PC en la
+red local.
+
+Es provisional y está escrito así en el código. No cierra nada: sirviéndose desde
+cualquier otro origen sigue mandando el origen —que es lo que acertará en la Fase
+9—, y el ajuste de «Cambiar de servidor» sigue existiendo, con lo guardado
+ganando siempre al valor por defecto. Lo que resuelve hoy es no tener que teclear
+una IP en cada teléfono antes de poder probar nada.
+
 ### Una sola imagen, y dónde vive la URL del servidor (Fases 7 y 9)
 
 **Web y servidor van juntos en la misma imagen**, con Nest sirviendo los estáticos del
