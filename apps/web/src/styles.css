@@ -60,3 +60,238 @@ a {
 .regla p {
   user-select: text;
 }
+
+/*
+ * Callar el juego sin salir de la partida.
+ *
+ * Es global porque lo llevan las dos pantallas de juego, la local y la online,
+ * y porque el CSS de cada componente tiene su propio presupuesto de tamano:
+ * repetirlo en las dos lo gastaba dos veces.
+ *
+ * Va al pie, con el resto de acciones: **la cabecera solo informa**, y algo que
+ * cambie de tamano por encima del tablero desvia el clic siguiente. Es cuadrado
+ * y solo lleva icono, asi que no cambia de ancho al pasar de sonando a callado.
+ */
+.silencio {
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--mh-texto-tenue);
+  cursor: pointer;
+  background: var(--mh-superficie-alta);
+  border: none;
+  border-radius: 0.5rem;
+}
+
+/*
+ * Preguntar antes de algo que no tiene vuelta (rendirse, dejar la partida).
+ *
+ * Es global porque la usan las dos pantallas de juego, y ademas cada CSS de
+ * componente tiene su propio presupuesto de tamano: repetirla lo gastaba dos
+ * veces.
+ *
+ * **La pregunta va en su linea y los dos botones en la suya, siempre juntos.**
+ * En un telefono estrecho, con los tres elementos en la misma fila, el «no»
+ * caia solo a la linea de abajo y la pareja de botones dejaba de leerse como
+ * una eleccion. Los botones se reparten el ancho a medias (`flex: 1 1 0`), asi
+ * que si el texto no cabe se parte dentro del boton en vez de partir la fila.
+ */
+.confirmar {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: stretch;
+  justify-content: center;
+  width: min(22rem, 100%);
+  margin: 0 auto;
+}
+
+.confirmar .pregunta {
+  flex: 1 0 100%;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+  text-align: center;
+}
+
+.confirmar button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Lo mismo en el dialogo del boton de atras: dos botones, una sola fila. */
+.dialogo .acciones {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+}
+
+.dialogo .acciones button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/*
+ * Cada jugador arrastra su color: el mismo en el marcador, en el resumen del
+ * final y en las minas que se apunta en el tablero.
+ *
+ * Global porque lo usan las dos pantallas de juego y el resumen, y las tres lo
+ * tenian escrito por su cuenta; ademas de repetirse, cualquier retoque se
+ * olvidaba en alguna.
+ */
+.jugador-0 {
+  color: var(--mh-jugador-0);
+}
+
+.jugador-1 {
+  color: var(--mh-jugador-1);
+}
+
+.jugador-2 {
+  color: var(--mh-jugador-2);
+}
+
+.jugador-3 {
+  color: var(--mh-jugador-3);
+}
+
+/*
+ * Los botones de las dos pantallas de juego.
+ *
+ * Estaban repetidos letra por letra en la partida local y en la online. Las
+ * otras pantallas (configuracion, historia) tienen los suyos con otro tamano y
+ * siguen mandando sobre estos, porque el CSS de un componente va encapsulado y
+ * gana al global.
+ */
+.principal,
+.secundario {
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.principal {
+  color: #fff;
+  background: var(--mh-acento);
+}
+
+.secundario {
+  color: var(--mh-texto-tenue);
+  background: var(--mh-superficie-alta);
+}
+
+.principal:disabled,
+.secundario:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/*
+ * Boton de verdad, pero de segunda fila: se ve el contorno y no pesa.
+ *
+ * Es para lo que abre un panel o lleva a otro sitio sin ser la accion
+ * principal. Global, con los otros dos botones: es vocabulario de toda la
+ * aplicacion, no de una pantalla.
+ */
+.discreto {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+.discreto:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/*
+ * Un dialogo por encima de todo: preguntar antes de dejar una partida, o
+ * esperar a que el servidor conteste.
+ *
+ * Global desde que lo usan las dos pantallas de juego. El velo se lleva los
+ * clics de lo que hay debajo, que es justo lo que se quiere mientras se espera.
+ */
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 60%);
+}
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  width: min(22rem, 100%);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 45%);
+}
+
+.dialogo .pregunta {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mh-texto);
+}
+
+.dialogo .ayuda {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+/*
+ * La rueda de esperar.
+ *
+ * Da igual lo que tarde el servidor: lo que no puede pasar es que el jugador se
+ * quede mirando una pantalla quieta sin saber si algo esta ocurriendo.
+ */
+.girando {
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 3px solid var(--mh-superficie);
+  border-top-color: var(--mh-acento);
+  border-radius: 50%;
+  animation: mh-girar 900ms linear infinite;
+}
+
+@keyframes mh-girar {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Quien pide menos movimiento tambien tiene que ver que se esta esperando. */
+@media (prefers-reduced-motion: reduce) {
+  .girando {
+    animation: mh-latir 1.4s ease-in-out infinite;
+  }
+
+  @keyframes mh-latir {
+    50% {
+      opacity: 0.3;
+    }
+  }
+}

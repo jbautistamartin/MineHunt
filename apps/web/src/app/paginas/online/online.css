@@ -334,17 +334,6 @@ input.codigo {
   justify-content: center;
 }
 
-.confirmar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.confirmar .pregunta {
-  font-size: 0.85rem;
-  color: var(--mh-texto-tenue);
-}
 
 /* Fin de partida */
 .fin {
@@ -363,50 +352,6 @@ input.codigo {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-}
-
-.clasificacion {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.clasificacion li {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: space-between;
-  font-size: 0.9rem;
-}
-
-/* Botones */
-.principal,
-.secundario {
-  padding: 0.6rem 1.1rem;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  border-radius: 0.5rem;
-}
-
-.principal {
-  color: #fff;
-  background: var(--mh-acento);
-}
-
-.secundario {
-  color: var(--mh-texto-tenue);
-  background: var(--mh-superficie-alta);
-}
-
-.principal:disabled,
-.secundario:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 button.peligro {
@@ -436,24 +381,6 @@ button.peligro {
   border: none;
 }
 
-/* Boton de verdad, pero de segunda fila: se ve el contorno y no pesa. */
-.discreto {
-  padding: 0.4rem 0.8rem;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--mh-texto-tenue);
-  cursor: pointer;
-  background: none;
-  border: 1px solid var(--mh-superficie-alta);
-  border-radius: 0.5rem;
-}
-
-.discreto:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
 /* Ajuste del servidor: se abre solo si hace falta */
 .servidor {
   display: flex;
@@ -468,23 +395,6 @@ button.peligro {
   padding: 0.75rem;
   background: var(--mh-superficie-alta);
   border-radius: 0.5rem;
-}
-
-/* Cada jugador arrastra su color */
-.jugador-0 {
-  color: var(--mh-jugador-0);
-}
-
-.jugador-1 {
-  color: var(--mh-jugador-1);
-}
-
-.jugador-2 {
-  color: var(--mh-jugador-2);
-}
-
-.jugador-3 {
-  color: var(--mh-jugador-3);
 }
 
 /* Salas esperando gente: para quien no tiene ningun codigo */

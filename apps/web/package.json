@@ -1,6 +1,6 @@
 {
   "name": "@minehunt/web",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "arrancar": "ng serve",
     "compilar": "ng build",
@@ -9,6 +9,7 @@
     "verificar-tipos": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json",
     "ng": "ng",
     "recursos-android": "node herramientas/generar-recursos-android.mjs",
+    "recursos-web": "node herramientas/generar-iconos-web.mjs",
     "sincronizar-android": "ng build && cap sync android",
     "abrir-android": "cap open android",
     "apk-android": "ng build && cap sync android && cd android && .\\gradlew.bat assembleDebug",
@@ -26,6 +27,7 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.1",
     "@capacitor/device": "^8.0.3",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
     "@minehunt/game-engine": "*",

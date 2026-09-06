@@ -1,13 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { MAX_JUGADORES, type Coordenada, type NivelIA } from '@minehunt/game-engine';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { ResumenFinal } from '../../componentes/resumen-final/resumen-final';
 import { Tablero } from '../../componentes/tablero/tablero';
 import { ServicioCompartir } from '../../nucleo/compartir.servicio';
+import { ServicioJugador } from '../../nucleo/jugador.servicio';
 import { ServicioOnline } from '../../nucleo/online.servicio';
 import { ServicioServidor } from '../../nucleo/servidor';
+import { ServicioSonido } from '../../nucleo/sonido.servicio';
+import { ServicioVibracion } from '../../nucleo/vibracion.servicio';
 
 /** A partir de aqui la cuenta atras del turno se pinta en rojo. */
 const SEGUNDOS_DE_AVISO = 5;
@@ -43,7 +55,7 @@ const AJUSTES_INICIALES = {
  */
 @Component({
   selector: 'mh-online',
-  imports: [TranslatePipe, FormsModule, Tablero],
+  imports: [TranslatePipe, FormsModule, ResumenFinal, Tablero],
   templateUrl: './online.html',
   styleUrl: './online.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +66,19 @@ export class Online {
   private readonly compartidor = inject(ServicioCompartir);
   private readonly traductor = inject(TranslateService);
   private readonly router = inject(Router);
+  private readonly sonido = inject(ServicioSonido);
+  private readonly vibracion = inject(ServicioVibracion);
+  private readonly jugador = inject(ServicioJugador);
+
+  /** Se puede callar el juego sin salir de la partida. */
+  readonly sonidoActivo = this.sonido.activo;
+
+  /**
+   * La vibracion se apaga desde la partida igual que el sonido, y por lo
+   * mismo: se molesta jugando, no antes. Solo sale donde hay que vibrar.
+   */
+  readonly vibracionActiva = this.vibracion.activa;
+  readonly hayVibracion = this.vibracion.disponibleEnElAparato;
 
   readonly conexion = this.online.conexion;
   readonly sala = this.online.sala;
@@ -72,8 +97,15 @@ export class Online {
   /** El codigo acaba de copiarse: se dice y se quita solo. */
   readonly copiado = signal(false);
 
-  /** Lo que el jugador escribe antes de entrar. */
-  readonly nombre = signal(this.online.credencialGuardada()?.nombre ?? '');
+  /**
+   * Lo que el jugador escribe antes de entrar.
+   *
+   * Arranca con el nombre recordado: la credencial de la sala se olvida al
+   * salir de ella, pero el nombre no tiene por que irse con la sala.
+   */
+  readonly nombre = signal(
+    this.jugador.nombre() || (this.online.credencialGuardada()?.nombre ?? ''),
+  );
   readonly codigo = signal('');
 
   /**
@@ -158,17 +190,68 @@ export class Online {
     () => !this.terminada() && this.esMiTurno() && this.miOnda() !== null,
   );
 
-  /** Clasificacion ordenada para el marcador de fin de partida. */
-  readonly clasificacion = computed(() =>
-    [...(this.partida()?.jugadores ?? [])].sort(
-      (a, b) => b.minasEncontradas - a.minasEncontradas,
-    ),
+  /**
+   * En Android la onda se lanza manteniendo el dedo sobre la celda: alli no
+   * hay boton derecho, y el boton de la onda obliga a mirar fuera del tablero.
+   *
+   * Solo mientras hay onda que gastar: sin onda disponible, mantener el dedo
+   * no tiene por que hacer nada distinto de un clic.
+   */
+  readonly pulsacionLargaLanzaOnda = computed(
+    () =>
+      Capacitor.isNativePlatform() &&
+      this.puedeManejarOnda() &&
+      this.miOnda()?.estado !== 'recargando',
   );
+
+  /**
+   * Nombre de cada jugador, en orden de puesto, para el resumen del final.
+   *
+   * Aqui no hay nada que traducir: son los nombres que se puso cada uno, y los
+   * manda el servidor.
+   */
+  readonly nombresDeJugadores = computed(() =>
+    (this.partida()?.jugadores ?? []).map((jugador) => this.nombreDe(jugador.id)),
+  );
+
+  /** El final ya sono: sin esto volveria a sonar a cada estado que llegara. */
+  private finalSonado = false;
 
   constructor() {
     // Lo primero al abrir la pantalla: que salas hay. De paso se ve si el
     // servidor esta ahi antes de que nadie escriba ningun nombre.
     void this.actualizarSalas();
+
+    // El nombre se recuerda segun se escribe, no al entrar en la sala: asi
+    // tambien sobrevive lo que se tecleo sin llegar a jugar.
+    effect(() => {
+      this.jugador.recordar(this.nombre());
+    });
+
+    // Los sucesos que llegan del servidor suenan —y se notan— igual que los
+    // de una partida local: son los mismos codigos.
+    effect(() => {
+      const suceso = this.ultimoSuceso();
+      if (suceso !== null) {
+        this.sonido.reproducirSuceso(suceso.codigo);
+        this.vibracion.vibrarSuceso(suceso.codigo);
+      }
+    });
+
+    // Aqui si se sabe quien mira la pantalla: gano si el ganador es su puesto.
+    effect(() => {
+      const partida = this.partida();
+      if (partida === null || !partida.terminada) {
+        this.finalSonado = false;
+        return;
+      }
+      if (!this.finalSonado) {
+        this.finalSonado = true;
+        const gano = partida.ganador === this.puesto();
+        this.sonido.reproducirFinal(gano);
+        this.vibracion.vibrarFinal(gano);
+      }
+    });
   }
 
   /** Nombre con el que se conoce a un puesto; el del servidor manda. */
@@ -273,6 +356,16 @@ export class Online {
     );
   }
 
+  /**
+   * El jugador se cansa de esperar al servidor.
+   *
+   * `conPaciencia` apaga `ocupado` solo, en cuanto la peticion cancelada
+   * termina, asi que aqui no hay que tocarlo.
+   */
+  cancelarEspera(): void {
+    this.online.cancelarEspera();
+  }
+
   async unirse(): Promise<void> {
     await this.conPaciencia(() => this.online.unirse(this.codigo(), this.nombre()));
   }
@@ -350,5 +443,13 @@ export class Online {
     } finally {
       this.ocupado.set(false);
     }
+  }
+
+  alternarSonido(): void {
+    this.sonido.alternar();
+  }
+
+  alternarVibracion(): void {
+    this.vibracion.alternar();
   }
 }

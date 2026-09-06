@@ -61,6 +61,25 @@ export interface OndaJugador {
 }
 
 /** Marcador de un jugador. */
+/**
+ * Lo que hizo un jugador durante la partida, para poder contarselo al final.
+ *
+ * No es informacion oculta ni cambia ninguna regla: son cuentas de lo que ya
+ * paso a la vista de todos, y por eso viajan dentro de `EstadoPartida` y valen
+ * igual para la partida local y para la online.
+ */
+export interface EstadisticasJugador {
+  /** Clics que ha dado, contando los que gastaron onda. */
+  readonly clics: number;
+  /** Celdas que destaparon esos clics; la onda destapa muchas de una vez. */
+  readonly celdasReveladas: number;
+  readonly ondasUsadas: number;
+  /** Minas seguidas en su mejor racha, que es lo que premia el juego. */
+  readonly mejorRacha: number;
+  /** Turnos que dejo pasar sin jugar porque se le acabo el tiempo. */
+  readonly turnosPerdidos: number;
+}
+
 export interface Jugador {
   /** Indice del jugador, de 0 a numJugadores - 1. */
   readonly id: number;
@@ -72,6 +91,8 @@ export interface Jugador {
    * no cuentan para nada.
    */
   readonly rendido: boolean;
+  /** Lo que ha hecho en la partida, para el resumen del final. */
+  readonly estadisticas: EstadisticasJugador;
 }
 
 /** Fotografia completa de la partida desde el punto de vista de los jugadores. */

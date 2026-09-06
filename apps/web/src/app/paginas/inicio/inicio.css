@@ -120,7 +120,21 @@ a.modo:focus-visible {
   border-radius: 999px;
 }
 
+/* Lo que vale para todo el juego, no para una partida: version e idioma en una
+   linea, y los interruptores en la suya. */
 .pie {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.version {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}
+
+.ajustes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -128,8 +142,62 @@ a.modo:focus-visible {
   justify-content: space-between;
 }
 
-.version {
-  margin: 0;
-  font-size: 0.75rem;
+/*
+ * Sonido y vibracion, siempre en la misma linea.
+ *
+ * Son dos interruptores de lo mismo —lo que el juego hace notar— y sueltos en
+ * una fila que envuelve se separaban en cuanto la etiqueta crecia: en un
+ * telefono estrecho la vibracion se caia sola a la linea de abajo y dejaba de
+ * leerse como la pareja que es. Se reparten el ancho a medias y no envuelven.
+ */
+.interruptores {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.sonido {
+  display: flex;
+  flex: 1 1 0;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-size: 0.8rem;
   color: var(--mh-texto-tenue);
+  cursor: pointer;
+  background: var(--mh-superficie);
+  border: 1px solid var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+/* Sin sitio, antes se recorta la etiqueta que se rompe la linea. */
+.etiqueta-interruptor {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sonido[aria-pressed='true'] {
+  color: var(--mh-texto);
+}
+
+/*
+ * El icono lleva al «Acerca de».
+ *
+ * Es donde todo el mundo toca por costumbre para saber que es esto y de que
+ * version va, y ademas deja la entrada del menu como camino evidente para quien
+ * no lo pruebe.
+ */
+.logo-enlace {
+  display: inline-block;
+  line-height: 0;
+  border-radius: 50%;
+}
+
+.logo-enlace:focus-visible {
+  outline: 2px solid var(--mh-acento);
+  outline-offset: 4px;
 }

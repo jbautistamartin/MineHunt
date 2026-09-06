@@ -1,6 +1,16 @@
+@if (mostrandoIntro()) {
+  <mh-intro (terminada)="introTerminada()" />
+}
+
 <section class="pantalla">
   <header class="portada">
-    <img class="logo" src="icono.svg" alt="" width="112" height="112" />
+    <a
+      class="logo-enlace"
+      routerLink="/acerca"
+      [attr.aria-label]="'inicio.aria.acerca' | translate"
+    >
+      <img class="logo" src="icono.svg" alt="" width="112" height="112" />
+    </a>
     <h1>{{ 'app.titulo' | translate }}</h1>
     <p class="lema">{{ 'app.lema' | translate }}</p>
   </header>
@@ -42,10 +52,47 @@
       </span>
       <span class="modo-flecha" aria-hidden="true">&#8594;</span>
     </a>
+
+    <a class="modo menor" routerLink="/acerca">
+      <span class="modo-texto">
+        <span class="modo-titulo">{{ 'inicio.acerca.titulo' | translate }}</span>
+        <span class="modo-detalle">{{ 'inicio.acerca.texto' | translate }}</span>
+      </span>
+      <span class="modo-flecha" aria-hidden="true">&#8594;</span>
+    </a>
   </nav>
 
   <footer class="pie">
-    <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
-    <mh-selector-idioma />
+    <div class="ajustes">
+      <p class="version">{{ 'app.version' | translate: { version: version } }}</p>
+      <mh-selector-idioma />
+    </div>
+
+    <div class="interruptores">
+      <button
+        type="button"
+        class="sonido"
+        [attr.aria-pressed]="sonidoActivo()"
+        (click)="alternarSonido()"
+      >
+        <span aria-hidden="true">{{ sonidoActivo() ? '&#128266;' : '&#128263;' }}</span>
+        <span class="etiqueta-interruptor">{{
+          (sonidoActivo() ? 'sonido.encendido' : 'sonido.apagado') | translate
+        }}</span>
+      </button>
+      @if (hayVibracion) {
+        <button
+          type="button"
+          class="sonido"
+          [attr.aria-pressed]="vibracionActiva()"
+          (click)="alternarVibracion()"
+        >
+          <span aria-hidden="true">{{ vibracionActiva() ? '&#128243;' : '&#128244;' }}</span>
+          <span class="etiqueta-interruptor">{{
+            (vibracionActiva() ? 'vibracion.encendida' : 'vibracion.apagada') | translate
+          }}</span>
+        </button>
+      }
+    </div>
   </footer>
 </section>

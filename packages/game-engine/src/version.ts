@@ -8,4 +8,4 @@
  * **Al subirla, sube tambien la del `package.json` del paquete y la de
  * `index.prueba.ts`**, que compara las tres.
  */
-export const VERSION_MOTOR = '0.9.0';
+export const VERSION_MOTOR = '0.0.2';

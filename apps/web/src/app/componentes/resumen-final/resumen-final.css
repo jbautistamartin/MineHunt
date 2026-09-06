@@ -1,0 +1,93 @@
+/*
+ * Sale con la partida ya terminada, asi que aqui no aplica la regla de que
+ * nada cambie de tamano: no queda ningun clic que desviar.
+ *
+ * Cada jugador ocupa **una sola linea**: el nombre a la izquierda y las cifras
+ * a la derecha. Antes eran una ficha con una rejilla de seis datos debajo del
+ * nombre, y en un telefono en vertical eso eran cuatro pantallas de resumen
+ * para cuatro jugadores, con el ancho desaprovechado a los lados de cada dato.
+ */
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  text-align: center;
+}
+
+.jugadores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jugador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+/* Al que gano se le nota sin tener que leer el marcador. */
+.jugador.ganador {
+  outline: 1px solid var(--mh-acento);
+}
+
+.nombre {
+  font-weight: 700;
+}
+
+.etiqueta {
+  font-size: 0.75rem;
+  color: var(--mh-texto-tenue);
+}
+
+/*
+ * Las dos cifras van juntas y pegadas al borde derecho. Si la linea no da de
+ * si —un nombre largo, una pantalla estrecha— bajan las dos a la vez, que
+ * separarlas dejaria el numero de minas colgado de cualquier sitio.
+ */
+.cifras {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-left: auto;
+}
+
+/*
+ * Anchos minimos y cifras de ancho fijo: asi las columnas de todos los
+ * jugadores caen unas debajo de otras y el resumen se lee de un vistazo, sin
+ * necesidad de una tabla de verdad ni del `subgrid`, que no todos los WebView
+ * del telefono entienden.
+ */
+.minas,
+.punteria {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.minas {
+  min-width: 4.5rem;
+}
+
+.punteria {
+  min-width: 6.5rem;
+  color: var(--mh-texto-tenue);
+}
+
+/* Un color por jugador, el mismo con el que se tinen sus minas. */

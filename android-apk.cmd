@@ -42,6 +42,9 @@ if "%ANDROID_HOME%"=="" (
   )
 )
 
+call :asegurar_jdk21
+if errorlevel 1 goto :fin
+
 echo [MineHunt] Compilando la web, sincronizando el proyecto nativo y montando el APK...
 echo            La primera vez Gradle se descarga solo y tarda un buen rato.
 echo.
@@ -59,14 +62,73 @@ goto :fin
 :error
 echo.
 echo [MineHunt] ERROR: el paso anterior ha fallado. Mira el detalle arriba.
-echo            Si se queja del JDK: hace falta el 21, no el 25. Pon JAVA_HOME
-echo            apuntando a un JDK 21 y vuelve a lanzarlo.
 
 :fin
 echo.
 pause
 endlocal
 goto :eof
+
+rem ======================================================================
+rem  El JDK: hace falta el 21
+rem
+rem  Gradle 8.14 y el plugin de Android 8.13 no admiten el 25, y con el la
+rem  compilacion revienta nada mas empezar con un "Unsupported class file major
+rem  version 69" que no dice de que va. Como Java se actualiza solo y deja
+rem  JAVA_HOME apuntando a la version nueva (o a un JRE, que tampoco sirve),
+rem  aqui se busca un JDK 21 instalado en vez de pedirselo a quien lo lance.
+rem
+rem  Solo vale para esta ventana: no se toca la variable del sistema.
+rem ======================================================================
+:asegurar_jdk21
+if defined JAVA_HOME (
+  call :es_jdk21 "%JAVA_HOME%" && goto :eof
+  echo [MineHunt] JAVA_HOME no apunta a un JDK 21; busco uno instalado...
+) else (
+  echo [MineHunt] JAVA_HOME no esta puesta; busco un JDK 21 instalado...
+)
+
+for %%B in (
+  "%ProgramFiles%\Eclipse Adoptium"
+  "%ProgramFiles%\Java"
+  "%ProgramFiles%\Microsoft"
+  "%ProgramFiles%\Amazon Corretto"
+  "%LOCALAPPDATA%\Programs\Eclipse Adoptium"
+) do (
+  if exist %%B (
+    for /d %%J in ("%%~B\jdk-21*") do (
+      call :usar_jdk "%%~fJ" && goto :eof
+    )
+  )
+)
+
+rem El JDK que trae Android Studio, que hoy tambien es un 21.
+call :usar_jdk "%ProgramFiles%\Android\Android Studio\jbr" && goto :eof
+
+echo.
+echo [MineHunt] ERROR: no encuentro ningun JDK 21, y Gradle no admite el 25.
+echo            Instala el JDK 21 (Eclipse Temurin, por ejemplo) o pon
+echo            JAVA_HOME apuntando a uno. Detalles en
+echo            documentos\MineHunt-android.md.
+exit /b 1
+
+rem Deja JAVA_HOME en ese JDK si de verdad es un 21. Devuelve 1 si no lo es.
+:usar_jdk
+call :es_jdk21 "%~1" || exit /b 1
+set "JAVA_HOME=%~1"
+echo [MineHunt] Uso el JDK 21 de "%~1"
+echo.
+exit /b 0
+
+rem Un JDK (no un JRE: se mira javac) y de la version 21.
+rem
+rem El "call" delante del javac no sobra: un ejecutable entrecomillado al frente
+rem de una tuberia lo vuelve a entrecomillar cmd y deja de encontrarlo, asi que
+rem sin el esta comprobacion fallaba siempre y ningun JDK valia.
+:es_jdk21
+if not exist "%~1\bin\javac.exe" exit /b 1
+call "%~1\bin\javac.exe" -version 2>&1 | findstr /b /c:"javac 21." >nul
+exit /b %errorlevel%
 
 :documentacion
 echo ======================================================================
@@ -82,7 +144,8 @@ echo    Para probar el juego en un telefono de verdad.
 echo.
 echo  QUE HACE FALTA
 echo    JDK 21 (con el 25 falla Gradle) y el SDK de Android con la
-echo    plataforma 36. Detalles en documentos\MineHunt-android.md.
+echo    plataforma 36. El JDK 21 lo busca este script solo si JAVA_HOME
+echo    apunta a otra cosa. Detalles en documentos\MineHunt-android.md.
 echo.
 echo  EQUIVALE A
 echo    npm run apk-android --workspace @minehunt/web

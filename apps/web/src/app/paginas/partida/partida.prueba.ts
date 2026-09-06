@@ -1,8 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { claveDeSuceso } from './partida';
-import type { UltimoSuceso } from '../../nucleo/partida.servicio';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
+
+import { Partida, claveDeSuceso } from './partida';
+import { ServicioPartida, type UltimoSuceso } from '../../nucleo/partida.servicio';
 
 function suceso(cambios: Partial<UltimoSuceso>): UltimoSuceso {
   return { codigo: 'CELDA_DESPEJADA', jugador: 0, celdas: 3, ...cambios };
@@ -58,5 +63,55 @@ describe('claveDeSuceso', () => {
       expect(textos['fin']?.['ultimo_en_pie'], idioma).toBeTruthy();
       expect(textos['fin']?.['ultimo_en_pie_una'], idioma).toBeTruthy();
     }
+  });
+});
+
+describe('Partida: la pantalla', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        provideTranslateService({}),
+      ],
+    });
+  });
+
+  /** Partida hotseat, sin bots ni reloj: nada se mueve solo. */
+  function montarPartida(): { servicio: ServicioPartida; elemento: HTMLElement } {
+    const servicio = TestBed.inject(ServicioPartida);
+    servicio.iniciar({
+      ancho: 5,
+      alto: 5,
+      minas: 4,
+      numJugadores: 2,
+      numHumanos: 2,
+      nivelesIA: [3, 3, 3, 3],
+      recargaOndaSegundos: 20,
+      tiempoPorTurnoSegundos: 0,
+    });
+
+    const fixture = TestBed.createComponent(Partida);
+    fixture.detectChanges();
+    return { servicio, elemento: fixture.nativeElement as HTMLElement };
+  }
+
+  /**
+   * El resumen cuenta como fue la partida: mientras se juega no hay nada que
+   * contar, y ademas ocupa mucho justo encima del tablero.
+   */
+  it('no ensena el resumen mientras se juega', () => {
+    const { elemento } = montarPartida();
+
+    expect(elemento.querySelector('mh-tablero')).not.toBeNull();
+    expect(elemento.querySelector('mh-resumen-final')).toBeNull();
+  });
+
+  it('deja callar el juego sin salir de la partida', () => {
+    const { elemento } = montarPartida();
+
+    expect(elemento.querySelector('button.silencio')).not.toBeNull();
   });
 });

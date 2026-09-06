@@ -213,6 +213,55 @@ bloquea por defecto.
 Ese fichero **solo se mezcla en la compilación de depuración**: el APK y el AAB
 de publicación siguen exigiendo `https`, que es lo que tocará en la Fase 9.
 
+**Y con eso solo no basta.** Capacitor sirve la aplicación desde `localhost`,
+pero **con qué esquema lo haga lo decide todo**: con el `https` que trae por
+defecto, la página queda en `https://localhost` y hablar con un servidor por
+`http://` —o abrir un `ws://`— es *contenido mixto*, que Chromium corta dentro
+del propio teléfono. No sale ni un paquete a la red, y por eso no se ve ningún
+error de conexión: no hay conexión que fallar. El permiso de tráfico en claro
+del manifest no llega, porque aquel es el permiso de Android y esto es la regla
+del navegador.
+
+Por eso `capacitor.config.ts` declara **`server.androidScheme: 'http'`**: así la
+página y el servidor de desarrollo van por el mismo esquema y no hay nada que
+bloquear, y contra un servidor `https` de producción tampoco lo habrá, porque lo
+que se prohíbe es lo inseguro desde lo seguro y no al revés. `http://localhost`
+sigue siendo un origen de confianza para el navegador, así que no se pierde nada.
+`empaquetado.prueba.ts` lo comprueba.
+
+**Cambiar el esquema borra lo guardado en el teléfono**: el origen del WebView
+cambia y con él se va el `localStorage` (idioma, ajustes y progreso del Modo
+Historia) de quien ya tuviera la aplicación instalada. Con la aplicación
+publicada eso sería perder la partida de la gente: no se toca.
+
+Como segunda línea, `MainActivity` levanta además el contenido mixto con
+`MIXED_CONTENT_ALWAYS_ALLOW` **atado a que la aplicación sea depurable**
+(`FLAG_DEBUGGABLE`), que es lo que distingue al APK de pruebas del que se
+publica. `empaquetado.prueba.ts` vigila las dos cosas.
+
+Síntoma exacto, por si vuelve a pasar: el teléfono hace ping al PC, una petición
+HTTP a mano desde el teléfono contesta, la regla del cortafuegos está puesta… y
+la aplicación sigue sin conectar. Entonces no es la red: es el WebView.
+
+**El JDK lo busca el script.** `android-apk.cmd` comprueba que `JAVA_HOME`
+apunte a un JDK 21 y, si no (Java se actualiza solo y deja ahí un 25, o un JRE
+sin `javac`), busca uno instalado en las rutas de siempre y lo usa **solo para
+esa ventana**. Sin eso, la compilación revienta con un `Unsupported class file
+major version 69` que no dice de qué va.
+
+**El cortafuegos de Windows es lo que impide jugar desde el móvil.** El servidor
+escucha en `0.0.0.0:3000`, pero Windows bloquea las conexiones entrantes hasta
+que hay una regla. Se pone una vez, en PowerShell como administrador:
+
+```powershell
+New-NetFirewallRule -DisplayName "MineHunt servidor de partidas (3000)" `
+  -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Private
+```
+
+Síntoma exacto: el teléfono está en la misma red, el PC responde en su propia
+dirección, y desde el móvil no llega nada. Antes de tocar código, se comprueba
+que exista la regla.
+
 **A qué servidor apunta la app instalada:** por defecto, a la IP fija del PC de
 desarrollo (`SERVIDOR_DE_DESARROLLO`, en `apps/web/src/app/nucleo/servidor.ts`),
 hoy `http://192.168.100.101:3000`. Dentro del WebView no sirve `localhost`, que

@@ -53,7 +53,9 @@ export const CREADOR_DE_SOCKET = new InjectionToken<CreadorDeSocket>('creador de
   factory:
     (): CreadorDeSocket =>
     (url: string): SocketMinimo =>
-      io(url, { transports: ['websocket'] }) as unknown as SocketMinimo,
+      // Websocket primero, que es lo que la partida necesita; y si no se
+      // puede, que se apane con las peticiones largas antes que no conectar.
+      io(url, { transports: ['websocket', 'polling'] }) as unknown as SocketMinimo,
 });
 
 /**
@@ -93,6 +95,14 @@ export class ServicioOnline {
   private credencial: SalaRecordada | null = leerRecordada();
 
   private readonly conexionInterna = signal<EstadoConexion>('desconectado');
+  /**
+   * Corta la espera de lo que se este pidiendo al servidor.
+   *
+   * Existe porque entrar en una sala no es instantaneo y puede no llegar nunca:
+   * con el servidor apagado o fuera de alcance, el acuse de recibo no vuelve y
+   * el jugador se queda mirando un boton apagado sin saber que pasa.
+   */
+  private abortarEspera: (() => void) | null = null;
   private readonly salaInterna = signal<VistaSala | null>(null);
   private readonly partidaInterna = signal<EstadoPartida | null>(null);
   private readonly sucesoInterno = signal<SucesoPartida | null>(null);
@@ -279,6 +289,18 @@ export class ServicioOnline {
     this.desconectar();
   }
 
+  /**
+   * El jugador se cansa de esperar: se deja de esperar y se corta la conexion.
+   *
+   * Cortar tambien el socket no es de mas: si el servidor contestara despues,
+   * la sala se habria creado de verdad y el jugador estaria fuera de ella sin
+   * saberlo. Asi la peticion muere del todo y se puede volver a intentar.
+   */
+  cancelarEspera(): void {
+    this.abortarEspera?.();
+    this.desconectar();
+  }
+
   /** Corta la conexion sin dejar la sala: se podra volver con la credencial. */
   desconectar(): void {
     this.detenerLatido();
@@ -291,6 +313,24 @@ export class ServicioOnline {
     this.puestoInterno.set(null);
   }
 
+  /**
+   * Espera una respuesta, con dos formas de rendirse: el limite de tiempo de
+   * siempre y el boton de cancelar del jugador. Devuelve null en los dos casos.
+   */
+  private async esperando(promesa: Promise<unknown>): Promise<unknown> {
+    const cancelacion = new Promise<null>((seguir) => {
+      this.abortarEspera = (): void => {
+        seguir(null);
+      };
+    });
+
+    try {
+      return await conLimiteDeEspera(Promise.race([promesa, cancelacion]));
+    } finally {
+      this.abortarEspera = null;
+    }
+  }
+
   /** Credencial guardada de una sala a medias, si la hay. */
   credencialGuardada(): SalaRecordada | null {
     return this.credencial;
@@ -300,7 +340,16 @@ export class ServicioOnline {
   private async entrar(mensaje: string, peticion: Record<string, unknown>): Promise<boolean> {
     await this.conectar();
 
-    const respuesta = (await this.pedir(mensaje, peticion)) as Resultado<Entrada>;
+    const respuesta = (await this.esperando(this.pedir(mensaje, peticion))) as
+      | Resultado<Entrada>
+      | null;
+
+    // Ni contesto ni el jugador espero mas: se corta y la pantalla lo dice.
+    if (respuesta === null) {
+      this.desconectar();
+      this.conexionInterna.set('caido');
+      return false;
+    }
     if (!respuesta.ok) {
       this.errorInterno.set(respuesta.error);
       return false;

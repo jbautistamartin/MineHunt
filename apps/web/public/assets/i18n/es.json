@@ -6,7 +6,8 @@
   },
   "inicio": {
     "aria": {
-      "menu": "Modos de juego"
+      "menu": "Modos de juego",
+      "acerca": "Acerca de MineHunt"
     },
     "entrenamiento": {
       "titulo": "Modo entrenamiento",
@@ -24,12 +25,24 @@
       "titulo": "Cómo se juega",
       "texto": "Las reglas, la onda expansiva y el reloj de turno."
     },
-    "volver": "← Volver al menú"
+    "volver": "← Volver al menú",
+    "acerca": {
+      "titulo": "Acerca de",
+      "texto": "Versión, qué es este juego y quién lo hizo."
+    }
   },
   "idioma": {
     "etiqueta": "Idioma",
     "es": "Español",
     "en": "English"
+  },
+  "vibracion": {
+    "encendida": "Vibración",
+    "apagada": "Sin vibración"
+  },
+  "sonido": {
+    "encendido": "Sonido",
+    "apagado": "Sin sonido"
   },
   "configuracion": {
     "titulo": "Modo entrenamiento",
@@ -135,8 +148,17 @@
       "lista": "Onda lista",
       "armada": "Onda armada",
       "recarga_corta": "Onda en {{segundos}} s",
-      "atajo": "Atajo: clic derecho sobre la celda."
+      "atajo": "Atajo: clic derecho sobre la celda.",
+      "atajo_movil": "Atajo: toca dos veces la misma celda."
     }
+  },
+  "resumen": {
+    "titulo": "Cómo fue la partida",
+    "minas": "{{minas}} minas",
+    "punteria": "{{valor}} % de acierto",
+    "sin_datos": "sin clics",
+    "turnos_perdidos": "{{turnos}} turno(s) perdido(s)",
+    "rendido": "se rindió"
   },
   "historia": {
     "titulo": "Modo historia",
@@ -252,7 +274,12 @@
       "anadir_bot": "Añadir un bot",
       "quitar": "Quitar"
     },
-    "bot": "bot"
+    "bot": "bot",
+    "esperando": {
+      "titulo": "Hablando con el servidor…",
+      "texto": "Si tarda demasiado, comprueba que el servidor esté encendido y que la dirección sea la correcta.",
+      "cancelar": "Cancelar"
+    }
   },
   "ayuda": {
     "titulo": "Cómo se juega",
@@ -272,7 +299,7 @@
     },
     "onda": {
       "titulo": "La onda expansiva",
-      "texto": "Gástala en una celda vacía y arrastrará todas las conectadas. En el navegador, el clic derecho sobre una celda la lanza ahí directamente, sin tocar este botón; en móvil hay que usar el botón. Sobre una celda numerada solo se revela ella y la onda se pierde; sobre una mina, la mina se apunta y la onda se gasta igual."
+      "texto": "Gástala en una celda vacía y arrastrará todas las conectadas. En el navegador, el clic derecho sobre una celda la lanza ahí directamente, sin tocar este botón; en el móvil hace lo mismo tocar dos veces seguidas la misma celda. Sobre una celda numerada solo se revela ella y la onda se pierde; sobre una mina, la mina se apunta y la onda se gasta igual."
     },
     "rendirse": {
       "titulo": "Rendirse",
@@ -290,6 +317,17 @@
       "titulo": "El modo historia",
       "texto": "Son cincuenta niveles con las mismas reglas y la dificultad subiendo por cuatro vías a la vez: tablero más grande, más minas, rivales más listos (y más numerosos) y menos tiempo por turno. Solo se avanza ganando: si pierdes repites el nivel, pero no pierdes nada de lo que ya llevabas. El progreso se guarda en este dispositivo."
     }
+  },
+  "acerca": {
+    "que_es": "MineHunt es un buscaminas al revés: aquí las minas no se esquivan, se buscan. Gana quien más encuentre. Quien acierta sigue jugando, quien falla cede el turno, y la onda expansiva despeja media zona de golpe si se gasta en el sitio adecuado.",
+    "modos": "Se juega en solitario contra bots, nivel a nivel en el Modo Historia, o en línea con hasta cuatro jugadores.",
+    "version": "Versión",
+    "autoria": {
+      "titulo": "Autoría",
+      "texto": "Un juego de Capicua, desarrollado por José Luis Bautista.",
+      "derechos": "© 2026 Capicua. Todos los derechos reservados."
+    },
+    "ir_a_ayuda": "Cómo se juega"
   },
   "error": {
     "CELDA_YA_REVELADA": "Esa celda ya está descubierta.",

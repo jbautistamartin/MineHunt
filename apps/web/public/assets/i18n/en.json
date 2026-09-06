@@ -6,7 +6,8 @@
   },
   "inicio": {
     "aria": {
-      "menu": "Game modes"
+      "menu": "Game modes",
+      "acerca": "About MineHunt"
     },
     "entrenamiento": {
       "titulo": "Training mode",
@@ -24,12 +25,24 @@
       "titulo": "How to play",
       "texto": "The rules, the shockwave and the turn clock."
     },
-    "volver": "← Back to menu"
+    "volver": "← Back to menu",
+    "acerca": {
+      "titulo": "About",
+      "texto": "Version, what this game is and who made it."
+    }
   },
   "idioma": {
     "etiqueta": "Language",
     "es": "Español",
     "en": "English"
+  },
+  "vibracion": {
+    "encendida": "Vibration",
+    "apagada": "No vibration"
+  },
+  "sonido": {
+    "encendido": "Sound",
+    "apagado": "Muted"
   },
   "configuracion": {
     "titulo": "Training mode",
@@ -135,8 +148,17 @@
       "lista": "Shockwave ready",
       "armada": "Shockwave armed",
       "recarga_corta": "Shockwave in {{segundos}} s",
-      "atajo": "Shortcut: right-click on the cell."
+      "atajo": "Shortcut: right-click on the cell.",
+      "atajo_movil": "Shortcut: tap the same cell twice."
     }
+  },
+  "resumen": {
+    "titulo": "How the game went",
+    "minas": "{{minas}} mines",
+    "punteria": "{{valor}}% accuracy",
+    "sin_datos": "no clicks",
+    "turnos_perdidos": "{{turnos}} turn(s) lost",
+    "rendido": "surrendered"
   },
   "historia": {
     "titulo": "Story mode",
@@ -252,7 +274,12 @@
       "anadir_bot": "Add a bot",
       "quitar": "Remove"
     },
-    "bot": "bot"
+    "bot": "bot",
+    "esperando": {
+      "titulo": "Talking to the server…",
+      "texto": "If this takes too long, check that the server is running and that the address is right.",
+      "cancelar": "Cancel"
+    }
   },
   "ayuda": {
     "titulo": "How to play",
@@ -272,7 +299,7 @@
     },
     "onda": {
       "titulo": "The shockwave",
-      "texto": "Spend it on an empty cell and it drags every connected one. In the browser, right-clicking a cell fires it there directly, without touching this button; on mobile you need the button. On a numbered cell only that cell is revealed and the shockwave is wasted; on a mine, the mine is scored and it is spent anyway."
+      "texto": "Spend it on an empty cell and it drags every connected one. In the browser, right-clicking a cell fires it there directly, without touching this button; on mobile, tapping the same cell twice does the same. On a numbered cell only that cell is revealed and the shockwave is wasted; on a mine, the mine is scored and it is spent anyway."
     },
     "rendirse": {
       "titulo": "Surrendering",
@@ -290,6 +317,17 @@
       "titulo": "Story mode",
       "texto": "Fifty levels under the same rules, with the difficulty climbing four ways at once: a bigger board, more mines, smarter (and more numerous) opponents and less time per turn. You only move forward by winning: lose and you replay the level, but you never lose what you had already cleared. Progress is saved on this device."
     }
+  },
+  "acerca": {
+    "que_es": "MineHunt is minesweeper inverted: mines are not avoided here, they are hunted. Whoever finds the most wins. Find one and you keep playing; miss and you hand over the turn. The shockwave clears half an area at once if you spend it in the right place.",
+    "modos": "Play solo against bots, level by level in Story Mode, or online with up to four players.",
+    "version": "Version",
+    "autoria": {
+      "titulo": "Credits",
+      "texto": "A game by Capicua, developed by José Luis Bautista.",
+      "derechos": "© 2026 Capicua. All rights reserved."
+    },
+    "ir_a_ayuda": "How to play"
   },
   "error": {
     "CELDA_YA_REVELADA": "That cell is already uncovered.",

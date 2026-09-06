@@ -92,13 +92,19 @@ forma de arreglarlo desde el cliente.
 Los tres mensajes de entrada llevan la **versión con la que viene el cliente**, y
 si no encaja con la del servidor se queda fuera con `VERSION_INCOMPATIBLE`. La
 versión es `VERSION_PROTOCOLO`, que es la del motor: como el protocolo vive ahí,
-las dos suben juntas.
+las dos suben juntas. Y desde la 0.0.2, **la del motor es también la de la
+aplicación**: el número que el jugador lee en «Acerca de» es el mismo que decide
+contra qué servidores puede jugar, así que un `VERSION_INCOMPATIBLE` se entiende
+sin tener que buscar un segundo número que no sale en ninguna pantalla.
 
 Se comparan `major.minor` y no la versión entera (`versionesCompatibles`, en el
 propio protocolo, para que los dos lados usen la misma regla): un parche arregla
 cosas sin tocar lo que va por el cable, y echar a un jugador por eso sería
-gratuito. **Si cambias el protocolo, sube la minor**; si no lo haces, un cliente
-viejo entrará creyendo que se entiende con el servidor.
+gratuito. **Si cambias el protocolo, sube la minor** —hoy, de 0.0.x a 0.1.0, y
+con ella la del juego entero—; si no lo haces, un cliente viejo entrará creyendo
+que se entiende con el servidor. Al revés también vale: mientras la minor no
+cambie, se pueden publicar arreglos sin echar de las salas a quien no haya
+actualizado.
 
 Es la diferencia entre que el jugador vea «actualiza la aplicación» y que vea una
 partida a medias, que se parece demasiado a un fallo del juego. Y no llega con

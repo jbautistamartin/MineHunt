@@ -15,9 +15,7 @@
               'partida.turno_de'
                 | translate
                   : {
-                      jugador:
-                        claveNombre(partida.turnoDe)
-                        | translate: { numero: numeroDe(partida.turnoDe) },
+                      jugador: nombreDe(partida.turnoDe),
                     }
             }}
           </h1>
@@ -54,7 +52,7 @@
           [class.rendido]="jugador.rendido"
         >
           <span class="nombre">
-            {{ claveNombre(jugador.id) | translate: { numero: numeroDe(jugador.id) } }}
+            {{ nombreDe(jugador.id) }}
             @if (nivelDeBot(jugador.id); as nivel) {
               <span class="nivel" [attr.title]="'configuracion.nivel.' + nivel | translate">
                 {{ 'partida.nivel_bot' | translate: { nivel: nivel } }}
@@ -91,6 +89,7 @@
       [estado]="partida"
       [bloqueado]="partida.terminada || esTurnoDeBot()"
       (celdaPulsada)="jugar($event)"
+      [pulsacionLargaAlterna]="pulsacionLargaLanzaOnda()"
       (celdaPulsadaAlterna)="jugarConOnda($event)"
     />
 
@@ -125,7 +124,12 @@
             {{ 'partida.onda.activo' | translate }}
           } @else {
             {{ 'partida.onda.ayuda' | translate }}
-            <span class="atajo">{{ 'partida.onda.atajo' | translate }}</span>
+            <span class="atajo">
+              {{
+                (pulsacionLargaLanzaOnda() ? 'partida.onda.atajo_movil' : 'partida.onda.atajo')
+                  | translate
+              }}
+            </span>
           }
         </span>
       </div>
@@ -145,8 +149,7 @@
           claveDeSuceso(suceso)
             | translate
               : {
-                  jugador:
-                    claveNombre(suceso.jugador) | translate: { numero: numeroDe(suceso.jugador) },
+                  jugador: nombreDe(suceso.jugador),
                   celdas: suceso.celdas,
                 }
         }}
@@ -155,6 +158,33 @@
 
     @if (!partida.terminada) {
       <div class="acciones-partida">
+        <button
+          type="button"
+          class="silencio"
+          [attr.aria-pressed]="sonidoActivo()"
+          [attr.aria-label]="(sonidoActivo() ? 'sonido.encendido' : 'sonido.apagado') | translate"
+          [attr.title]="(sonidoActivo() ? 'sonido.encendido' : 'sonido.apagado') | translate"
+          (click)="alternarSonido()"
+        >
+          <span aria-hidden="true">{{ sonidoActivo() ? '&#128266;' : '&#128263;' }}</span>
+        </button>
+        @if (hayVibracion) {
+          <button
+            type="button"
+            class="silencio"
+            [attr.aria-pressed]="vibracionActiva()"
+            [attr.aria-label]="
+              (vibracionActiva() ? 'vibracion.encendida' : 'vibracion.apagada') | translate
+            "
+            [attr.title]="
+              (vibracionActiva() ? 'vibracion.encendida' : 'vibracion.apagada') | translate
+            "
+            (click)="alternarVibracion()"
+          >
+            <span aria-hidden="true">{{ vibracionActiva() ? '&#128243;' : '&#128244;' }}</span>
+          </button>
+        }
+
         @if (puedeRendirse()) {
           @if (confirmandoRendicion()) {
             <span class="confirmar">
@@ -196,8 +226,7 @@
               'partida.fin.gana'
                 | translate
                   : {
-                      jugador:
-                        claveNombre(partida.ganador) | translate: { numero: numeroDe(partida.ganador) },
+                      jugador: nombreDe(partida.ganador),
                     }
             }}
           </p>
@@ -213,6 +242,12 @@
             }}
           </p>
         }
+
+        <mh-resumen-final
+          [jugadores]="partida.jugadores"
+          [nombres]="nombresDeJugadores()"
+          [ganador]="partida.ganador"
+        />
 
         @if (nivelHistoria(); as nivel) {
           @if (nivelSuperado()) {

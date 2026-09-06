@@ -35,5 +35,9 @@ export const routes: Routes = [
     path: 'ayuda',
     loadComponent: () => import('./paginas/ayuda/ayuda').then((modulo) => modulo.Ayuda),
   },
+  {
+    path: 'acerca',
+    loadComponent: () => import('./paginas/acerca/acerca').then((modulo) => modulo.Acerca),
+  },
   { path: '**', redirectTo: '' },
 ];

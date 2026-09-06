@@ -127,6 +127,117 @@ describe('Tablero', () => {
   });
 
   /**
+   * La pulsacion larga es la unica via en Android, donde no hay boton derecho.
+   *
+   * Lo que se comprueba aqui es lo que la hizo sustituir al doble toque: que
+   * **el clic normal no paga nada** —se resuelve al soltar, sin esperar a
+   * nada— y que mantener el dedo no acaba jugando la celda dos veces.
+   */
+  describe('pulsacion larga', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /** El boton de una celda oculta, con el gesto encendido o apagado. */
+    function tableroConGesto(encendido: boolean) {
+      const fixture = crearComponente(estadoDePrueba());
+      fixture.componentRef.setInput('pulsacionLargaAlterna', encendido);
+      fixture.detectChanges();
+
+      const pulsaciones: Coordenada[] = [];
+      const alternas: Coordenada[] = [];
+      fixture.componentInstance.celdaPulsada.subscribe((celda: Coordenada) => {
+        pulsaciones.push(celda);
+      });
+      fixture.componentInstance.celdaPulsadaAlterna.subscribe((celda: Coordenada) => {
+        alternas.push(celda);
+      });
+
+      // (2,0) es la tercera celda y sigue oculta: la cascada no llego hasta ella.
+      const celda = fixture.nativeElement.querySelectorAll('.celda')[2] as HTMLButtonElement;
+      return { celda, pulsaciones, alternas };
+    }
+
+    function apoyar(celda: HTMLButtonElement, x = 50, y = 50): void {
+      celda.dispatchEvent(
+        new MouseEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }),
+      );
+    }
+
+    it('mantener el dedo sobre la celda vale por la pulsacion alterna', () => {
+      const { celda, pulsaciones, alternas } = tableroConGesto(true);
+
+      apoyar(celda);
+      vi.advanceTimersByTime(500);
+
+      expect(alternas).toEqual([{ x: 2, y: 0 }]);
+      expect(pulsaciones).toHaveLength(0);
+    });
+
+    /**
+     * Al soltar, el navegador dispara el clic de todos modos. Sin tragarselo,
+     * la celda se jugaria dos veces: una con onda y otra sin ella.
+     */
+    it('el clic que viene detras de la pulsacion larga no juega la celda otra vez', () => {
+      const { celda, pulsaciones, alternas } = tableroConGesto(true);
+
+      apoyar(celda);
+      vi.advanceTimersByTime(500);
+      celda.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+      celda.click();
+
+      expect(alternas).toHaveLength(1);
+      expect(pulsaciones).toHaveLength(0);
+    });
+
+    /**
+     * Lo que costaba el doble toque y aqui no se paga: un clic corriente se
+     * resuelve al soltar, sin esperar a ver si el gesto era otro.
+     */
+    it('soltar antes de tiempo es el clic de siempre, sin esperas', () => {
+      const { celda, pulsaciones, alternas } = tableroConGesto(true);
+
+      apoyar(celda);
+      vi.advanceTimersByTime(100);
+      celda.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+      celda.click();
+
+      expect(pulsaciones).toEqual([{ x: 2, y: 0 }]);
+      // Y el temporizador ya no espera a nadie.
+      vi.advanceTimersByTime(500);
+      expect(alternas).toHaveLength(0);
+    });
+
+    it('arrastrar el dedo cancela la pulsacion larga', () => {
+      const { celda, pulsaciones, alternas } = tableroConGesto(true);
+
+      apoyar(celda, 50, 50);
+      celda.dispatchEvent(
+        new MouseEvent('pointermove', { bubbles: true, clientX: 90, clientY: 50 }),
+      );
+      vi.advanceTimersByTime(500);
+
+      expect(alternas).toHaveLength(0);
+      expect(pulsaciones).toHaveLength(0);
+    });
+
+    it('con el gesto apagado, mantener el dedo no lanza nada', () => {
+      const { celda, pulsaciones, alternas } = tableroConGesto(false);
+
+      apoyar(celda);
+      vi.advanceTimersByTime(500);
+      celda.click();
+
+      expect(alternas).toHaveLength(0);
+      expect(pulsaciones).toEqual([{ x: 2, y: 0 }]);
+    });
+  });
+
+  /**
    * Al acabar la partida el motor destapa el tablero entero. Las minas que no
    * se llevo nadie no llevan color de jugador: se pintan apagadas para que se
    * distingan de las que si puntuaron.

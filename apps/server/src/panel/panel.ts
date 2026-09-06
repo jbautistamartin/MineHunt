@@ -148,7 +148,10 @@ function vacio(): string {
 
 function tarjeta(sala: InformeSala): string {
   const humanos = sala.jugadores - sala.bots;
-  const bots = sala.bots > 0 ? ` · ${String(sala.bots)} ${sala.bots === 1 ? 'bot' : 'bots'}` : '';
+  const bots =
+    sala.bots > 0
+      ? ` · ${String(sala.bots)} ${sala.bots === 1 ? 'bot' : 'bots'}`
+      : '';
   // Una persona que se fue deja su puesto guardado hasta que vuelve, y eso es
   // justo lo que hay que ver desde fuera: hay sitios ocupados por nadie.
   const ausentes = humanos - sala.conectados;
@@ -173,11 +176,58 @@ function tarjeta(sala: InformeSala): string {
 }
 
 /** La mina del icono del juego, simplificada para que quepa en una cadena. */
-const ICONO = `<svg class="icono" viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
-  <circle cx="24" cy="27" r="13" fill="#e8433a" />
-  <path d="M24 14V5" stroke="#f0a92b" stroke-width="3" stroke-linecap="round" />
-  <circle cx="24" cy="4" r="3" fill="#f0a92b" />
-  <circle cx="19" cy="22" r="3" fill="#ff8a7a" />
+/*
+ * El icono del juego, **copia literal del icono maestro**
+ * (`documentos/MineHunt-icon.svg`) con el tamano puesto en la etiqueta. Va
+ * copiado y no leido del disco porque la imagen de la Fase 9 no llevara la
+ * carpeta de documentacion dentro, y sirve para las dos cosas: la cabecera de
+ * la pagina y el icono de la pestana. Antes habia aqui un dibujo aparte, mas
+ * pobre y distinto del de la aplicacion; si se retoca el maestro hay que
+ * volver a copiarlo, y `panel.prueba.ts` falla mientras no se haga.
+ */
+export const ICONO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2a4a"/>
+      <stop offset="100%" stop-color="#0d1730"/>
+    </linearGradient>
+    <radialGradient id="mine" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ff8a4c"/>
+      <stop offset="55%" stop-color="#e8433a"/>
+      <stop offset="100%" stop-color="#a5211f"/>
+    </radialGradient>
+    <radialGradient id="spark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff6c8"/>
+      <stop offset="100%" stop-color="#ffd23f"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <g stroke="#3a1210" stroke-width="14" stroke-linecap="round">
+    <line x1="256" y1="150" x2="256" y2="100"/>
+    <line x1="256" y1="382" x2="256" y2="432"/>
+    <line x1="150" y1="266" x2="100" y2="266"/>
+    <line x1="382" y1="266" x2="432" y2="266"/>
+    <line x1="184" y1="194" x2="150" y2="160"/>
+    <line x1="328" y1="194" x2="362" y2="160"/>
+    <line x1="184" y1="338" x2="150" y2="372"/>
+    <line x1="328" y1="338" x2="362" y2="372"/>
+  </g>
+
+  <circle cx="256" cy="266" r="116" fill="url(#mine)" stroke="#3a1210" stroke-width="10"/>
+  <ellipse cx="215" cy="220" rx="34" ry="20" fill="#ffffff" opacity="0.25"/>
+
+  <path d="M300 178 C 330 150, 340 120, 320 90" stroke="#5a3b26" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <circle cx="320" cy="86" r="22" fill="url(#spark)"/>
+  <circle cx="320" cy="86" r="22" fill="none" stroke="#ff9f1c" stroke-width="4" opacity="0.6"/>
+
+  <g transform="translate(300,300) rotate(-20)">
+    <path d="M0 60 L0 5 C0 -8 18 -8 18 5 L18 20 L34 24 C46 27 52 36 50 48 L44 78
+             C42 90 32 98 20 98 L4 98 C-6 98 -14 92 -18 84 L-32 56 C-36 48 -30 38 -20 40
+             L-14 42 L-14 5 C-14 -8 4 -8 4 5"
+          fill="#ffe0c2" stroke="#3a1210" stroke-width="6" stroke-linejoin="round"/>
+  </g>
 </svg>`;
 
 /* Los colores son los de la aplicacion (`apps/web/src/styles.css`); si se

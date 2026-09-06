@@ -1,3 +1,23 @@
+@if (ocupado()) {
+  <div
+    class="velo"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'online.esperando.titulo' | translate"
+  >
+    <div class="dialogo">
+      <span class="girando" aria-hidden="true"></span>
+      <p class="pregunta">{{ 'online.esperando.titulo' | translate }}</p>
+      <p class="ayuda">{{ 'online.esperando.texto' | translate }}</p>
+      <div class="acciones">
+        <button type="button" class="secundario" (click)="cancelarEspera()">
+          {{ 'online.esperando.cancelar' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <section class="pantalla">
   @if (!enPartida()) {
     <header class="cabecera">
@@ -430,6 +450,7 @@
         [estado]="partida"
         [bloqueado]="partida.terminada || !esMiTurno()"
         (celdaPulsada)="jugar($event)"
+        [pulsacionLargaAlterna]="pulsacionLargaLanzaOnda()"
         (celdaPulsadaAlterna)="jugarConOnda($event)"
       />
 
@@ -479,6 +500,33 @@
 
       @if (!partida.terminada) {
         <div class="acciones-partida">
+          <button
+            type="button"
+            class="silencio"
+            [attr.aria-pressed]="sonidoActivo()"
+            [attr.aria-label]="(sonidoActivo() ? 'sonido.encendido' : 'sonido.apagado') | translate"
+            [attr.title]="(sonidoActivo() ? 'sonido.encendido' : 'sonido.apagado') | translate"
+            (click)="alternarSonido()"
+          >
+            <span aria-hidden="true">{{ sonidoActivo() ? '&#128266;' : '&#128263;' }}</span>
+          </button>
+          @if (hayVibracion) {
+            <button
+              type="button"
+              class="silencio"
+              [attr.aria-pressed]="vibracionActiva()"
+              [attr.aria-label]="
+                (vibracionActiva() ? 'vibracion.encendida' : 'vibracion.apagada') | translate
+              "
+              [attr.title]="
+                (vibracionActiva() ? 'vibracion.encendida' : 'vibracion.apagada') | translate
+              "
+              (click)="alternarVibracion()"
+            >
+              <span aria-hidden="true">{{ vibracionActiva() ? '&#128243;' : '&#128244;' }}</span>
+            </button>
+          }
+
           @if (confirmandoRendicion()) {
             <span class="confirmar">
               <span class="pregunta">{{ 'partida.rendirse.seguro' | translate }}</span>
@@ -512,20 +560,20 @@
             </p>
           }
 
-          <ol class="clasificacion">
-            @for (jugador of clasificacion(); track jugador.id) {
-              <li [class]="'jugador-' + jugador.id">
-                <span class="nombre">{{ nombreDe(jugador.id) }}</span>
-                <span class="minas">
-                  {{ 'partida.minas_de' | translate: { minas: jugador.minasEncontradas } }}
-                </span>
-              </li>
-            }
-          </ol>
+          <mh-resumen-final
+            [jugadores]="partida.jugadores"
+            [nombres]="nombresDeJugadores()"
+            [ganador]="partida.ganador"
+          />
 
           <div class="acciones">
             @if (soyAnfitrion()) {
-              <button type="button" class="principal" [disabled]="ocupado()" (click)="otraPartida()">
+              <button
+                type="button"
+                class="principal"
+                [disabled]="ocupado()"
+                (click)="otraPartida()"
+              >
                 {{ 'online.otra' | translate }}
               </button>
             } @else {

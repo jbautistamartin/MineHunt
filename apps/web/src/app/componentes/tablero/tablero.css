@@ -43,6 +43,10 @@
   /* Sin esto, el navegador del movil espera al doble toque para hacer zoom y
      cada jugada llega tarde. */
   touch-action: manipulation;
+
+  /* La onda se lanza manteniendo el dedo sobre la celda, y ese mismo gesto es
+     el que el WebView usa para su propio menu de «tocar y mantener». */
+  -webkit-touch-callout: none;
   transition:
     background-color 120ms ease,
     transform 80ms ease;
@@ -146,5 +150,64 @@
 @media (width <= 420px) {
   :host {
     --lado-maximo: 1.6rem;
+  }
+}
+
+/*
+ * Animaciones (Fase 8).
+ *
+ * Las clases de una celda cambian cuando cambia su estado, y una animacion CSS
+ * arranca justo al aplicarse: por eso cada celda se anima una sola vez, cuando
+ * se destapa, y no en cada repintado. La cascada de la onda no necesita nada
+ * mas —son muchas celdas estrenando la clase a la vez— y por eso no hay aqui
+ * ni un temporizador ni una animacion orquestada desde TypeScript.
+ */
+@keyframes mh-aparecer {
+  from {
+    transform: scale(0.86);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* La mina primero se hunde y luego revienta, que es lo que se espera al verla. */
+@keyframes mh-detonar {
+  0% {
+    transform: scale(0.7);
+    box-shadow: 0 0 0 0 rgb(232 67 58 / 55%);
+  }
+
+  45% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 0.4rem rgb(232 67 58 / 0%);
+  }
+
+  100% {
+    transform: none;
+    box-shadow: 0 0 0 0 rgb(232 67 58 / 0%);
+  }
+}
+
+.celda.despejada,
+.celda.mina.sin-duenno {
+  animation: mh-aparecer 160ms ease-out;
+}
+
+.celda.mina:not(.sin-duenno) {
+  animation: mh-detonar 420ms ease-out;
+}
+
+/*
+ * Quien pide menos movimiento no lo pide solo para las webs bonitas: aqui las
+ * celdas se mueven donde se esta clicando.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .celda {
+    animation: none;
+    transition: none;
   }
 }

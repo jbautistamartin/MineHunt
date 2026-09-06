@@ -13,6 +13,11 @@
         [disabled]="bloqueado() || celda.estado !== 'oculta'"
         (click)="pulsar(celda)"
         (contextmenu)="pulsarAlterna($event, celda)"
+        (pointerdown)="empezarPulsacion($event, celda)"
+        (pointermove)="moverPulsacion($event)"
+        (pointerup)="soltarPulsacion()"
+        (pointercancel)="soltarPulsacion()"
+        (pointerleave)="soltarPulsacion()"
       >
         @if (celda.estado === 'mina-encontrada' || celda.estado === 'mina-sin-encontrar') {
           <span class="glifo" aria-hidden="true">✸</span>

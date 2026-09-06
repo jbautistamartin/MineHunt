@@ -536,3 +536,70 @@ describe('MotorJuego: revelado final', () => {
     expect(huerfana?.minasAdyacentes).toBeNull();
   });
 });
+
+describe('MotorJuego: estadisticas por jugador', () => {
+  /**
+   * Con el azar clavado en 0 las minas caen en las primeras celdas libres tras
+   * excluir la del primer clic: aqui, (0,0), (1,0) y (2,0).
+   */
+  it('cuenta clics, celdas destapadas y la mejor racha', () => {
+    const partida = MotorJuego.crearPartida(4, 4, 3, 2, { aleatorio: SIN_AZAR });
+
+    partida.clicCelda(3, 3);
+    // Le toca al segundo, que encuentra dos seguidas y a la tercera falla.
+    expect(partida.clicCelda(0, 0).codigo).toBe('MINA_ENCONTRADA');
+    expect(partida.clicCelda(1, 0).codigo).toBe('MINA_ENCONTRADA');
+    expect(partida.clicCelda(3, 2).codigo).toBe('CELDA_DESPEJADA');
+
+    const [primero, segundo] = partida.obtenerEstado().jugadores;
+    expect(primero?.estadisticas.clics).toBe(1);
+    expect(primero?.estadisticas.mejorRacha).toBe(0);
+    expect(segundo?.estadisticas.clics).toBe(3);
+    expect(segundo?.estadisticas.celdasReveladas).toBe(3);
+    expect(segundo?.estadisticas.mejorRacha).toBe(2);
+  });
+
+  it('la onda cuenta como un clic, y las celdas que arrastra como suyas', () => {
+    const partida = MotorJuego.crearPartida(4, 4, 3, 2, { aleatorio: SIN_AZAR });
+    partida.clicCelda(3, 3);
+
+    partida.activarOnda();
+    const resultado = partida.clicCelda(3, 2);
+
+    expect(resultado.codigo).toBe('ONDA_EXPANSIVA');
+    const segundo = partida.obtenerEstado().jugadores[1];
+    expect(segundo?.estadisticas.ondasUsadas).toBe(1);
+    expect(segundo?.estadisticas.clics).toBe(1);
+    expect(segundo?.estadisticas.celdasReveladas).toBe(resultado.celdasReveladas.length);
+    expect(resultado.celdasReveladas.length).toBeGreaterThan(1);
+  });
+
+  /** Quedarse sin tiempo corta la racha igual que fallar, y ademas se apunta. */
+  it('apunta los turnos perdidos por tiempo', () => {
+    const reloj = { ahora: 0 };
+    const partida = MotorJuego.crearPartida(4, 4, 3, 2, {
+      aleatorio: SIN_AZAR,
+      ahora: () => reloj.ahora,
+      tiempoPorTurnoSegundos: 10,
+    });
+
+    reloj.ahora = 11_000;
+    expect(partida.comprobarTiempoDeTurno()).toBe(true);
+
+    const jugadores = partida.obtenerEstado().jugadores;
+    expect(jugadores[0]?.estadisticas.turnosPerdidos).toBe(1);
+    expect(jugadores[1]?.estadisticas.turnosPerdidos).toBe(0);
+  });
+
+  it('empieza todo a cero', () => {
+    const nueva = MotorJuego.crearPartida(4, 4, 3, 2).obtenerEstado();
+
+    expect(nueva.jugadores[0]?.estadisticas).toEqual({
+      clics: 0,
+      celdasReveladas: 0,
+      ondasUsadas: 0,
+      mejorRacha: 0,
+      turnosPerdidos: 0,
+    });
+  });
+});

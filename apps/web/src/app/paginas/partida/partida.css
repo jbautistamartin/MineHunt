@@ -124,43 +124,6 @@ h1 {
   justify-content: center;
 }
 
-.principal,
-.secundario {
-  padding: 0.6rem 1.1rem;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  border-radius: 0.5rem;
-}
-
-.principal {
-  color: #fff;
-  background: var(--mh-acento);
-}
-
-.secundario {
-  color: var(--mh-texto-tenue);
-  background: var(--mh-superficie-alta);
-}
-
-/* Cada jugador arrastra su color al turno, a su ficha y al resultado. */
-.jugador-0 {
-  color: var(--mh-jugador-0);
-}
-
-.jugador-1 {
-  color: var(--mh-jugador-1);
-}
-
-.jugador-2 {
-  color: var(--mh-jugador-2);
-}
-
-.jugador-3 {
-  color: var(--mh-jugador-3);
-}
-
 .aviso .pensando {
   color: var(--mh-texto-tenue);
   font-style: italic;
@@ -292,17 +255,6 @@ h1 {
   justify-content: center;
 }
 
-.confirmar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.confirmar .pregunta {
-  font-size: 0.85rem;
-  color: var(--mh-texto-tenue);
-}
 
 button.peligro {
   padding: 0.4rem 0.8rem;
@@ -321,37 +273,6 @@ button.peligro {
  * salir al paso. La de rendirse sigue siendo de las de abajo, que ahi hay que
  * ir a buscar el boton.
  */
-.velo {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgb(0 0 0 / 60%);
-}
-
-.dialogo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
-  width: min(22rem, 100%);
-  padding: 1.5rem 1.25rem;
-  text-align: center;
-  background: var(--mh-superficie-alta);
-  border-radius: 0.75rem;
-  box-shadow: 0 1rem 2rem rgb(0 0 0 / 45%);
-}
-
-.dialogo .pregunta {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--mh-texto);
-}
-
 .dialogo .detalle {
   margin: 0;
 }

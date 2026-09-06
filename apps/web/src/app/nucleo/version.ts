@@ -5,6 +5,10 @@
  * por un solo string no compensa. Lo que evita que se quede atras es
  * `version.prueba.ts`, que falla si deja de coincidir con el package.json.
  *
- * No es la version del motor de juego (`VERSION_MOTOR`), que va por su cuenta.
+ * **La version del motor va a la par con esta**: `VERSION_MOTOR` es tambien
+ * `VERSION_PROTOCOLO`, con la que cliente y servidor comprueban que se
+ * entienden, y llevarlas separadas obligaba a mirar dos numeros para saber que
+ * hablaba con que. Al subir una version se suben las dos, y `version.prueba.ts`
+ * falla si dejan de coincidir.
  */
-export const VERSION_APP = '0.0.1';
+export const VERSION_APP = '0.0.2';

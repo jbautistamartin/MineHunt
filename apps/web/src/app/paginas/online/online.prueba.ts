@@ -175,3 +175,40 @@ describe('Online', () => {
     }
   });
 });
+
+describe('Online: la espera del servidor', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        provideTranslateService({}),
+      ],
+    });
+  });
+
+  /**
+   * Entrar en una sala no es instantaneo y puede no llegar nunca: con el
+   * servidor fuera de alcance, el acuse de recibo no vuelve. Sin esto el
+   * jugador se queda mirando un boton apagado sin saber que pasa.
+   */
+  it('ensena que esta esperando al servidor, y deja cancelar', () => {
+    const fixture = TestBed.createComponent(Online);
+    fixture.componentInstance.ocupado.set(true);
+    fixture.detectChanges();
+    const elemento = fixture.nativeElement as HTMLElement;
+
+    expect(elemento.querySelector('.velo')).not.toBeNull();
+    expect(elemento.querySelector('.girando')).not.toBeNull();
+    expect(elemento.querySelector('.velo button')).not.toBeNull();
+  });
+
+  it('sin nada pendiente no hay ninguna ventana encima', () => {
+    const fixture = TestBed.createComponent(Online);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.velo')).toBeNull();
+  });
+});

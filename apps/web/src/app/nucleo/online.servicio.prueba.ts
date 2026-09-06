@@ -94,6 +94,14 @@ function entradaCorrecta(puesto = 0): Resultado<Entrada> {
   return { ok: true, datos: entrada(puesto) };
 }
 
+/** Como el falso, pero el servidor no contesta jamas. */
+class SocketMudo extends SocketFalso {
+  override emitWithAck(mensaje: string, datos?: unknown): Promise<unknown> {
+    this.enviados.push({ mensaje, datos });
+    return new Promise<unknown>(() => undefined);
+  }
+}
+
 let socket: SocketFalso;
 
 function crear(): ServicioOnline {
@@ -266,6 +274,40 @@ describe('ServicioOnline', () => {
     );
     expect(socket.desconectado).toBe(true);
     expect(online.hayCredencial()).toBe(false);
+    expect(online.sala()).toBeNull();
+  });
+});
+
+describe('ServicioOnline: cuando el servidor no contesta', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  /**
+   * Crear una sala puede no llegar nunca: con el servidor apagado o fuera de
+   * alcance el acuse de recibo no vuelve. El jugador tiene que poder rendirse
+   * de esperar sin recargar la aplicacion.
+   */
+  it('cancelar la espera termina la peticion y corta la conexion', async () => {
+    socket = new SocketMudo();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: CREADOR_DE_SOCKET,
+          useValue: ((): SocketMinimo => socket) satisfies CreadorDeSocket,
+        },
+      ],
+    });
+    const online = TestBed.inject(ServicioOnline);
+
+    const creando = online.crearSala('Ana');
+    // Sin esto, la promesa de arriba no se resolveria jamas.
+    online.cancelarEspera();
+
+    expect(await creando).toBe(false);
+    expect(socket.desconectado).toBe(true);
     expect(online.sala()).toBeNull();
   });
 });

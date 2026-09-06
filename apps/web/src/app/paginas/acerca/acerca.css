@@ -1,0 +1,78 @@
+/* Pantalla de lectura: mismo ancho y mismos bloques que la ayuda. */
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  width: min(34rem, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.portada {
+  text-align: center;
+}
+
+.logo {
+  width: 5.5rem;
+  height: auto;
+}
+
+h1 {
+  margin: 0.4rem 0 0;
+  font-size: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.lema,
+.ayuda {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--mh-texto-tenue);
+}
+
+.ficha {
+  width: 100%;
+  padding: 1rem;
+  background: var(--mh-superficie);
+  border-radius: 0.75rem;
+}
+
+/* El texto largo si se deja seleccionar, como en la ayuda. */
+.texto {
+  margin: 0;
+  line-height: 1.5;
+  user-select: text;
+}
+
+.separado {
+  margin-top: 0.75rem;
+}
+
+.version {
+  margin: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mh-texto-tenue);
+  user-select: text;
+}
+
+.salidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.secundario {
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  color: var(--mh-texto-tenue);
+  text-decoration: none;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}

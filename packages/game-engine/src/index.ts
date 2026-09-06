@@ -8,6 +8,8 @@
  * Fase 4: tabla de niveles del Modo Historia y logica de progreso.
  * Fase 6: el protocolo con el que cliente y servidor se hablan en las partidas
  * online, que vive aqui por ser el vocabulario comun de los dos.
+ * Fase 8: estadisticas por jugador dentro del estado, para el resumen del
+ * final de la partida.
  */
 
 export {
@@ -80,6 +82,7 @@ export {
   type CodigoResultadoClic,
   type CodigoSuceso,
   type Coordenada,
+  type EstadisticasJugador,
   type EstadoCelda,
   type EstadoOnda,
   type EstadoPartida,

@@ -1,12 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import type { CodigoSuceso, Coordenada } from '@minehunt/game-engine';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { ResumenFinal } from '../../componentes/resumen-final/resumen-final';
 import { Tablero } from '../../componentes/tablero/tablero';
 import { ServicioBotonAtras } from '../../nucleo/atras.servicio';
 import { JUGADOR_HUMANO, ServicioHistoria } from '../../nucleo/historia.servicio';
+import { ServicioJugador } from '../../nucleo/jugador.servicio';
 import { ServicioPartida, type UltimoSuceso } from '../../nucleo/partida.servicio';
+import { ServicioSonido } from '../../nucleo/sonido.servicio';
+import { ServicioVibracion } from '../../nucleo/vibracion.servicio';
 
 /** A partir de aqui la cuenta atras del turno se pinta en rojo. */
 const SEGUNDOS_DE_AVISO = 5;
@@ -46,7 +51,7 @@ export function claveDeSuceso(suceso: UltimoSuceso): string {
  */
 @Component({
   selector: 'mh-partida',
-  imports: [TranslatePipe, Tablero],
+  imports: [TranslatePipe, ResumenFinal, Tablero],
   templateUrl: './partida.html',
   styleUrl: './partida.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +60,20 @@ export class Partida {
   private readonly servicio = inject(ServicioPartida);
   private readonly historia = inject(ServicioHistoria);
   private readonly atras = inject(ServicioBotonAtras);
+  private readonly traductor = inject(TranslateService);
+  private readonly sonido = inject(ServicioSonido);
+  private readonly vibracion = inject(ServicioVibracion);
+  private readonly jugadorPropio = inject(ServicioJugador);
+
+  /** Se puede callar el juego sin salir de la partida. */
+  readonly sonidoActivo = this.sonido.activo;
+
+  /**
+   * La vibracion se apaga desde la partida igual que el sonido, y por lo
+   * mismo: se molesta jugando, no antes. Solo sale donde hay que vibrar.
+   */
+  readonly vibracionActiva = this.vibracion.activa;
+  readonly hayVibracion = this.vibracion.disponibleEnElAparato;
   private readonly router = inject(Router);
 
   readonly estado = this.servicio.estado;
@@ -94,6 +113,20 @@ export class Partida {
   /** El boton de la onda solo tiene sentido en el turno de un humano. */
   readonly puedeManejarOnda = computed(
     () => !this.terminada() && !this.esTurnoDeBot() && this.ondaDelTurno() !== null,
+  );
+
+  /**
+   * En Android la onda se lanza manteniendo el dedo sobre la celda: alli no
+   * hay boton derecho, y el boton de la onda obliga a mirar fuera del tablero.
+   *
+   * Solo mientras hay onda que gastar: sin onda disponible, mantener el dedo
+   * no tiene por que hacer nada distinto de un clic.
+   */
+  readonly pulsacionLargaLanzaOnda = computed(
+    () =>
+      Capacitor.isNativePlatform() &&
+      this.puedeManejarOnda() &&
+      this.ondaDelTurno()?.estado !== 'recargando',
   );
 
   /**
@@ -143,12 +176,20 @@ export class Partida {
     return nivel === null ? null : this.historia.siguienteDe(nivel.numero);
   });
 
-  /** Clasificacion ordenada para el marcador de fin de partida. */
-  readonly clasificacion = computed(() =>
-    [...(this.estado()?.jugadores ?? [])].sort(
-      (a, b) => b.minasEncontradas - a.minasEncontradas,
-    ),
+  /**
+   * Nombre de cada jugador, en orden de puesto, para el resumen del final.
+   *
+   * Se traducen aqui y no en la plantilla porque el resumen los recibe ya
+   * hechos: en el Online son nombres de personas y no hay nada que traducir.
+   * Traducir a mano es seguro porque **el idioma no se puede cambiar desde una
+   * partida**: el selector vive solo en el menu principal.
+   */
+  readonly nombresDeJugadores = computed(() =>
+    (this.estado()?.jugadores ?? []).map((jugador) => this.nombreDe(jugador.id)),
   );
+
+  /** El final ya sono: sin esto volveria a sonar a cada repintado. */
+  private finalSonado = false;
 
   constructor() {
     // Si se entra a /partida sin partida en curso (recarga o enlace directo),
@@ -156,6 +197,32 @@ export class Partida {
     effect(() => {
       if (!this.servicio.hayPartida()) {
         void this.router.navigate(['/']);
+      }
+    });
+
+    // El sonido y la vibracion acompanan al mismo suceso que la interfaz
+    // cuenta por escrito, asi que basta con seguir la senal que ya existe.
+    effect(() => {
+      const suceso = this.servicio.ultimoSuceso();
+      if (suceso !== null) {
+        this.sonido.reproducirSuceso(suceso.codigo);
+        this.vibracion.vibrarSuceso(suceso.codigo);
+      }
+    });
+
+    // Y el cierre, una sola vez por partida. En hotseat gana «el jugador» si
+    // el que gano no es un bot: quien mira la pantalla es siempre humano.
+    effect(() => {
+      const estado = this.estado();
+      if (estado === null || !estado.terminada) {
+        this.finalSonado = false;
+        return;
+      }
+      if (!this.finalSonado) {
+        this.finalSonado = true;
+        const gano = estado.ganador !== null && !this.esBot(estado.ganador);
+        this.sonido.reproducirFinal(gano);
+        this.vibracion.vibrarFinal(gano);
       }
     });
 
@@ -262,7 +329,7 @@ export class Partida {
   }
 
   /** Los jugadores se numeran desde 1 de cara al jugador. */
-  numeroDe(idJugador: number): number {
+  private numeroDe(idJugador: number): number {
     return idJugador + 1;
   }
 
@@ -287,7 +354,39 @@ export class Partida {
    * Clave de traduccion del nombre de un jugador.
    * Los puestos de la IA se llaman "Bot" para distinguirlos de un vistazo.
    */
-  claveNombre(idJugador: number): string {
+  private claveNombre(idJugador: number): string {
     return this.servicio.esBot(idJugador) ? 'partida.bot' : 'partida.jugador';
+  }
+
+  /**
+   * Como se llama un puesto en la pantalla.
+   *
+   * **El puesto 0 es quien tiene el aparato en la mano**, asi que si dejo su
+   * nombre puesto se le llama por el: «Jugador 1» es lo que se dice cuando no
+   * hay nada mejor, y el nombre ya se recuerda de una partida a otra
+   * (ServicioJugador). Los demas puestos humanos del hotseat siguen siendo
+   * numeros, que el nombre recordado es de una sola persona, y los bots su
+   * «Bot n» de siempre.
+   *
+   * Se traduce aqui y no con la tuberia de la plantilla porque hay que elegir
+   * entre un nombre y una clave. Es seguro: **el idioma no se puede cambiar
+   * desde una partida**, el selector vive solo en el menu principal.
+   */
+  nombreDe(idJugador: number): string {
+    const propio = this.jugadorPropio.nombre();
+    if (idJugador === JUGADOR_HUMANO && propio !== '' && !this.servicio.esBot(idJugador)) {
+      return propio;
+    }
+    return this.traductor.instant(this.claveNombre(idJugador), {
+      numero: this.numeroDe(idJugador),
+    }) as string;
+  }
+
+  alternarSonido(): void {
+    this.sonido.alternar();
+  }
+
+  alternarVibracion(): void {
+    this.vibracion.alternar();
   }
 }

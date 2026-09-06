@@ -8,6 +8,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { routes } from '../../app.routes';
 import { Inicio } from './inicio';
+import { ServicioIntro } from '../../nucleo/intro.servicio';
 
 /** Lee un fichero de traduccion de los que se sirven en /assets/i18n/. */
 function traducciones(idioma: 'es' | 'en'): Record<string, unknown> {
@@ -32,7 +33,18 @@ describe('Inicio', () => {
     });
   });
 
-  it('lleva a cada modo de juego y a la ayuda', () => {
+  /** Tocar el icono es lo que hace todo el mundo para saber que es esto. */
+  it('el icono tambien lleva al acerca de', () => {
+    const fixture = TestBed.createComponent(Inicio);
+    fixture.detectChanges();
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('.logo-enlace');
+
+    expect(enlace?.getAttribute('href')).toBe('/acerca');
+    // Sin texto dentro, hace falta decir a donde lleva.
+    expect(enlace?.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('lleva a cada modo de juego, a la ayuda y al acerca de', () => {
     const fixture = TestBed.createComponent(Inicio);
     fixture.detectChanges();
 
@@ -41,6 +53,7 @@ describe('Inicio', () => {
       '/entrenamiento',
       '/online',
       '/ayuda',
+      '/acerca',
     ]);
   });
 
@@ -82,5 +95,49 @@ describe('Inicio', () => {
       expect(textos['volver']).toBeTruthy();
       expect((textos['aria'] as Record<string, string>)['menu']).toBeTruthy();
     }
+  });
+});
+
+describe('Inicio: la presentacion del arranque', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter(routes),
+        provideTranslateService({}),
+      ],
+    });
+  });
+
+  it('sale la primera vez que se abre el menu', () => {
+    const fixture = TestBed.createComponent(Inicio);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('mh-intro')).not.toBeNull();
+  });
+
+  /**
+   * Entre partida y partida se vuelve al menu: verla cada vez seria un peaje,
+   * asi que se ensena una vez por arranque de la aplicacion.
+   */
+  it('no vuelve a salir al volver al menu', () => {
+    TestBed.inject(ServicioIntro).marcarVista();
+
+    const fixture = TestBed.createComponent(Inicio);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('mh-intro')).toBeNull();
+  });
+
+  it('el menu esta debajo desde el principio, no despues', () => {
+    const fixture = TestBed.createComponent(Inicio);
+    fixture.detectChanges();
+    const elemento = fixture.nativeElement as HTMLElement;
+
+    // La presentacion tapa, no sustituye: asi no hay salto al quitarse.
+    expect(elemento.querySelector('mh-intro')).not.toBeNull();
+    expect(elemento.querySelectorAll('a.modo').length).toBeGreaterThan(0);
   });
 });

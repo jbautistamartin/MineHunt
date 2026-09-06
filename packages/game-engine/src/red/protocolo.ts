@@ -186,7 +186,14 @@ export interface Entrada {
  *
  * Se comparan `major.minor` y no la version entera: un parche arregla cosas
  * sin tocar lo que va por el cable, y echar a un jugador por eso seria
- * gratuito. Si cambia el protocolo, sube la minor.
+ * gratuito. **Si cambia el protocolo, sube la minor.**
+ *
+ * Esta version es la del juego entero (la que el jugador ve en pantalla), asi
+ * que dentro de una misma minor —hoy, cualquier 0.0.x— todas las versiones se
+ * dan por compatibles y se pueden publicar arreglos sin dejar fuera a nadie.
+ * Cambiar lo que va por el cable obliga entonces a subir la minor de todo el
+ * juego (a 0.1.0), que es justo lo que hace que un cliente viejo se quede
+ * fuera en vez de entrar creyendo que se entiende.
  */
 export function versionesCompatibles(una: string, otra: string): boolean {
   const hastaLaMinor = (version: string): string =>

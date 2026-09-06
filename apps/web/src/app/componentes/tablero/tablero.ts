@@ -1,6 +1,31 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import type { CeldaVisible, Coordenada, EstadoPartida } from '@minehunt/game-engine';
+
+/**
+ * Cuanto hay que mantener el dedo encima para que cuente como pulsacion larga.
+ *
+ * Es el tiempo que usa Android para su propia pulsacion larga, asi que es el
+ * que el jugador ya tiene en la mano. Mas corto se dispararia queriendo clicar
+ * normal; mas largo se siente como que el juego no responde.
+ */
+const MS_PULSACION_LARGA = 400;
+
+/**
+ * Lo que puede bailar el dedo sin que se cancele la pulsacion larga.
+ *
+ * Un dedo apoyado nunca esta del todo quieto. Pasado ese margen ya no es una
+ * pulsacion: es un arrastre, y arrastrar no tiene que gastar la onda.
+ */
+const PX_DE_MARGEN = 12;
 
 /**
  * Rejilla de juego.
@@ -33,18 +58,111 @@ export class Tablero {
    */
   readonly celdaPulsadaAlterna = output<Coordenada>();
 
+  /**
+   * Mantener el dedo sobre una celda vale por la pulsacion alterna.
+   *
+   * **Es la unica via en Android**, donde no hay boton derecho. Sustituye al
+   * doble toque, que salia caro: con aquel, un toque suelto no podia resolverse
+   * hasta comprobar que no venia un segundo, asi que **cada jugada normal
+   * llegaba tarde**. Manteniendo el dedo no hay nada que esperar — el clic
+   * normal se resuelve al soltar, como siempre — y ademas es el gesto que el
+   * telefono ya usa para «la otra accion» en todas partes.
+   *
+   * Aun asi lo enciende la pantalla **solo cuando hay onda de verdad que
+   * gastar**: sin onda, con la onda recargando o en el turno de otro, mantener
+   * el dedo no tiene que hacer nada distinto de un clic.
+   */
+  readonly pulsacionLargaAlterna = input(false);
+
   readonly filas = computed(() => this.estado().celdas);
 
   /** Una columna por celda de ancho, todas del mismo lado. */
-  readonly columnas = computed(
-    () => `repeat(${String(this.estado().ancho)}, var(--lado-celda))`,
-  );
+  readonly columnas = computed(() => `repeat(${String(this.estado().ancho)}, var(--lado-celda))`);
 
+  /** El dedo apoyado ahora mismo, esperando a cumplir el tiempo. */
+  private pendiente: {
+    celda: Coordenada;
+    x: number;
+    y: number;
+    temporizador: ReturnType<typeof setTimeout>;
+  } | null = null;
+
+  /**
+   * La pulsacion larga ya se resolvio: el clic que viene detras no vale.
+   *
+   * Al soltar el dedo el navegador dispara `click` de todos modos, y sin esto
+   * la celda se jugaria dos veces: una con onda y otra sin ella. Se apaga al
+   * empezar la siguiente pulsacion y no al consumir el clic, porque ese clic
+   * puede no llegar nunca — la celda ya esta destapada y su boton, apagado.
+   */
+  private alternaResuelta = false;
+
+  constructor() {
+    // Salir de la partida con el dedo a medias no puede dejar viva una jugada
+    // que se dispare sobre un tablero que ya no existe.
+    inject(DestroyRef).onDestroy(() => {
+      this.olvidarPendiente();
+    });
+  }
+
+  /** El clic de siempre: destapa la celda, salvo que ya lo hiciera el gesto. */
   pulsar(celda: CeldaVisible): void {
-    if (this.bloqueado() || celda.estado !== 'oculta') {
+    if (this.alternaResuelta || this.bloqueado() || celda.estado !== 'oculta') {
       return;
     }
     this.celdaPulsada.emit({ x: celda.x, y: celda.y });
+  }
+
+  /** El dedo se apoya: empieza a contar para la pulsacion larga. */
+  empezarPulsacion(evento: PointerEvent, celda: CeldaVisible): void {
+    this.olvidarPendiente();
+    this.alternaResuelta = false;
+    if (!this.pulsacionLargaAlterna() || this.bloqueado() || celda.estado !== 'oculta') {
+      return;
+    }
+
+    const destino: Coordenada = { x: celda.x, y: celda.y };
+    this.pendiente = {
+      celda: destino,
+      x: evento.clientX,
+      y: evento.clientY,
+      temporizador: setTimeout(() => {
+        this.pendiente = null;
+        this.alternaResuelta = true;
+        this.celdaPulsadaAlterna.emit(destino);
+      }, MS_PULSACION_LARGA),
+    };
+  }
+
+  /**
+   * El dedo se va de paseo: esto ya no es una pulsacion.
+   *
+   * Sin esto, arrastrar el dedo por el tablero acabaria gastando la onda en la
+   * celda donde se apoyo primero.
+   */
+  moverPulsacion(evento: PointerEvent): void {
+    const pendiente = this.pendiente;
+    if (pendiente === null) {
+      return;
+    }
+    if (
+      Math.abs(evento.clientX - pendiente.x) > PX_DE_MARGEN ||
+      Math.abs(evento.clientY - pendiente.y) > PX_DE_MARGEN
+    ) {
+      this.olvidarPendiente();
+    }
+  }
+
+  /** Se solto (o se fue el dedo) antes de tiempo: era un clic normal. */
+  soltarPulsacion(): void {
+    this.olvidarPendiente();
+  }
+
+  private olvidarPendiente(): void {
+    if (this.pendiente !== null) {
+      clearTimeout(this.pendiente.temporizador);
+      this.pendiente = null;
+    }
   }
 
   /**
@@ -58,6 +176,7 @@ export class Tablero {
     if (this.bloqueado() || celda.estado !== 'oculta') {
       return;
     }
+    this.olvidarPendiente();
     this.celdaPulsadaAlterna.emit({ x: celda.x, y: celda.y });
   }
 

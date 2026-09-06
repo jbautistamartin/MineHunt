@@ -14,6 +14,24 @@ export const IDIOMA_POR_DEFECTO: Idioma = 'en';
 /** Clave con la que se recuerda la eleccion manual del jugador. */
 const CLAVE_ALMACENAMIENTO = 'minehunt.idioma';
 
+/** Id del <link rel="manifest"> de index.html, que hay uno por idioma. */
+const ID_DEL_MANIFIESTO = 'manifiesto';
+
+/**
+ * Apunta el manifiesto de la aplicacion instalable al del idioma activo.
+ *
+ * El nombre y la descripcion con los que la aplicacion se instala tambien se
+ * traducen, y eso no sale de ngx-translate: lo lee el navegador del
+ * manifiesto, antes de que arranque nada. De ahi que haya dos ficheros y que
+ * lo unico que se haga en caliente sea cambiar a cual apunta el enlace.
+ */
+function apuntarManifiesto(idioma: Idioma): void {
+  const enlace = globalThis.document?.getElementById(ID_DEL_MANIFIESTO);
+  if (enlace instanceof HTMLLinkElement) {
+    enlace.href = `manifest.${idioma}.json`;
+  }
+}
+
 function esIdiomaSoportado(valor: string | null): valor is Idioma {
   return valor !== null && (IDIOMAS_SOPORTADOS as readonly string[]).includes(valor);
 }
@@ -67,6 +85,7 @@ export class ServicioIdioma {
     this.traductor.addLangs([...IDIOMAS_SOPORTADOS]);
     this.traductor.setFallbackLang(IDIOMA_POR_DEFECTO);
     this.traductor.use(this.idioma());
+    apuntarManifiesto(this.idioma());
     void this.repasarConElIdiomaDelSistema();
   }
 
@@ -93,6 +112,7 @@ export class ServicioIdioma {
       if (delSistema !== this.idioma()) {
         this.idioma.set(delSistema);
         this.traductor.use(delSistema);
+        apuntarManifiesto(delSistema);
       }
     } catch {
       // Sin respuesta del plugin se sigue con el idioma que dijo el WebView.
@@ -106,6 +126,7 @@ export class ServicioIdioma {
     }
     this.idioma.set(idioma);
     this.traductor.use(idioma);
+    apuntarManifiesto(idioma);
     try {
       localStorage.setItem(CLAVE_ALMACENAMIENTO, idioma);
     } catch {

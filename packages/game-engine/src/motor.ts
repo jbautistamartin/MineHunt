@@ -1,6 +1,7 @@
 import { Tablero } from './tablero.js';
 import type {
   Coordenada,
+  EstadisticasJugador,
   EstadoPartida,
   OndaJugador,
   Jugador,
@@ -14,6 +15,21 @@ import {
   RECARGA_ONDA_POR_DEFECTO_S,
   SIN_LIMITE_DE_TIEMPO,
 } from './tipos.js';
+
+/**
+ * Contadores de un jugador mientras juega.
+ *
+ * Es mutable y privado a proposito: `EstadisticasJugador` es lo que sale al
+ * exterior, y ahi la racha en curso no pinta nada porque no se cuenta al final.
+ */
+interface ContadoresJugador {
+  clics: number;
+  celdasReveladas: number;
+  ondasUsadas: number;
+  rachaActual: number;
+  mejorRacha: number;
+  turnosPerdidos: number;
+}
 
 /**
  * Motor de una partida de MineHunt.
@@ -49,6 +65,8 @@ export class MotorJuego {
   private readonly recargaHasta: (number | null)[];
   /** Quien se ha rendido y ya no juega. */
   private readonly rendidos: boolean[];
+  /** Lo que va haciendo cada jugador, para el resumen del final. */
+  private readonly contadores: ContadoresJugador[];
   private turnoActual = 0;
   private minasEncontradas = 0;
   private partidaTerminada = false;
@@ -67,6 +85,14 @@ export class MotorJuego {
     this.ondaArmada = new Array<boolean>(numJugadores).fill(false);
     this.rendidos = new Array<boolean>(numJugadores).fill(false);
     this.recargaHasta = new Array<number | null>(numJugadores).fill(null);
+    this.contadores = Array.from({ length: numJugadores }, () => ({
+      clics: 0,
+      celdasReveladas: 0,
+      ondasUsadas: 0,
+      rachaActual: 0,
+      mejorRacha: 0,
+      turnosPerdidos: 0,
+    }));
     this.aleatorio = opciones.aleatorio ?? Math.random;
     this.ahora = opciones.ahora ?? Date.now;
     this.recargaOndaMs =
@@ -159,6 +185,8 @@ export class MotorJuego {
       codigo = 'CELDA_DESPEJADA';
     }
 
+    this.apuntarClic(jugador, celdasReveladas.length, usaOnda, codigo === 'MINA_ENCONTRADA');
+
     // La onda se gasta con el clic aunque haya caido sobre una mina.
     if (usaOnda) {
       this.ondaArmada[jugador] = false;
@@ -215,6 +243,13 @@ export class MotorJuego {
     const restante = this.tiempoRestanteDeTurnoMs();
     if (restante === null || restante > 0) {
       return false;
+    }
+
+    const perdedor = this.contadores[this.turnoActual];
+    if (perdedor !== undefined) {
+      perdedor.turnosPerdidos += 1;
+      // Quedarse sin tiempo corta la racha igual que fallar: no la continua.
+      perdedor.rachaActual = 0;
     }
 
     this.pasarTurno();
@@ -314,6 +349,7 @@ export class MotorJuego {
       minasEncontradas,
       onda: this.estadoDeLaOnda(id),
       rendido: this.rendidos[id] === true,
+      estadisticas: this.estadisticasDe(id),
     }));
     const ganador = this.obtenerGanador();
 
@@ -374,8 +410,52 @@ export class MotorJuego {
         minasEncontradas,
         onda: this.estadoDeLaOnda(id),
         rendido: this.rendidos[id] === true,
+        estadisticas: this.estadisticasDe(id),
       }))
       .sort((a, b) => b.minasEncontradas - a.minasEncontradas);
+  }
+
+  /**
+   * Apunta lo que acaba de hacer un jugador.
+   *
+   * La racha se corta con el primer clic que no da mina, que es justo cuando
+   * pierde el turno: la mejor racha es entonces lo mas largo que aguanto sin
+   * ceder la vez.
+   */
+  private apuntarClic(
+    jugador: number,
+    celdasReveladas: number,
+    usoOnda: boolean,
+    encontroMina: boolean,
+  ): void {
+    const cuenta = this.contadores[jugador];
+    if (cuenta === undefined) {
+      return;
+    }
+
+    cuenta.clics += 1;
+    cuenta.celdasReveladas += celdasReveladas;
+    if (usoOnda) {
+      cuenta.ondasUsadas += 1;
+    }
+    if (encontroMina) {
+      cuenta.rachaActual += 1;
+      cuenta.mejorRacha = Math.max(cuenta.mejorRacha, cuenta.rachaActual);
+    } else {
+      cuenta.rachaActual = 0;
+    }
+  }
+
+  /** Lo que ha hecho un jugador, sin los contadores que solo sirven aqui. */
+  private estadisticasDe(jugador: number): EstadisticasJugador {
+    const cuenta = this.contadores[jugador];
+    return {
+      clics: cuenta?.clics ?? 0,
+      celdasReveladas: cuenta?.celdasReveladas ?? 0,
+      ondasUsadas: cuenta?.ondasUsadas ?? 0,
+      mejorRacha: cuenta?.mejorRacha ?? 0,
+      turnosPerdidos: cuenta?.turnosPerdidos ?? 0,
+    };
   }
 
   /**

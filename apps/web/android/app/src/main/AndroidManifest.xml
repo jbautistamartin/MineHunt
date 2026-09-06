@@ -33,4 +33,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        La vibracion la pide el juego, no un plugin de paso: hasta ahora entraba
+        fusionada desde el manifest de @capacitor/haptics, y quitar esa
+        dependencia la habria dejado caer sin que fallara nada al compilar.
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

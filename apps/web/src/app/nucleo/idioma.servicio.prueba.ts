@@ -70,6 +70,30 @@ describe('ServicioIdioma', () => {
     expect(localStorage.getItem(CLAVE)).toBe('en');
     expect(detectarIdiomaInicial()).toBe('en');
   });
+
+  /**
+   * El nombre con el que se instala la aplicacion sale del manifiesto, que lee
+   * el navegador y no traduce nadie: por eso hay uno por idioma y el enlace
+   * tiene que seguir al idioma activo.
+   */
+  it('apunta el manifiesto instalable al idioma activo', () => {
+    const enlace = document.createElement('link');
+    enlace.id = 'manifiesto';
+    enlace.rel = 'manifest';
+    enlace.href = 'manifest.en.json';
+    document.head.append(enlace);
+
+    try {
+      const servicio = TestBed.inject(ServicioIdioma);
+      expect(enlace.getAttribute('href')).toBe('manifest.es.json');
+
+      servicio.cambiarIdioma('en');
+
+      expect(enlace.getAttribute('href')).toBe('manifest.en.json');
+    } finally {
+      enlace.remove();
+    }
+  });
 });
 
 /**

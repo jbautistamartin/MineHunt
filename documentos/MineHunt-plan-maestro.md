@@ -232,6 +232,13 @@ sirve por https y el WebView de Android bloquea el tráfico en claro, así que l
 partidas online tienen que ir por wss. Documenta el despliegue, las variables y cómo
 se recupera el servicio, y comprueba que un cliente de verdad juega una partida
 completa contra el servidor desplegado.
+
+Y antes de abrirlo a internet, lo que hoy no existe porque solo se ha jugado en la
+red de casa: un tope de salas por conexion y por IP, que las salas viven en memoria
+y crearlas es gratis; un limite de ritmo en los mensajes del socket, que un cliente
+manipulado puede inundar una sala; y el CORS cerrado a los origenes que se declaren
+por variable de entorno, en vez del comodin de hoy. Con pruebas que lo verifiquen,
+que esto no se ve jugando.
 ```
 
 ### Fase 10 — Publicación en Google Play
@@ -245,6 +252,11 @@ que la consola exige aparte de la ficha: política de privacidad, cuestionario d
 clasificación de contenido, declaración de seguridad de los datos y público objetivo.
 Publica primero en un canal cerrado de prueba, comprueba la instalación desde la
 tienda en un teléfono real, y solo entonces promociona a producción.
+
+Antes de nada, prueba un APK de **release** en un telefono de verdad, no solo el de
+depuracion: la compilacion de publicacion no lleva el permiso de trafico en claro,
+asi que el Multijugador Online contra un servidor de la red local no funcionara ahi
+por diseno, y hay que verlo antes de subir nada y no despues.
 ```
 
 ---
@@ -603,6 +615,149 @@ de plantilla que además dicen cosas distintas.
 Lo que sí quedó compartido es lo que valía la pena: el tablero, el lenguaje visual
 y los textos. Si algún día el Online y el Entrenamiento acaban enseñando lo mismo,
 entonces sí toca extraer el marcador a un componente.
+
+### Lo que se decidió al pulir (Fase 8)
+
+**Las estadísticas las cuenta el motor y viajan en el estado.** Clics, celdas
+reveladas, ondas usadas, mejor racha y turnos perdidos van dentro de
+`EstadoPartida`, en cada jugador. Podrían haberse contado en el cliente mirando
+los sucesos, pero entonces el Online tendría unas cuentas y la partida local
+otras, y las de una reconexión saldrían mal —quien vuelve no vio lo que pasó
+mientras no estaba—. Contándolas donde está la partida de verdad, los tres modos
+enseñan lo mismo y el servidor no tiene que mandar nada aparte. La puntería no se
+guarda: es una división, y esa sí la hace la pantalla.
+
+**El sonido se sintetiza; no hay ficheros de audio.** Cuatro efectos cortos salen
+de un oscilador y una envolvente con Web Audio. No hay licencias que revisar, no
+engordan el APK y suenan igual en el navegador y en el WebView. El día que hagan
+falta samples de verdad, `ServicioSonido` es el único sitio que hay que tocar.
+Va encendido por defecto —un juego suena— y se apaga desde el menú principal, que
+es donde ya viven las cosas que valen para todo el juego.
+
+**Las animaciones son CSS y se disparan solas.** Una celda estrena su clase al
+destaparse y ahí arranca su animación: no hay temporizadores, ni estado de
+animación en TypeScript, ni una cascada orquestada desde el componente. Con la
+onda expansiva son muchas celdas estrenando clase a la vez, que es exactamente lo
+que se quería ver. Se respeta `prefers-reduced-motion`, que aquí no es un detalle
+de accesibilidad de manual: las celdas se mueven justo donde se está clicando.
+
+**Un manifiesto por idioma.** El nombre y la descripción con los que se instala la
+aplicación los lee el navegador antes de que arranque nada del juego, así que
+ngx-translate no llega a tiempo. Hay dos ficheros y lo único que se hace en
+caliente es cambiar a cuál apunta el enlace de `index.html`.
+
+**No hay service worker.** El Entrenamiento y la Historia ya funcionan sin red una
+vez cargada la página, y el Online necesita servidor por definición. Añadirlo
+obligaría a resolver las actualizaciones en caliente a cambio de nada que el
+jugador note.
+
+### El WebView de Android se sirve por http (posterior a la Fase 8)
+
+El Multijugador Online no conectaba desde el teléfono, y no era la red: el
+servidor escuchaba, el cortafuegos estaba abierto y desde el propio teléfono una
+petición HTTP al PC contestaba. Lo que fallaba estaba dentro del WebView.
+Capacitor servía la aplicación desde **`https://localhost`**, y desde una página
+segura un `ws://` a la IP del PC es contenido mixto: **Chromium lo corta dentro
+del teléfono, antes de que salga un paquete**, así que no se ve ni un error de
+red —no hay red que fallar—.
+
+Se resuelve donde nace: `androidScheme: 'http'`. La página y el servidor de
+desarrollo van entonces por el mismo esquema, y contra un servidor `https` de
+producción tampoco habrá problema, porque lo que se prohíbe es lo inseguro desde
+lo seguro y no al revés. `http://localhost` sigue siendo origen de confianza, así
+que no se pierde ninguna capacidad del navegador.
+
+Lo que sí se pierde, **una sola vez**, es lo guardado en el teléfono: el origen
+del WebView cambia y con él el `localStorage`. Con la aplicación ya publicada eso
+sería borrarle la partida a la gente, así que ese ajuste no se vuelve a tocar.
+
+Y el nombre del jugador pasa a recordarse aparte de la credencial de la sala
+(`minehunt.jugador`): la credencial se olvida al salir de la sala, y tener que
+teclear el nombre en cada partida no tenía ningún sentido.
+
+### Ideas apuntadas, fuera del plan
+
+Salieron revisando la Fase 8 y no están en ninguna fase. Se anotan para no
+perderlas, no para hacerlas ya:
+
+- **Estadísticas acumuladas** —partidas jugadas, minas encontradas, mejor racha
+  histórica—, guardadas como el progreso de Historia y enseñadas en el menú o en
+  «Acerca de». Hoy las estadísticas de una partida mueren con ella.
+
+### Lo que solo se nota con el teléfono en la mano (posterior a la Fase 8)
+
+Cuatro cosas que en el escritorio no se echan de menos y en el móvil sí. Ninguna
+cambia una regla del juego.
+
+**Vibración al encontrar mina** (`@capacitor/haptics`), que estaba apuntada aquí
+como idea fuera de plan y era el complemento natural del sonido: se juega con el
+aparato en la mano y a menudo en silencio. El servicio es el gemelo táctil del
+sonido —los mismos códigos de suceso, un golpe para cada uno— y vale para los
+tres modos sin tocar ninguna pantalla. Solo existe en la aplicación de Android:
+en un navegador no se ofrece ni el interruptor, porque no habría nada que mover.
+Se apaga desde el menú y también desde la partida, al lado del sonido.
+
+**La onda expansiva se lanza tocando dos veces la misma celda.** En Android no
+hay botón derecho y el botón de la onda obliga a mirar fuera del tablero. Cuesta
+algo: mientras el doble toque está puesto, un toque suelto tiene que esperar
+220 ms a ver si viene otro, porque si se resolviera al momento la celda ya
+estaría destapada cuando llegara el segundo. Por eso se enciende **solo cuando
+hay onda de verdad que gastar**, que es cuando ese retraso compra algo.
+
+**En las partidas locales el jugador se llama por su nombre**, el que ya se
+recordaba para el Online (`minehunt.jugador`). «Jugador 1» es lo que se dice
+cuando no se sabe nada mejor, y ya se sabía. Solo el puesto 0, que es quien
+tiene el aparato: los demás puestos del hotseat siguen siendo números.
+
+**El panel del servidor lleva el icono del juego**, copia literal del icono
+maestro, en la cabecera y en la pestaña. Antes tenía un dibujo aparte, más pobre
+y distinto del de la aplicación.
+
+### Esperar al servidor se ve y se puede cancelar (posterior a la Fase 8)
+
+Entrar en una sala no es instantáneo y **puede no llegar nunca**: con el servidor
+apagado o fuera de alcance, el acuse de recibo no vuelve. Antes eso dejaba al
+jugador mirando un botón apagado, sin saber si estaba pasando algo; ahora sale un
+diálogo que dice que se está hablando con el servidor, con su rueda y un botón de
+cancelar.
+
+Cancelar corta también la conexión, y no es de más: si el servidor contestara
+después, la sala existiría de verdad y el jugador estaría fuera de ella sin
+saberlo. Además la espera lleva ahora el mismo límite de tiempo que ya tenía la
+lista de salas, así que ni cancelando ni esperando se puede quedar colgada.
+
+### La versión del juego es también la del protocolo (posterior a la Fase 8)
+
+Había dos números: `VERSION_APP`, la que el jugador ve en pantalla, y
+`VERSION_MOTOR`, que es la del protocolo y la que decide contra qué servidores se
+puede jugar. Ahora van a la par, las dos en **0.0.2**, y `version.prueba.ts` falla
+si dejan de coincidir.
+
+El motivo es el jugador: cuando una sala rechaza a alguien por versión, el número
+que hay que mirar tiene que ser el que sale en «Acerca de», no un segundo número
+que no aparece en ninguna pantalla. La consecuencia hay que tenerla presente:
+como la compatibilidad se compara por `major.minor`, **dentro de una misma minor
+todo se da por compatible** —hoy, cualquier 0.0.x—, así que se pueden publicar
+arreglos sin echar a nadie de las salas, pero **tocar el protocolo obliga a subir
+la minor del juego entero** (0.0.x → 0.1.0). Es lo que hace que el guardia siga
+sirviendo para algo.
+
+### La presentación del arranque y el «Acerca de» (posterior a la Fase 8)
+
+La aplicación abre con una presentación corta antes del menú, y **se salta
+tocando la pantalla**: quien abre el juego por décima vez no quiere verla. Sale
+una vez por sesión y no cada vez que se vuelve al menú entre partidas, que es la
+diferencia entre una presentación y un peaje.
+
+El «Acerca de» (`/acerca`) cuelga del menú, junto a la ayuda, y se abre también
+tocando el icono del juego, que es donde todo el mundo pulsa por costumbre.
+
+**Ahí no se cuenta nada técnico**, y es una decisión de cara a publicar: esa
+pantalla la lee quien va a jugar, no quien lo programa. Nada de nombres de
+bibliotecas ni de piezas internas, y **un solo número de versión** —que vale para
+todo, porque la del protocolo va a la par—. Lo que queda es qué es el juego, cómo
+se juega y la firma: **Capicua**, la empresa con la que se publicará, y quien lo
+desarrolla.
 
 ### La raíz del servidor enseña las salas (posterior a la Fase 7)
 

@@ -77,12 +77,16 @@ Dentro de `src/app`:
   el único que habla con el motor), `ServicioOnline` (su gemelo, pero con el
   estado llegando del servidor), `ServicioHistoria` (niveles y progreso),
   `ServicioIdioma`, `ServicioAjustes`, `ServicioServidor` (a qué servidor se
-  juega), `ServicioBotonAtras` (qué hace el atrás del teléfono) y `version.ts`.
+  juega), `ServicioBotonAtras` (qué hace el atrás del teléfono), `ServicioSonido`
+  (los efectos, sintetizados con Web Audio) y `version.ts`.
 - **`paginas/`** — las pantallas, con carga diferida: `inicio` (el menú),
   `configuracion` (montar un Entrenamiento), `partida`, `historia` (el mapa de
   niveles), `online` y `ayuda`.
 - **`componentes/`** — lo reutilizable: el `tablero`, que es **el mismo en los
-  tres modos de juego**, y el selector de idioma.
+  tres modos de juego**, el `resumen-final` (las estadísticas de la partida, el
+  mismo en los tres) y el selector de idioma.
+- **`herramientas/`** (fuera de `src`) — los generadores de iconos, que sacan
+  del icono maestro los recursos de Android y los PNG del manifiesto de la web.
 
 Tres modos que comparten componentes: **Entrenamiento** (motor local, hotseat y
 bots), **Historia** (50 niveles, progreso en `localStorage`) y **Multijugador

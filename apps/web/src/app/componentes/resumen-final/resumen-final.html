@@ -1,0 +1,33 @@
+<section class="resumen">
+  <h3>{{ 'resumen.titulo' | translate }}</h3>
+
+  <ul class="jugadores">
+    @for (fila of filas(); track fila.id) {
+      <li class="jugador" [class.ganador]="fila.ganador">
+        <span class="nombre" [class]="'jugador-' + fila.id">{{ fila.nombre }}</span>
+
+        @if (fila.rendido) {
+          <span class="etiqueta">{{ 'resumen.rendido' | translate }}</span>
+        }
+        @if (fila.turnosPerdidos > 0) {
+          <span class="etiqueta">
+            {{ 'resumen.turnos_perdidos' | translate: { turnos: fila.turnosPerdidos } }}
+          </span>
+        }
+
+        <span class="cifras">
+          <span class="minas">
+            {{ 'resumen.minas' | translate: { minas: fila.minas } }}
+          </span>
+          <span class="punteria">
+            @if (fila.punteria === null) {
+              {{ 'resumen.sin_datos' | translate }}
+            } @else {
+              {{ 'resumen.punteria' | translate: { valor: fila.punteria } }}
+            }
+          </span>
+        </span>
+      </li>
+    }
+  </ul>
+</section>

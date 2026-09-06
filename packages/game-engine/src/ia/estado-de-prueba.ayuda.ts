@@ -1,7 +1,21 @@
-import type { CeldaVisible, EstadoPartida, OndaJugador } from '../tipos.js';
+import type {
+  CeldaVisible,
+  EstadisticasJugador,
+  EstadoPartida,
+  OndaJugador,
+} from '../tipos.js';
 
 /** Onda lista para usarse, que es como arrancan todos los jugadores. */
 const ONDA_DISPONIBLE: OndaJugador = { estado: 'disponible', recargaRestanteMs: 0 };
+
+/** Nadie ha jugado todavia: al bot le da igual, pero el tipo las pide. */
+const SIN_ESTADISTICAS: EstadisticasJugador = {
+  clics: 0,
+  celdasReveladas: 0,
+  ondasUsadas: 0,
+  mejorRacha: 0,
+  turnosPerdidos: 0,
+};
 
 /**
  * Ayudante de pruebas: construye un EstadoPartida a partir de un dibujo del
@@ -49,8 +63,8 @@ export function tableroDe(
     minasRestantes,
     celdas,
     jugadores: [
-      { id: 0, minasEncontradas: 0, onda, rendido: false },
-      { id: 1, minasEncontradas: 0, onda, rendido: false },
+      { id: 0, minasEncontradas: 0, onda, rendido: false, estadisticas: SIN_ESTADISTICAS },
+      { id: 1, minasEncontradas: 0, onda, rendido: false, estadisticas: SIN_ESTADISTICAS },
     ],
     turnoDe: 0,
     tiempoPorTurnoMs: 0,

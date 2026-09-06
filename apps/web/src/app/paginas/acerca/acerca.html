@@ -1,0 +1,29 @@
+@if (mostrandoIntro()) {
+  <mh-intro [anotaLaSesion]="false" (terminada)="introTerminada()" />
+}
+
+<section class="pantalla">
+  <header class="portada">
+    <img class="logo" src="icono.svg" alt="" width="88" height="88" />
+    <h1>{{ 'app.titulo' | translate }}</h1>
+    <p class="lema">{{ 'app.lema' | translate }}</p>
+  </header>
+
+  <div class="ficha">
+    <p class="texto">{{ 'acerca.que_es' | translate }}</p>
+    <p class="texto separado">{{ 'acerca.modos' | translate }}</p>
+  </div>
+
+  <div class="ficha">
+    <h2>{{ 'acerca.autoria.titulo' | translate }}</h2>
+    <p class="texto">{{ 'acerca.autoria.texto' | translate }}</p>
+    <p class="ayuda">{{ 'acerca.autoria.derechos' | translate }}</p>
+  </div>
+
+  <p class="version">{{ 'acerca.version' | translate }} {{ version }}</p>
+
+  <nav class="salidas">
+    <a class="secundario" routerLink="/ayuda">{{ 'acerca.ir_a_ayuda' | translate }}</a>
+    <a class="secundario" routerLink="/">{{ 'inicio.volver' | translate }}</a>
+  </nav>
+</section>

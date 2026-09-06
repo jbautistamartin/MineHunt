@@ -1,5 +1,13 @@
+import { readFileSync } from 'node:fs';
+
 import type { InformeSala } from '../salas/sala.js';
-import { contenidoDelPanel, escapar, formatearDuracion, paginaDelPanel } from './panel.js';
+import {
+  contenidoDelPanel,
+  escapar,
+  formatearDuracion,
+  ICONO,
+  paginaDelPanel,
+} from './panel.js';
 
 function informe(cambios: Partial<InformeSala> = {}): InformeSala {
   return {
@@ -17,6 +25,27 @@ function informe(cambios: Partial<InformeSala> = {}): InformeSala {
 }
 
 describe('panel del servidor', () => {
+  /**
+   * El icono del panel es el del juego y no un dibujo parecido.
+   *
+   * Va copiado dentro del codigo —la imagen del servidor no lleva la carpeta
+   * de documentacion—, y una copia sin vigilar se queda atras en cuanto se
+   * retoca el maestro.
+   */
+  it('el icono es el maestro, con el tamano puesto', () => {
+    const maestro = readFileSync(
+      '../../documentos/MineHunt-icon.svg',
+      'utf8',
+    ).trim();
+
+    expect(ICONO).toBe(
+      maestro.replace(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">',
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true">',
+      ),
+    );
+  });
+
   describe('formatearDuracion', () => {
     it('el primer minuto va en segundos', () => {
       expect(formatearDuracion(0)).toBe('0 s');
@@ -52,7 +81,9 @@ describe('panel del servidor', () => {
 
     it('dice si esta en el lobby o jugando', () => {
       expect(contenidoDelPanel([informe()])).toContain('En el lobby');
-      expect(contenidoDelPanel([informe({ estado: 'jugando' })])).toContain('En partida');
+      expect(contenidoDelPanel([informe({ estado: 'jugando' })])).toContain(
+        'En partida',
+      );
       expect(contenidoDelPanel([informe({ estado: 'terminada' })])).toContain(
         'Partida terminada',
       );
@@ -110,7 +141,9 @@ describe('panel del servidor', () => {
      * del que esta mirando el panel.
      */
     it('escapa el nombre del anfitrion', () => {
-      const html = contenidoDelPanel([informe({ anfitrion: '<script>malo()</script>' })]);
+      const html = contenidoDelPanel([
+        informe({ anfitrion: '<script>malo()</script>' }),
+      ]);
 
       expect(html).not.toContain('<script>malo()');
       expect(html).toContain('&lt;script&gt;');
