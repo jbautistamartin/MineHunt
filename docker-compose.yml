@@ -1,0 +1,57 @@
+# ======================================================================
+#  MineHunt - levantar el servidor como en produccion
+#
+#      docker compose up -d --build      arranca (y construye si hace falta)
+#      docker compose logs -f            ver lo que hace
+#      docker compose down               pararlo
+#
+#  Sirve para las dos cosas: probar en local exactamente lo que se va a
+#  desplegar, y desplegarlo. Lo unico que cambia entre un sitio y otro son
+#  las variables de abajo. Documentacion en documentos/MineHunt-despliegue.md.
+# ======================================================================
+
+services:
+  minehunt:
+    build:
+      context: .
+    image: minehunt:local
+    container_name: minehunt
+
+    # Que vuelva solo si se cae, y tambien si se reinicia la maquina. Sin
+    # esto, un reinicio del servidor deja el juego apagado hasta que alguien
+    # se da cuenta.
+    restart: unless-stopped
+
+    ports:
+      - '${PUERTO_PUBLICADO:-3000}:3000'
+
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # De que webs se aceptan conexiones. **Ponlo antes de abrirlo a
+      # internet**: sin esto el servidor acepta a cualquiera, que es lo comodo
+      # en casa y lo inaceptable fuera. Sigue haciendo falta aunque la web
+      # venga en la misma imagen, porque la aplicacion de Android no la
+      # descarga: lleva el bundle dentro del APK y su origen nunca sera este.
+      ORIGENES_PERMITIDOS: ${ORIGENES_PERMITIDOS:-}
+
+      # Topes de la Fase 9. Los valores por defecto estan en configuracion.ts
+      # y no hace falta repetirlos aqui salvo para cambiarlos.
+      MAX_SALAS_POR_IP: ${MAX_SALAS_POR_IP:-4}
+      MAX_SALAS_POR_CONEXION: ${MAX_SALAS_POR_CONEXION:-2}
+      MAX_MENSAJES_POR_SEGUNDO: ${MAX_MENSAJES_POR_SEGUNDO:-20}
+
+      # Ponlo a «si» solo cuando de verdad haya un proxy inverso delante: es
+      # lo que hace que se crea la cabecera X-Forwarded-For, y creersela sin
+      # proxy es regalar la forma de saltarse el tope por IP.
+      CONFIAR_EN_PROXY: ${CONFIAR_EN_PROXY:-no}
+
+    # La misma que lleva la imagen; se repite aqui para que compose la vigile
+    # y pueda reiniciar el contenedor cuando deje de responder.
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3000/motor']
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

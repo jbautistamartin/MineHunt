@@ -149,7 +149,7 @@
       "armada": "Shockwave armed",
       "recarga_corta": "Shockwave in {{segundos}} s",
       "atajo": "Shortcut: right-click on the cell.",
-      "atajo_movil": "Shortcut: tap the same cell twice."
+      "atajo_movil": "Shortcut: press and hold the cell."
     }
   },
   "resumen": {
@@ -299,7 +299,7 @@
     },
     "onda": {
       "titulo": "The shockwave",
-      "texto": "Spend it on an empty cell and it drags every connected one. In the browser, right-clicking a cell fires it there directly, without touching this button; on mobile, tapping the same cell twice does the same. On a numbered cell only that cell is revealed and the shockwave is wasted; on a mine, the mine is scored and it is spent anyway."
+      "texto": "Spend it on an empty cell and it drags every connected one. In the browser, right-clicking a cell fires it there directly, without touching this button; on mobile, pressing and holding a cell does the same. On a numbered cell only that cell is revealed and the shockwave is wasted; on a mine, the mine is scored and it is spent anyway."
     },
     "rendirse": {
       "titulo": "Surrendering",
@@ -351,6 +351,8 @@
     "CONFIGURACION_INVALIDA": "Those settings do not make a playable board.",
     "NOMBRE_INVALIDO": "That name is not valid: use between 1 and 16 characters.",
     "PETICION_INVALIDA": "The server did not understand the request.",
-    "VERSION_INCOMPATIBLE": "Your version of the game is not compatible with the server. Update the app."
+    "VERSION_INCOMPATIBLE": "Your version of the game is not compatible with the server. Update the app.",
+    "DEMASIADAS_SALAS": "You have too many rooms open. Close one before creating another.",
+    "DEMASIADAS_PETICIONES": "You are going too fast for the server. Wait a moment and try again."
   }
 }

@@ -147,6 +147,20 @@ export type CodigoErrorSala =
   | 'NOMBRE_INVALIDO'
   /** El mensaje no traia lo que decia traer. Del cliente no se fia nadie. */
   | 'PETICION_INVALIDA'
+  /**
+   * Se abren salas mas deprisa de lo razonable desde el mismo sitio.
+   *
+   * Las salas viven en memoria y abrirlas es gratis: sin tope, cualquiera
+   * puede llenar el servidor desde una pestana.
+   */
+  | 'DEMASIADAS_SALAS'
+  /**
+   * Se mandan mensajes mas deprisa de lo que puede jugar una persona.
+   *
+   * Un cliente manipulado puede inundar su sala y dejar sin servicio a los
+   * demas que estan dentro de ella.
+   */
+  | 'DEMASIADAS_PETICIONES'
   /** Cliente y servidor no hablan el mismo protocolo. */
   | 'VERSION_INCOMPATIBLE';
 

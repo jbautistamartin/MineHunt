@@ -17,6 +17,8 @@ rem    probar.cmd             Todas las pruebas de los tres paquetes.
 rem    probar-motor.cmd       Pruebas del motor de juego.      [arg: ver]
 rem    probar-web.cmd         Pruebas de la web.               [arg: ver]
 rem    probar-servidor.cmd    Pruebas del servidor.            [arg: ver | e2e]
+rem    docker-arrancar.cmd    El servidor en Docker, como en produccion.
+rem    docker-humo.cmd        Comprueba que lo desplegado juega de verdad.
 rem    android-apk.cmd        Compila el APK de prueba para Android.
 rem    android-abrir.cmd      Abre el proyecto Android en Android Studio.
 rem    limpiar.cmd            Borra lo compilado del motor.
@@ -153,7 +155,8 @@ echo    ...que es: ng build + cap sync android + gradlew assembleDebug
 echo.
 echo  Otros scripts en la raiz: arrancar-web, arrancar-servidor, arrancar-online,
 echo  verificar, compilar, verificar-tipos, probar, probar-motor, probar-web,
-echo  probar-servidor, android-apk, android-abrir y limpiar.
+echo  probar-servidor, docker-arrancar, docker-humo, android-apk, android-abrir
+echo  y limpiar.
 echo ======================================================================
 echo.
 goto :eof

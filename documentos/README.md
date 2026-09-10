@@ -10,6 +10,7 @@ esta carpeta**, y se añade a este índice en el mismo cambio.
 | [MineHunt-android.md](MineHunt-android.md) | **Cómo se compila la app de Android.** Qué hace falta instalado (JDK 21, SDK 36), el ciclo `ng build` → `cap sync` → Gradle, dónde queda el APK y el AAB, de dónde salen los iconos y qué falta para publicar. |
 | [MineHunt-web.md](MineHunt-web.md) | **El cliente Angular.** Cómo se desarrolla y cómo se compila para producción, qué deja `ng build` y dónde, los presupuestos de tamaño, la aplicación instalable con un manifiesto por idioma, de dónde salen los iconos y cómo funcionan el sonido y las animaciones. |
 | [MineHunt-servidor.md](MineHunt-servidor.md) | **El multijugador online.** Cómo está montado el servidor de la Fase 6, el protocolo completo de Socket.IO (mensajes, respuestas y códigos), la credencial de reconexión, el bot que sustituye a quien se cae y lo que la Fase 7 va a necesitar. |
+| [MineHunt-despliegue.md](MineHunt-despliegue.md) | **El despliegue del servidor.** Qué lleva la imagen Docker y por qué el cliente web va dentro, las variables de entorno, el endurecimiento de la Fase 9 (topes de salas, límite de ritmo, CORS), el proxy inverso con HTTPS, la comprobación de salud y cómo se recupera el servicio. |
 | [MineHunt-icon.svg](MineHunt-icon.svg) | El icono de la aplicación: fondo azul marino, mina roja-naranja con la mecha encendida y un dedo tocándola. Es el origen de **todos** los iconos: los de Android (`recursos-android`) y los PNG del manifiesto de la web (`recursos-web`). |
 
 ## Lo que no está aquí y por qué

@@ -1,6 +1,6 @@
 {
   "name": "@minehunt/server",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Servidor NestJS de MineHunt: autoridad del juego y salas multijugador",
   "author": "",
   "private": true,
@@ -14,6 +14,7 @@
     "probar": "vitest run",
     "probar:ver": "vitest",
     "probar:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "humo": "node scripts/humo.mjs",
     "probar:cobertura": "vitest run --coverage",
     "verificar-tipos": "tsc --noEmit -p tsconfig.json",
     "lint": "oxlint src/ test/",

@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { AZAR, RELOJ, type Azar, type Reloj } from './dependencias.js';
+import { leerConfiguracion, type Configuracion } from '../configuracion.js';
+import { AZAR, CONFIGURACION, RELOJ, type Azar, type Reloj } from './dependencias.js';
+import { LimitadorDeRitmo } from './limitador.js';
 import { PasarelaPartida } from './partida.pasarela.js';
+import { InterceptorDeRitmo } from './ritmo.interceptor.js';
 import { ServicioSalas } from './salas.servicio.js';
 
 /**
@@ -17,6 +20,16 @@ import { ServicioSalas } from './salas.servicio.js';
     PasarelaPartida,
     { provide: RELOJ, useValue: (() => Date.now()) satisfies Reloj },
     { provide: AZAR, useValue: (() => Math.random()) satisfies Azar },
+    { provide: CONFIGURACION, useFactory: () => leerConfiguracion() },
+    {
+      // Uno solo para todo el servidor: son las marcas de cada conexion, y dos
+      // limitadores dejarian pasar el doble sin que se notara.
+      provide: LimitadorDeRitmo,
+      useFactory: (configuracion: Configuracion, ahora: Reloj) =>
+        new LimitadorDeRitmo(configuracion.maxMensajesPorSegundo, ahora),
+      inject: [CONFIGURACION, RELOJ],
+    },
+    InterceptorDeRitmo,
   ],
   exports: [ServicioSalas],
 })

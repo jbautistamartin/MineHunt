@@ -684,6 +684,38 @@ perderlas, no para hacerlas ya:
   histórica—, guardadas como el progreso de Historia y enseñadas en el menú o en
   «Acerca de». Hoy las estadísticas de una partida mueren con ella.
 
+### Lo hecho de la Fase 9, y lo que le falta (6 de septiembre de 2026)
+
+La fase se empezó y **está a medias**. Lo que sigue es lo que ya está
+implementado y comprobado en local; el detalle vive en
+`documentos/MineHunt-despliegue.md`.
+
+**Hecho.** La imagen Docker por etapas, que compila el motor primero —la web y
+el servidor consumen su `dist/`, no su código— y deja en la final solo lo de
+ejecutar, con el usuario `node` sin privilegios. Dentro va también el `ng build`
+del cliente, servido por el propio Nest: **el juego en la raíz y el panel en
+`/panel`**, que hasta ahora la ocupaba él. El puerto y los orígenes del CORS
+salen de variables de entorno, igual que los tres topes nuevos.
+`docker-compose.yml` levanta en local lo mismo que en el servidor, con
+comprobación de salud contra `/motor` —la ruta que ya respondía— y
+`restart: unless-stopped`.
+
+**El endurecimiento, entero y con pruebas**: tope de salas por conexión y por
+IP, límite de ritmo por conexión y CORS por variable de entorno en vez del
+comodín. Trajo dos códigos de error nuevos al protocolo, `DEMASIADAS_SALAS` y
+`DEMASIADAS_PETICIONES`, y por eso **la versión sube a 0.1.0**: cambió el
+vocabulario, y un cliente viejo no sabría qué decirle al jugador.
+
+**La comprobación que pedía la fase** —que un cliente de verdad juegue una
+partida completa contra el servidor desplegado— es `scripts/humo.mjs`, que habla
+por Socket.IO como habla la web. Se ha pasado contra el contenedor y juega.
+
+**Falta**: desplegarlo en un servidor de verdad. La capa de HTTPS
+(`docker-compose.https.yml`, con Caddy porque saca y renueva el certificado él
+solo) está escrita pero **no se ha ejecutado nunca contra un dominio real**, y
+antes hay que decidir dónde se aloja — que además es lo que la Fase 10 tiene que
+poner de fábrica en `nucleo/servidor.ts`, donde hoy hay una IP de la red local.
+
 ### Lo que solo se nota con el teléfono en la mano (posterior a la Fase 8)
 
 Cuatro cosas que en el escritorio no se echan de menos y en el móvil sí. Ninguna

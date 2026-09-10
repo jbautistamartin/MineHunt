@@ -6,28 +6,23 @@ import { ServicioSalas } from '../salas/salas.servicio.js';
 import { contenidoDelPanel, paginaDelPanel } from './panel.js';
 
 /**
- * Sirve el panel del servidor.
+ * Sirve el panel del servidor, en `/panel`.
  *
- * Esta en la raiz porque es lo que uno abre al escribir la direccion del
- * servidor a secas; `/panel` lleva a lo mismo y es la que quedara cuando en la
- * Fase 9 la raiz la ocupe la web del juego servida por el propio Nest.
+ * **Ya no ocupa la raiz**: desde la Fase 9 la imagen lleva dentro el cliente
+ * web y es el propio Nest quien lo sirve, asi que quien escribe la direccion a
+ * secas espera el juego y no la contabilidad del servidor. Sin bundle al lado
+ * —desarrollando, con la web en su `ng serve`— la raiz redirige aqui, que es
+ * lo unico que hay que ver entonces.
  */
 @Controller()
 export class ControladorPanel {
   constructor(private readonly salas: ServicioSalas) {}
 
-  @Get()
+  @Get('panel')
   @Header('Content-Type', 'text/html; charset=utf-8')
   @Header('Cache-Control', 'no-store')
   pagina(): string {
     return paginaDelPanel(this.informes(), VERSION_MOTOR);
-  }
-
-  @Get('panel')
-  @Header('Content-Type', 'text/html; charset=utf-8')
-  @Header('Cache-Control', 'no-store')
-  paginaEnSuRuta(): string {
-    return this.pagina();
   }
 
   /** Solo la lista, que es lo que el navegador vuelve a pedir cada poco. */

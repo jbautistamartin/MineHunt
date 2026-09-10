@@ -1,4 +1,4 @@
-import type { OnModuleDestroy } from '@nestjs/common';
+import { Inject, UseInterceptors, type OnModuleDestroy } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -26,6 +26,10 @@ import {
   type SalaAbierta,
   type SucesoPartida,
 } from '@minehunt/game-engine';
+import { leerConfiguracion, type Configuracion } from '../configuracion.js';
+import { CONFIGURACION } from './dependencias.js';
+import { LimitadorDeRitmo } from './limitador.js';
+import { InterceptorDeRitmo } from './ritmo.interceptor.js';
 import type { Sala } from './sala.js';
 import { ServicioSalas } from './salas.servicio.js';
 
@@ -77,6 +81,16 @@ function versionAceptada(version: unknown): boolean {
 }
 
 /**
+ * Los origenes con los que arranca la pasarela.
+ *
+ * El decorador se evalua al cargar el modulo, antes de que Nest inyecte nada,
+ * asi que este es el unico sitio del servidor que lee el entorno por su
+ * cuenta. La copia inyectada (`CONFIGURACION`) es la misma lectura y es la que
+ * usan los topes; se separan porque el decorador no tiene forma de esperar.
+ */
+const ORIGENES = leerConfiguracion().origenes;
+
+/**
  * La puerta de las partidas online: traduce mensajes de Socket.IO a llamadas a
  * la sala, y difunde a los de dentro lo que salga.
  *
@@ -88,7 +102,8 @@ function versionAceptada(version: unknown): boolean {
  * suceso, y la frase la compone cada cliente en su idioma. Dos jugadores de la
  * misma sala pueden estar viendo la partida en idiomas distintos.
  */
-@WebSocketGateway({ cors: { origin: '*' } })
+@UseInterceptors(InterceptorDeRitmo)
+@WebSocketGateway({ cors: { origin: ORIGENES ?? '*' } })
 export class PasarelaPartida implements OnGatewayInit, OnGatewayDisconnect, OnModuleDestroy {
   @WebSocketServer()
   private servidor!: Server;
@@ -98,7 +113,31 @@ export class PasarelaPartida implements OnGatewayInit, OnGatewayDisconnect, OnMo
   /** Desde cuando esta vacia cada sala, para recogerla si no vuelve nadie. */
   private readonly vaciasDesde = new Map<string, number>();
 
-  constructor(private readonly salas: ServicioSalas) {}
+  constructor(
+    private readonly salas: ServicioSalas,
+    @Inject(CONFIGURACION) private readonly configuracion: Configuracion,
+    private readonly ritmo: LimitadorDeRitmo,
+  ) {}
+
+  /**
+   * Desde donde llama esa conexion, para repartirle su cupo de salas.
+   *
+   * Detras de un proxy inverso —que es como se despliega— la direccion del
+   * socket es la del proxy y todo el mundo pareceria venir del mismo sitio, de
+   * ahi `X-Forwarded-For`. **Solo se mira si se declara que hay un proxy
+   * delante** (`CONFIAR_EN_PROXY`): esa cabecera la escribe quien quiera, y
+   * fiarse de ella a pelo es regalar la forma de saltarse el tope por IP.
+   */
+  private ipDe(socket: Socket): string {
+    if (this.configuracion.confiarEnProxy) {
+      const reenviada = socket.handshake.headers['x-forwarded-for'];
+      const primera = (Array.isArray(reenviada) ? reenviada[0] : reenviada)?.split(',')[0]?.trim();
+      if (primera !== undefined && primera !== '') {
+        return primera;
+      }
+    }
+    return socket.handshake.address;
+  }
 
   afterInit(): void {
     this.latido ??= setInterval(() => {
@@ -120,6 +159,8 @@ export class PasarelaPartida implements OnGatewayInit, OnGatewayDisconnect, OnMo
    * esperando a que vuelva, y mientras tanto le juega un bot.
    */
   handleDisconnect(socket: Socket): void {
+    this.ritmo.olvidar(socket.id);
+
     const { codigo, token } = socket.data as DatosDelSocket;
     if (codigo === undefined || token === undefined) {
       return;
@@ -167,7 +208,10 @@ export class PasarelaPartida implements OnGatewayInit, OnGatewayDisconnect, OnMo
       return { ok: false, error: 'VERSION_INCOMPATIBLE' };
     }
 
-    const sala = this.salas.crear();
+    const sala = this.salas.crear({ conexion: socket.id, ip: this.ipDe(socket) });
+    if (sala === null) {
+      return { ok: false, error: 'DEMASIADAS_SALAS' };
+    }
 
     const entrada = this.entrar(socket, sala, peticion.nombre);
     if (!entrada.ok) {

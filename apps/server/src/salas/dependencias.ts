@@ -17,3 +17,12 @@ export type Azar = () => number;
 
 export const RELOJ = Symbol('reloj del servidor');
 export const AZAR = Symbol('azar del servidor');
+
+/**
+ * Los topes y los origenes con los que arranco el servidor.
+ *
+ * Se inyecta por lo mismo que el reloj: las pruebas necesitan topes de dos o
+ * de tres para poder pasarse de la raya en una linea, y leyendo `process.env`
+ * desde dentro no habria forma de ponerlos.
+ */
+export const CONFIGURACION = Symbol('configuracion del servidor');

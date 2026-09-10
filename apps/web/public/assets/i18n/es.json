@@ -149,7 +149,7 @@
       "armada": "Onda armada",
       "recarga_corta": "Onda en {{segundos}} s",
       "atajo": "Atajo: clic derecho sobre la celda.",
-      "atajo_movil": "Atajo: toca dos veces la misma celda."
+      "atajo_movil": "Atajo: mantén el dedo sobre la celda."
     }
   },
   "resumen": {
@@ -299,7 +299,7 @@
     },
     "onda": {
       "titulo": "La onda expansiva",
-      "texto": "Gástala en una celda vacía y arrastrará todas las conectadas. En el navegador, el clic derecho sobre una celda la lanza ahí directamente, sin tocar este botón; en el móvil hace lo mismo tocar dos veces seguidas la misma celda. Sobre una celda numerada solo se revela ella y la onda se pierde; sobre una mina, la mina se apunta y la onda se gasta igual."
+      "texto": "Gástala en una celda vacía y arrastrará todas las conectadas. En el navegador, el clic derecho sobre una celda la lanza ahí directamente, sin tocar este botón; en el móvil hace lo mismo mantener el dedo sobre la celda. Sobre una celda numerada solo se revela ella y la onda se pierde; sobre una mina, la mina se apunta y la onda se gasta igual."
     },
     "rendirse": {
       "titulo": "Rendirse",
@@ -351,6 +351,8 @@
     "CONFIGURACION_INVALIDA": "Esos ajustes no dan un tablero jugable.",
     "NOMBRE_INVALIDO": "Ese nombre no vale: escribe entre 1 y 16 caracteres.",
     "PETICION_INVALIDA": "El servidor no ha entendido la petición.",
-    "VERSION_INCOMPATIBLE": "Tu versión del juego no es compatible con la del servidor. Actualiza la aplicación."
+    "VERSION_INCOMPATIBLE": "Tu versión del juego no es compatible con la del servidor. Actualiza la aplicación.",
+    "DEMASIADAS_SALAS": "Tienes demasiadas salas abiertas. Cierra alguna antes de crear otra.",
+    "DEMASIADAS_PETICIONES": "Vas demasiado rápido para el servidor. Espera un momento y vuelve a intentarlo."
   }
 }

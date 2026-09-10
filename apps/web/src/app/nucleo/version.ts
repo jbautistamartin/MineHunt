@@ -11,4 +11,4 @@
  * hablaba con que. Al subir una version se suben las dos, y `version.prueba.ts`
  * falla si dejan de coincidir.
  */
-export const VERSION_APP = '0.0.2';
+export const VERSION_APP = '0.1.0';

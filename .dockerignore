@@ -1,0 +1,20 @@
+# Lo que no tiene por que entrar en el contexto de construccion. Cuanto mas
+# corto sea esto que se manda al demonio de Docker, mas rapido construye.
+
+node_modules
+**/node_modules
+**/dist
+**/.angular
+**/coverage
+
+# El proyecto nativo de Android: son cientos de megas y el servidor no lo usa.
+apps/web/android
+
+.git
+.github
+documentos
+*.md
+!package.json
+
+# Los .cmd son para el Explorador de Windows, no para un contenedor Linux.
+*.cmd

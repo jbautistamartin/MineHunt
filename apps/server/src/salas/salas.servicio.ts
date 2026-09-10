@@ -2,8 +2,23 @@ import { randomInt } from 'node:crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
 
-import { AZAR, RELOJ, type Azar, type Reloj } from './dependencias.js';
+import type { Configuracion } from '../configuracion.js';
+import { AZAR, CONFIGURACION, RELOJ, type Azar, type Reloj } from './dependencias.js';
 import { Sala } from './sala.js';
+
+/**
+ * Quien abre una sala, a efectos de los topes.
+ *
+ * Son dos y no uno porque protegen de cosas distintas: la conexion frena a
+ * quien abre salas una detras de otra desde la misma pestana, y la IP a quien
+ * lo intenta abriendo pestanas nuevas. Detras de un router domestico la IP la
+ * comparte toda la casa, asi que su tope no puede ser tan estrecho como el de
+ * la conexion.
+ */
+export interface Dueno {
+  readonly conexion: string;
+  readonly ip: string;
+}
 
 /**
  * Alfabeto de los codigos de sala.
@@ -19,16 +34,57 @@ const LARGO_DEL_CODIGO = 4;
 export class ServicioSalas {
   private readonly salas = new Map<string, Sala>();
 
+  /**
+   * Quien abrio cada sala de las que siguen vivas.
+   *
+   * Se apunta aqui y no dentro de `Sala` porque a la sala no le importa: es
+   * contabilidad del servidor, no una regla del juego, y `Sala` se prueba sin
+   * saber nada de conexiones ni de IPs.
+   */
+  private readonly duenos = new Map<string, Dueno>();
+
   constructor(
     @Inject(RELOJ) private readonly ahora: Reloj,
     @Inject(AZAR) private readonly azar: Azar,
+    @Inject(CONFIGURACION) private readonly configuracion: Configuracion,
   ) {}
 
-  /** Abre una sala con un codigo libre. */
-  crear(): Sala {
+  /**
+   * Abre una sala con un codigo libre, si a quien la pide le quedan.
+   *
+   * Devuelve null cuando ya tiene abiertas todas las que le tocan. Las salas
+   * viven en memoria y abrirlas no cuesta nada, asi que sin tope una sola
+   * pestana puede quedarse con el servidor entero.
+   */
+  crear(dueno: Dueno): Sala | null {
+    if (!this.leQuedanSalas(dueno)) {
+      return null;
+    }
+
     const sala = new Sala(this.codigoLibre(), this.ahora, this.azar);
     this.salas.set(sala.codigo, sala);
+    this.duenos.set(sala.codigo, dueno);
     return sala;
+  }
+
+  /** Cuantas de las salas vivas abrio esa conexion, y cuantas esa IP. */
+  private leQuedanSalas(dueno: Dueno): boolean {
+    let deLaConexion = 0;
+    let deLaIp = 0;
+
+    for (const abierta of this.duenos.values()) {
+      if (abierta.conexion === dueno.conexion) {
+        deLaConexion += 1;
+      }
+      if (abierta.ip === dueno.ip) {
+        deLaIp += 1;
+      }
+    }
+
+    return (
+      deLaConexion < this.configuracion.maxSalasPorConexion &&
+      deLaIp < this.configuracion.maxSalasPorIp
+    );
   }
 
   /** La sala de ese codigo, mirando en mayusculas: se teclea a mano. */
@@ -38,6 +94,9 @@ export class ServicioSalas {
 
   eliminar(codigo: string): void {
     this.salas.delete(codigo);
+    // Con la sala se va lo que ocupaba del tope de quien la abrio, o cerrarla
+    // no le devolveria el hueco y el tope acabaria siendo «salas por vida».
+    this.duenos.delete(codigo);
   }
 
   todas(): readonly Sala[] {

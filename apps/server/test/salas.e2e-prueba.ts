@@ -285,11 +285,13 @@ describe('Salas multijugador (e2e)', () => {
    */
   it('un cliente de otra version no entra', async () => {
     const cliente = await conectar();
+    const [mayor, menor] = VERSION_PROTOCOLO.split('.');
+    const otraVersion = `${mayor ?? '0'}.${String(Number(menor ?? '0') + 1)}.0`;
 
     expect(
       await pedir(cliente, MENSAJES_DEL_CLIENTE.crearSala, {
         nombre: 'Ana',
-        version: '0.1.0',
+        version: otraVersion,
       }),
     ).toEqual({ ok: false, error: 'VERSION_INCOMPATIBLE' });
 

@@ -1,0 +1,54 @@
+# ======================================================================
+#  MineHunt - la capa de HTTPS, para el servidor de verdad
+#
+#      DOMINIO=minehunt.example CORREO=tu@correo \
+#      docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+#
+#  Va aparte del compose principal a proposito: en local no hace falta
+#  —ni se puede, sin un dominio que apunte a la maquina— y arrastrarlo
+#  siempre obligaria a montar un certificado para probar en el portatil.
+#
+#  Es Caddy y no nginx por una sola razon: **saca y renueva el
+#  certificado de Let's Encrypt el solo**, sin cron ni certbot ni un
+#  segundo contenedor. Aqui no hay nada que sintonizar; lo que se gana
+#  con nginx es control que este servicio no necesita.
+#
+#  Hace falta HTTPS y no es una manía: el cliente web se sirve por https
+#  y el WebView de Android **bloquea el trafico en claro** en la
+#  compilacion de publicacion, asi que las partidas online tienen que ir
+#  por wss. Documentacion en documentos/MineHunt-despliegue.md.
+# ======================================================================
+
+services:
+  minehunt:
+    # Detras del proxy, el puerto deja de publicarse a la maquina: al
+    # servidor se llega por el proxy y solo por el.
+    ports: !override []
+    environment:
+      # Ahora si hay un proxy delante, asi que su X-Forwarded-For es de fiar
+      # y es la unica forma de saber desde donde llama cada quien.
+      CONFIAR_EN_PROXY: 'si'
+      ORIGENES_PERMITIDOS: ${ORIGENES_PERMITIDOS:-https://${DOMINIO}}
+
+  proxy:
+    image: caddy:2-alpine
+    container_name: minehunt-proxy
+    restart: unless-stopped
+    depends_on:
+      - minehunt
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMINIO: ${DOMINIO:?falta el dominio, y sin el no hay certificado}
+      CORREO: ${CORREO:?falta el correo con el que Let's Encrypt avisa de los problemas}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # El certificado se guarda entre reinicios: sin esto, cada `up` pide
+      # uno nuevo y Let's Encrypt acaba cortando por exceso de peticiones.
+      - caddy-datos:/data
+      - caddy-configuracion:/config
+
+volumes:
+  caddy-datos:
+  caddy-configuracion:

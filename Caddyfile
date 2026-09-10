@@ -1,0 +1,37 @@
+# ======================================================================
+#  MineHunt - configuracion del proxy inverso
+#
+#  Se usa desde docker-compose.https.yml, que le pasa DOMINIO y CORREO.
+#  Caddy pide y renueva el certificado el solo, y redirige http a https
+#  sin que haya que decirselo.
+# ======================================================================
+
+{
+	email {$CORREO}
+}
+
+{$DOMINIO} {
+	# Todo va al servidor, y el reparte: la web en la raiz, el panel en
+	# /panel y el WebSocket en /socket.io. No hace falta una regla por
+	# sitio porque **es un solo origen**, que es justo lo que buscaba
+	# meter el cliente dentro de la imagen del servidor.
+	#
+	# Caddy detecta la conexion de WebSocket y la deja pasar tal cual: no
+	# hay que declarar Upgrade ni Connection como en nginx.
+	reverse_proxy minehunt:3000
+
+	encode gzip zstd
+
+	header {
+		# Que nadie meta el juego en un iframe ajeno, y que el navegador no
+		# adivine tipos de contenido.
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
