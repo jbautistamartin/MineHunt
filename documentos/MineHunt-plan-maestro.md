@@ -52,6 +52,18 @@ Cómo funciona en la práctica:
                  └────────────────────┘
 ```
 
+**El Multijugador Local (Fase 8.5) no tiene servidor**: la sala vive dentro del
+teléfono que abre la partida, y el cable es Nearby Connections en vez de un
+WebSocket. El protocolo y las pantallas son exactamente los mismos.
+
+```
+   APK Android (anfitrión)                    APK Android (1 a 3 invitados)
+┌──────────────────────────┐               ┌──────────────────────────┐
+│  Angular (misma pantalla) │               │  Angular (misma pantalla) │
+│  Anfitrión → Sala → Motor │◄── Nearby ───►│  (aquí no hay motor)      │
+└──────────────────────────┘   P2P_STAR    └──────────────────────────┘
+```
+
 (El resto de la arquitectura —motor de juego en TypeScript puro reutilizado en cliente y servidor, NestJS + Socket.IO para multijugador— se mantiene igual que en la versión anterior del plan.)
 
 ---
@@ -213,6 +225,80 @@ todas las resoluciones necesarias para Android (mipmap) y PWA/web (manifest.json
 ambos idiomas, con "name"/"description" según el idioma detectado). Revisa que no
 quede ningún texto hardcodeado sin pasar por ngx-translate. Documenta el proceso de
 build de producción del cliente.
+```
+
+### Fase 8.5 — Multijugador local sin servidor (Nearby Connections)
+
+> **Por qué 8.5 y no una Fase 9 nueva:** esta fase se pensó con las Fases 9 y 10
+> ya escritas y la 9 a medias, y el apéndice de decisiones las cita por su número
+> más de una docena de veces. Renumerar convertiría en mentira todo lo ya
+> documentado, así que la fase se intercala sin mover a nadie de sitio.
+
+```
+Añade el Modo Multijugador Local: de 2 a 4 teléfonos Android juegan una partida
+entre ellos sin servidor, sin Wi-Fi común y sin internet. Uno crea la partida y
+hace de anfitrión —es quien tiene la verdad del juego—, y los demás lo encuentran
+en una lista de partidas cercanas y se unen.
+
+El transporte es Nearby Connections de Google Play Services, en estrategia
+P2P_STAR, que es exactamente la forma que ya tiene el Online: uno manda y de uno a
+tres escuchan. Nearby negocia solo el medio —Bluetooth, BLE, Wi-Fi Direct o un
+punto de acceso temporal— y se ocupa del descubrimiento, así que no hay que
+teclear ninguna IP ni estar en la misma red, que es justo lo que hoy obliga a
+`nucleo/servidor.ts` a llevar a mano la IP del PC. No existe plugin oficial de
+Capacitor, así que hay que escribir uno propio en `apps/web/android` que exponga
+anunciar, buscar, conectar, mandar y recibir, con sus eventos hacia el WebView.
+
+No se inventa un protocolo nuevo. Van los mismos mensajes de
+`packages/game-engine/src/red/protocolo.ts`, serializados en JSON dentro de
+payloads de tipo BYTES, con la misma comprobación de versión por `major.minor` al
+entrar: aquí importa incluso más que en el Online, porque cada teléfono lleva su
+APK instalado por su cuenta y dos de ellos pueden ser de meses distintos, sin un
+servidor en medio que imponga una sola versión. Comprueba que un `EstadoPartida`
+del tablero más grande cabe en los 32 KB que admite un payload BYTES; si no
+cupiera, párte el envío, no recortes el estado.
+
+El anfitrión ejecuta la sala de verdad dentro de su propio WebView. Para eso,
+saca `apps/server/src/salas/sala.ts` a `packages/game-engine/src/red/sala.ts`,
+junto al protocolo y por la misma razón que él: ya solo depende del motor, y lo
+único que la ata a Node es `randomUUID`, que pasa a recibirse como dependencia
+igual que el reloj. El servidor la sigue usando desde su sitio nuevo y no cambia
+de comportamiento; sus pruebas tienen que seguir pasando tal cual, y son la red
+que dice que el traslado salió bien. Con eso el anfitrión hereda gratis lo que ya
+está probado: los turnos, la gracia antes de ponerle un bot a quien se cae, la
+sustitución por IA de nivel medio y el fin de partida.
+
+En el cliente el asiento ya está puesto: `ServicioOnline` no habla con Socket.IO
+sino con `SocketMinimo`, que se inyecta. Escribe una implementación de esa misma
+interfaz sobre el plugin de Nearby —`emitWithAck` sobre mensajes con
+identificador y respuesta, `on` sobre lo que llega— y en el anfitrión enchufa
+además la sala local al otro extremo, sin que salga nada por la radio. La
+pantalla del Online y el servicio se reutilizan enteros; lo único que cambia es
+de dónde cuelga el transporte y que aquí no hay URL que configurar.
+
+Los permisos son la mitad del trabajo y conviene tratarlos como tal:
+BLUETOOTH_SCAN, BLUETOOTH_ADVERTISE y BLUETOOTH_CONNECT en Android 12 y
+posteriores, NEARBY_WIFI_DEVICES en Android 13 y posteriores, y la ubicación
+precisa en los anteriores, todos pedidos en caliente y precedidos de una pantalla
+que explique para qué son antes de que salte el diálogo del sistema —nadie
+entiende que un buscaminas pida su ubicación—. Si el jugador los niega, el modo
+tiene que decir por qué no puede empezar, no quedarse en blanco esperando.
+
+Que se caiga un invitado ya lo resuelve la sala. Que se caiga el anfitrión acaba
+la partida, y hay que decirlo con un mensaje claro en vez de dejar a los demás
+mirando un tablero que ya no avanza. La entrada del menú aparece solo donde el
+modo existe —Android con Play Services—, así que en el navegador no se enseña.
+
+Pruebas: las de la sala trasladada siguen siendo las del servidor, sin tocarlas;
+las del transporte, contra un plugin de mentira, igual que hoy se prueba
+`SocketMinimo` contra un socket de mentira. Y una comprobación que ningún
+emulador puede dar, porque Nearby necesita radios de verdad: dos teléfonos
+físicos, con el Wi-Fi apagado en los dos, jugando una partida entera de principio
+a fin.
+
+Deja anotado para la Fase 10 lo que esta fase le añade a la ficha de Google Play:
+los permisos nuevos hay que justificarlos en el cuestionario, y la declaración de
+seguridad de los datos tiene que decir que en este modo no sale nada del teléfono.
 ```
 
 ### Fase 9 — Despliegue del servidor
@@ -715,6 +801,69 @@ por Socket.IO como habla la web. Se ha pasado contra el contenedor y juega.
 solo) está escrita pero **no se ha ejecutado nunca contra un dominio real**, y
 antes hay que decidir dónde se aloja — que además es lo que la Fase 10 tiene que
 poner de fábrica en `nucleo/servidor.ts`, donde hoy hay una IP de la red local.
+
+### Lo hecho de la Fase 8.5 (20 de septiembre de 2026)
+
+La fase está **entera**, con una salvedad que se dice abajo. El detalle vive en
+`documentos/MineHunt-local.md`.
+
+**La sala se mudó al motor y no cambió de comportamiento.** `Sala` estaba en
+`apps/server/src/salas/` y ahora vive en `packages/game-engine/src/red/`, junto
+al protocolo y por la misma razón que él. Lo único que la ataba a Node era
+`randomUUID`, que pasa a inyectarse como el reloj y el azar. **Sus pruebas se
+movieron con ella y pasaron sin tocar ni una aserción**, que era justo lo que
+tenía que demostrar el traslado; el servidor la usa desde el sitio nuevo y le
+pasa `randomUUID` al construirla.
+
+**`Anfitrion`, al lado.** Es lo que `PasarelaPartida` hace en el servidor —
+traducir mensajes del protocolo a llamadas a la sala y difundir lo que salga—
+pero para una sola sala y sin Socket.IO ni Nest. Con eso el anfitrión de una
+partida local hereda gratis los turnos, la gracia antes de ponerle un bot a
+quien se cae, la sustitución por IA y el fin de partida.
+
+**El asiento del cliente ya estaba puesto.** `ServicioOnline` no hablaba con
+Socket.IO sino con `SocketMinimo`, que se inyecta, así que el Local entró por
+ahí: `usarTransporte()` cambia por dónde va la partida y todo lo demás del
+servicio es idéntico. El anfitrión no usa radio para hablar consigo mismo — su
+socket llama directamente a la sala que tiene al lado.
+
+**`/local` es la misma pantalla que `/online`**, con otro dato en la ruta. Lo
+único que cambia es la primera de sus tres partes; el lobby y la partida son
+idénticos hasta el píxel, y duplicarlos habría sido copiar trescientas líneas de
+plantilla que dicen lo mismo. Esto **matiza** la decisión «El Online tiene
+pantalla propia, no la de la partida local» de la Fase 7: aquella hablaba del
+Entrenamiento, que enseña otras cosas encima del tablero (bots, niveles,
+revancha); el Local enseña exactamente lo mismo que el Online.
+
+**Los mensajes se parten.** Nearby admite 32 KB por payload y un tablero de
+30×30 se va por encima de los 60 KB, así que se trocea a 8000 caracteres. El
+límite va en caracteres y no en bytes para no tener que medir. Dos detalles
+tienen prueba propia porque no se ven jugando: el corte respeta los pares
+suplentes (los nombres los teclea el jugador y ahí caben emojis), y el array del
+ensamblador se rellena con `fill(undefined)` — **uno creado por tamaño está
+disperso y `some` se salta los huecos**, así que un mensaje de nueve trozos se
+daba por completo con el primero que llegara. Lo encontró la prueba del tablero
+grande, no el teléfono.
+
+**No se inventó ningún mensaje.** Por la radio van los del protocolo de
+siempre, con la misma comprobación de versión `major.minor`, que aquí pesa más
+que en el Online: allí el servidor impone una sola versión a todos, y aquí cada
+teléfono lleva el APK que se instaló por su cuenta. La versión sube a **0.1.1**
+y no a 0.2.0 a propósito: no cambió nada de lo que va por el cable, así que un
+APK de 0.1.0 sigue entrando en el servidor del Online.
+
+**Los permisos fueron la mitad del trabajo**, como estaba previsto. Se piden en
+caliente y solo los que tocan en ese Android: pedir uno declarado con
+`maxSdkVersion` por debajo de la versión del aparato **se deniega solo, sin
+enseñar ningún diálogo**, y desde fuera parece que el jugador dijo que no. Y por
+debajo de Android 12 hace falta además la ubicación del sistema encendida, que
+no es un permiso pero impide lo mismo: el plugin lo cuenta como si lo fuera.
+
+**Lo que falta**: la comprobación que ninguna prueba puede dar. Nearby necesita
+radios de verdad —no hay emulador que las levante—, así que quedan **dos
+teléfonos físicos, con el Wi-Fi apagado en los dos, jugando una partida entera**.
+El APK está compilado e instalado en el teléfono de pruebas; hace falta un
+segundo aparato.
 
 ### Lo que solo se nota con el teléfono en la mano (posterior a la Fase 8)
 

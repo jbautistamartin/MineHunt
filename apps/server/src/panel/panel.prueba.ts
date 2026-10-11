@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { InformeSala } from '../salas/sala.js';
+import type { InformeSala } from '@minehunt/game-engine';
 import {
   contenidoDelPanel,
   escapar,

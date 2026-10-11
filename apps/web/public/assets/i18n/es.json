@@ -21,6 +21,10 @@
       "titulo": "Multijugador online",
       "texto": "Crea una sala y juega con quien quieras, cada uno en su pantalla."
     },
+    "local": {
+      "titulo": "Multijugador local",
+      "texto": "De dos a cuatro móviles, uno al lado del otro. Sin internet."
+    },
     "ayuda": {
       "titulo": "Cómo se juega",
       "texto": "Las reglas, la onda expansiva y el reloj de turno."
@@ -279,6 +283,28 @@
       "titulo": "Hablando con el servidor…",
       "texto": "Si tarda demasiado, comprueba que el servidor esté encendido y que la dirección sea la correcta.",
       "cancelar": "Cancelar"
+    }
+  },
+  "local": {
+    "titulo": "Multijugador local",
+    "lema": "De dos a cuatro móviles cerca, sin servidor ni internet.",
+    "explicacion": "Los móviles se buscan entre ellos por Bluetooth y Wi-Fi. Uno crea la partida y los demás la ven aquí; no hace falta que estéis en la misma red.",
+    "caido": "Se perdió el contacto con quien tenía la partida.",
+    "fallo": "La radio no pudo hacerlo: {{motivo}}",
+    "sala": {
+      "comparte": "Los demás ya te ven en su lista. Espera a que entren."
+    },
+    "cercanas": {
+      "titulo": "Partidas cerca de ti",
+      "actualizar": "Buscar otra vez",
+      "buscando": "Buscando móviles cerca…",
+      "ninguna": "Ninguna por ahora. Que alguien cree una, o crea tú la tuya.",
+      "detalle": "aquí al lado"
+    },
+    "permisos": {
+      "explicacion": "Para encontrar los móviles que tienes al lado, el juego necesita permiso para usar el Bluetooth y el Wi-Fi. No se usa para saber dónde estás, y en este modo no sale nada de tu teléfono.",
+      "empezar": "Buscar partidas cerca",
+      "denegados": "Sin permiso para usar el Bluetooth y el Wi-Fi no se puede buscar con quién jugar. Puedes dárselo en los ajustes del teléfono, en Aplicaciones → MineHunt → Permisos."
     }
   },
   "ayuda": {

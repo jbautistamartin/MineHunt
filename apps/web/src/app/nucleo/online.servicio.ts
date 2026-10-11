@@ -91,6 +91,16 @@ export class ServicioOnline {
   private readonly abrirSocket = inject(CREADOR_DE_SOCKET);
   private readonly servidor = inject(ServicioServidor);
   private socket: SocketMinimo | null = null;
+  /**
+   * Con que se abre la proxima conexion, cuando no es con el servidor.
+   *
+   * Es lo unico que separa una partida online de una local: en el Online el
+   * socket sale al servidor, y en el Multijugador Local sale a la radio del
+   * telefono —o a ningun sitio, si uno es el anfitrion y la sala la lleva el
+   * mismo—. Todo lo demas de este servicio es identico, porque el protocolo
+   * tambien lo es.
+   */
+  private apertura: (() => SocketMinimo) | null = null;
   /** Credencial de la sala en curso; sin ella no se puede volver a entrar. */
   private credencial: SalaRecordada | null = leerRecordada();
 
@@ -301,6 +311,19 @@ export class ServicioOnline {
     this.desconectar();
   }
 
+  /**
+   * Cambia por donde va la partida: `null` la devuelve al servidor del Online.
+   *
+   * Corta lo que hubiera abierto antes, porque los dos transportes no pueden
+   * convivir: la sala de una partida local vive en un telefono que puede
+   * apagarse, y la del Online en un servidor, y mezclarlas dejaria senales de
+   * una sala hablando de la otra.
+   */
+  usarTransporte(apertura: (() => SocketMinimo) | null): void {
+    this.desconectar();
+    this.apertura = apertura;
+  }
+
   /** Corta la conexion sin dejar la sala: se podra volver con la credencial. */
   desconectar(): void {
     this.detenerLatido();
@@ -416,7 +439,7 @@ export class ServicioOnline {
     }
 
     this.conexionInterna.set('conectando');
-    const socket = this.abrirSocket(this.servidor.url());
+    const socket = this.apertura === null ? this.abrirSocket(this.servidor.url()) : this.apertura();
     this.socket = socket;
     this.escuchar(socket);
   }

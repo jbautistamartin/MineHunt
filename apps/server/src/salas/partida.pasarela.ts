@@ -16,6 +16,7 @@ import {
   VERSION_PROTOCOLO,
   versionesCompatibles,
   type Entrada,
+  type Sala,
   type PeticionClic,
   type PeticionCrearSala,
   type PeticionOnda,
@@ -30,7 +31,6 @@ import { leerConfiguracion, type Configuracion } from '../configuracion.js';
 import { CONFIGURACION } from './dependencias.js';
 import { LimitadorDeRitmo } from './limitador.js';
 import { InterceptorDeRitmo } from './ritmo.interceptor.js';
-import type { Sala } from './sala.js';
 import { ServicioSalas } from './salas.servicio.js';
 
 /**

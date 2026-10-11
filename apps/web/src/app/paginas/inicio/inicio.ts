@@ -6,6 +6,7 @@ import { Intro } from '../../componentes/intro/intro';
 import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
 import { ServicioHistoria } from '../../nucleo/historia.servicio';
 import { ServicioIntro } from '../../nucleo/intro.servicio';
+import { ServicioLocal } from '../../nucleo/local.servicio';
 import { ServicioSonido } from '../../nucleo/sonido.servicio';
 import { ServicioVibracion } from '../../nucleo/vibracion.servicio';
 import { VERSION_APP } from '../../nucleo/version';
@@ -35,6 +36,15 @@ export class Inicio {
   private readonly sonido = inject(ServicioSonido);
   private readonly vibracion = inject(ServicioVibracion);
   private readonly intro = inject(ServicioIntro);
+  private readonly local = inject(ServicioLocal);
+
+  /**
+   * El Multijugador Local solo sale donde existe: en la aplicacion de Android.
+   *
+   * Nearby son las radios del telefono y en un navegador no hay ninguna, asi
+   * que enseñarlo en el escritorio seria ofrecer un modo que no puede empezar.
+   */
+  readonly hayMultijugadorLocal = this.local.disponible;
 
   /**
    * La presentacion del arranque, solo la primera vez que se abre el menu.

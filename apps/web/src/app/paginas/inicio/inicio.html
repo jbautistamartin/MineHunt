@@ -45,6 +45,16 @@
       <span class="modo-flecha" aria-hidden="true">&#8594;</span>
     </a>
 
+    @if (hayMultijugadorLocal) {
+      <a class="modo" routerLink="/local">
+        <span class="modo-texto">
+          <span class="modo-titulo">{{ 'inicio.local.titulo' | translate }}</span>
+          <span class="modo-detalle">{{ 'inicio.local.texto' | translate }}</span>
+        </span>
+        <span class="modo-flecha" aria-hidden="true">&#8594;</span>
+      </a>
+    }
+
     <a class="modo menor" routerLink="/ayuda">
       <span class="modo-texto">
         <span class="modo-titulo">{{ 'inicio.ayuda.titulo' | translate }}</span>

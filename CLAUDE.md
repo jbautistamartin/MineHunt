@@ -4,9 +4,29 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 a 8 completadas.** El monorepo compila, tipa y pasa 380 pruebas, más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae; y la web tiene el Multijugador Online en `/online`, con el mismo tablero que los otros modos; abriendo la dirección del servidor en el navegador sale su panel de salas. El juego está pulido: sonidos sintetizados, animaciones de destape y detonación, resumen con estadísticas por jugador al terminar, iconos y manifiestos de aplicación instalable en los dos idiomas. La **Fase 9 está a medias**: el servidor se empaqueta en una imagen Docker que lleva dentro el cliente web, con topes de salas, límite de ritmo, CORS y puerto por variables de entorno, comprobación de salud y prueba de humo; falta desplegarlo en un servidor de verdad con dominio y certificado. Pendiente entera queda la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
+**Fases 0 a 8.5 completadas.** El monorepo compila, tipa y pasa 380 pruebas, más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae; y la web tiene el Multijugador Online en `/online`, con el mismo tablero que los otros modos; abriendo la dirección del servidor en el navegador sale su panel de salas. El juego está pulido: sonidos sintetizados, animaciones de destape y detonación, resumen con estadísticas por jugador al terminar, iconos y manifiestos de aplicación instalable en los dos idiomas. Y tiene **Multijugador Local** en `/local` (Fase 8.5): de dos a cuatro teléfonos Android jugando entre ellos por Nearby Connections, sin servidor, sin Wi-Fi común y sin internet, con la sala corriendo dentro del teléfono que abre la partida. La **Fase 9 está a medias**: el servidor se empaqueta en una imagen Docker que lleva dentro el cliente web, con topes de salas, límite de ritmo, CORS y puerto por variables de entorno, comprobación de salud y prueba de humo; falta desplegarlo en un servidor de verdad con dominio y certificado. Pendiente entera queda la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
 
-### Dónde nos quedamos (19 de septiembre de 2026, noche)
+### Dónde nos quedamos (20 de septiembre de 2026)
+
+- **La Fase 8.5 (Multijugador Local) está hecha**, y es nueva: se intercaló
+  entre la 8 y la 9 sin renumerar nada, porque el apéndice del plan cita las
+  Fases 9 y 10 por su número más de una docena de veces. Todo el detalle en
+  `documentos/MineHunt-local.md` y en el apéndice del plan maestro.
+- **`Sala` ya no es del servidor**: vive en `packages/game-engine/src/red/`,
+  junto al protocolo. Sus pruebas se movieron con ella y pasaron sin tocar ni
+  una aserción. Si tocas la sala, recompila el motor antes de probar el
+  servidor (la trampa del monorepo de siempre).
+- **La versión sube a 0.1.1** (motor, web y `VERSION_APP`). Es un parche a
+  propósito: por el cable no cambió nada, así que un APK de 0.1.0 sigue
+  entrando en el servidor del Online.
+- **El APK está compilado e instalado en el teléfono** (`D6CMIFMNS44LBAJJ`,
+  POCO, Android 16). El plugin `Cercanos` se registra —se ve en
+  `adb logcat Capacitor:V`—, pero **el modo no se ha jugado todavía**: Nearby
+  necesita radios de verdad y hacen falta **dos teléfonos físicos**. Esa es la
+  comprobación que le falta a la fase, y no la puede dar ninguna prueba.
+- **La Fase 9 sigue empezada y a medias**, igual que estaba.
+
+### Dónde nos quedamos antes (19 de septiembre de 2026, noche)
 
 - **La Fase 9 está empezada y a medias.** Hecho y comprobado en local: la imagen Docker por etapas con usuario sin privilegios, el cliente web servido por el propio Nest (el juego en `/`, el panel en `/panel`), la configuración por entorno, los tres puntos de endurecimiento con sus pruebas, `docker-compose.yml`, la comprobación de salud y la prueba de humo. **Falta**: desplegarlo en un servidor de verdad —la capa de HTTPS (`docker-compose.https.yml` con Caddy) está escrita pero **no se ha ejecutado nunca contra un dominio real**—, y decidir dónde se aloja, que es lo que hay que poner en `nucleo/servidor.ts` para la Fase 10. Todo el detalle en `documentos/MineHunt-despliegue.md`.
 - **El protocolo subió a 0.1.0** (y con él `VERSION_APP`), porque hay dos códigos de error nuevos. Un APK con 0.0.2 ya no entra en este servidor: hay que reinstalarlo en el teléfono.
@@ -179,7 +199,7 @@ Del menú cuelgan también **la ayuda** (`/ayuda`, las reglas) y **«Acerca de»
 
 **El selector de idioma y el interruptor del sonido viven solo aquí.** Las demás pantallas los tenían repetidos en su cabecera (y la ayuda también colgaba del final de la partida); con un menú que se abre al arrancar y al que se vuelve entre partidas, repetirlos solo llenaba de ruido pantallas que ya piden bastante al jugador. Si añades una pantalla, no le pongas ninguno de los dos — el sonido tiene además su propio botón dentro de la partida, que es donde molesta que suene.
 
-El **Multijugador Online aparece en el menú apagado**, con su etiqueta de «próximamente», hasta la Fase 7. Es un `div` y no un enlace a propósito: la ruta comodín devolvería al propio menú sin explicar nada. Cuando llegue la Fase 7 se convierte en enlace y se le quita la etiqueta.
+El **Multijugador Online** es una entrada más desde la Fase 7 (antes era un `div` apagado con su etiqueta de «próximamente»). El **Multijugador Local** se le añadió en la Fase 8.5 y **solo sale en Android**, porque son las radios del teléfono: enseñarlo en el escritorio sería ofrecer un modo que no puede empezar. Lo decide `ServicioLocal.disponible`, no un `@if` con `Capacitor` suelto en la plantilla.
 
 ## Android con Capacitor (Fase 5)
 
@@ -212,7 +232,7 @@ Queda un caso sin cubrir: en el marcador, la etiqueta «rendido» puede hacer cr
 `apps/server/src/salas/` tiene el multijugador online. **`documentos/MineHunt-servidor.md` es el documento de referencia** —protocolo completo, decisiones y lo que necesitará la Fase 7—; aquí solo lo que hay que tener presente al tocar código.
 
 - **El servidor es la autoridad.** Dentro de cada sala hay un `MotorJuego` de verdad, el mismo paquete que usa el cliente. Los clientes mandan intenciones y reciben el estado que salga; nadie juega fuera de su turno porque el servidor comprueba de quién es, y nadie ve una mina antes de tiempo porque el estado que se manda es el que el motor deja ver a cualquiera.
-- **`Sala` no sabe nada de Socket.IO ni de Nest**, y así se queda: recibe llamadas y devuelve `Resultado<T>`, lo que permite probar las reglas enteras sin levantar un servidor. La pasarela solo conecta cables y difunde.
+- **`Sala` no sabe nada de Socket.IO ni de Nest**, y así se queda: recibe llamadas y devuelve `Resultado<T>`, lo que permite probar las reglas enteras sin levantar un servidor. La pasarela solo conecta cables y difunde. **Desde la Fase 8.5 vive en el motor** (`game-engine/src/red/sala.ts`), porque el anfitrión de una partida local también la necesita; el servidor la importa de `@minehunt/game-engine` y le pasa `randomUUID` al construirla.
 - **Las respuestas van por el acuse de recibo** de Socket.IO, no por un mensaje aparte, y siempre con la misma forma: `{ ok: true, datos }` o `{ ok: false, error }`.
 - **Ni un texto traducido sale de aquí**, igual que manda la convención 3: códigos de suceso y de error, y datos crudos. Las claves con las que el cliente los traduce son las mismas del Modo Entrenamiento.
 - **El reloj y el azar se inyectan** (`RELOJ` y `AZAR`, en `salas/dependencias.ts`), por lo mismo que en el motor. Ojo: **el código de sala usa el azar del sistema y no el inyectado**, porque las pruebas fijan el suyo en una constante y todas las salas pedirían el mismo código.
@@ -261,6 +281,21 @@ Queda un caso sin cubrir: en el marcador, la etiqueta «rendido» puede hacer cr
 - **En una confirmación, la pregunta va en su línea y los dos botones en la suya**, siempre juntos y repartiéndose el ancho: en un teléfono estrecho el «no» se caía solo a la línea de abajo y la pareja dejaba de leerse como una elección.
 - **Los iconos de la web también salen del icono maestro**: `npm run recursos-web` genera los PNG del manifiesto, incluido el enmascarable con su margen. Al retocar el icono se relanzan los dos scripts, el de web y el de Android.
 
+## El Multijugador Local (Fase 8.5)
+
+De dos a cuatro teléfonos Android jugando entre ellos **sin servidor, sin Wi-Fi común y sin internet**. **`documentos/MineHunt-local.md` es el documento de referencia**; aquí solo lo que hay que tener presente al tocar código.
+
+- **Lo único que cambia respecto al Online es el cable.** El protocolo es el mismo, las pantallas son las mismas y `ServicioOnline` es el mismo: `usarTransporte()` decide si el socket sale a un servidor o a la radio. No inventes mensajes nuevos para el Local; si necesitas uno, va en `red/protocolo.ts` y lo hablan los dos modos.
+- **`Sala` vive ahora en el motor** (`packages/game-engine/src/red/sala.ts`), no en `apps/server`. Es lo que permite que el anfitrión sea un teléfono. La credencial se inyecta (`randomUUID` en el servidor, `crypto.getRandomValues` en el móvil) igual que el reloj y el azar; **no metas `node:crypto` ahí dentro**.
+- **`Anfitrion`** (`red/anfitrion.ts`) es `PasarelaPartida` para una sola sala y sin Socket.IO. Valida lo que entra igual que la pasarela: del otro lado hay otro teléfono con su propio APK y no se fía nadie.
+- **El anfitrión no usa radio para hablar consigo mismo.** `SocketDelAnfitrion` llama directamente a la sala que tiene al lado; la radio es solo para los invitados.
+- **Los mensajes se parten en trozos de 8000 caracteres.** Nearby admite 32 KB por payload y un tablero de 30×30 se va por encima de los 60 KB. El troceado está en la web y no en Java a propósito: ahí se puede probar. **Ojo al array del ensamblador**: se rellena con `fill(undefined)` porque uno creado por tamaño está disperso y `some` se salta los huecos — ese fallo daba un mensaje de nueve trozos por completo con el primero.
+- **`/local` es la misma pantalla que `/online`**, con `data: { modo: 'local' }` en la ruta. Sólo cambia la parte de entrar; el lobby y la partida son idénticos. Si tocas el lobby o la partida, estás tocando los dos modos.
+- **Los permisos se piden en caliente y solo los que tocan en ese Android.** Pedir uno declarado con `maxSdkVersion` por debajo de la del aparato **se deniega solo, sin diálogo**, y parece que el jugador dijo que no. La tabla por versión está en `CercanosPlugin.java` y en el documento.
+- **Al abrir `/local` no salta ningún diálogo.** `comprobarPermisos()` mira sin pedir; si falta, la pantalla explica para qué sirven y el diálogo sale al tocar el botón. No llames a `asegurarPermisos()` desde el arranque de una pantalla.
+- **La entrada del menú solo sale en Android** (`ServicioLocal.disponible`): en un navegador no hay radios.
+- **Nearby no se puede probar en un emulador.** Las pruebas llegan hasta una radio de mentira (`RADIO_CERCANA`), que cubre el reparto de mensajes entero, incluido un tablero que no cabe en un solo envío. Lo que falta es con dos teléfonos en la mano.
+
 ## El despliegue del servidor (Fase 9)
 
 **`documentos/MineHunt-despliegue.md` es el documento de referencia.** Aquí solo lo que hay que tener presente al tocar código:
@@ -296,6 +331,8 @@ Se entra **solo desde el menú principal**, como el selector de idioma. Nunca de
 
 Angular 22 exige **TypeScript >=6.0 <6.1**, así que el monorepo va con **TypeScript 6.0.3** — no lo subas a la 7 (el compilador nativo) sin comprobar antes que Angular lo acepta. Node 24 LTS, Angular 22.1, NestJS 12, Vitest 4.1, Capacitor 8.5. Los tres paquetes usan Vitest; Angular lo hace con jsdom, así que no hace falta Chrome ni Karma.
 
+En Android, la única dependencia nativa que no viene de Capacitor es **`com.google.android.gms:play-services-nearby`** (fijada en `android/variables.gradle`), que es el Multijugador Local. Requiere Play Services en el aparato; sin ellos el modo no arranca, y por eso su entrada del menú se esconde fuera de Android.
+
 ## Qué es MineHunt
 
 Buscaminas **invertido**: el objetivo es *encontrar* minas, no evitarlas. Multijugador por turnos (2-4 jugadores, humanos y/o bots). Un clic revela o bien una mina (que se anota en el marcador del jugador) o bien un número de minas adyacentes. Quien encuentra mina sigue jugando; quien falla cede el turno, y también lo pierde si se le acaba el tiempo. Existe la «onda expansiva», con recarga, que es lo único que despeja en cascada. Gana quien más minas encuentre.
@@ -312,7 +349,7 @@ Buscaminas **invertido**: el objetivo es *encontrar* minas, no evitarlas. Multij
 
 **`documentos/MineHunt-proyectos.md` es el mapa completo**: qué es cada paquete, qué contiene y de qué depende. Lo esencial:
 
-- `packages/game-engine` — librería TypeScript **pura**: sin Angular, sin DOM, sin dependencias de runtime del navegador. Contiene generación de tablero, revelado y cascada, cálculo de adyacencias, turnos, marcador, ítem de despeje, módulo de IA y la tabla declarativa de niveles del Modo Historia. En `src/red/protocolo.ts` está además **el contrato del multijugador online** (nombres de los mensajes y forma de los datos): ahí no hay reglas ni nada que se ejecute, y vive aquí porque es el vocabulario común de cliente y servidor, igual que `CodigoSuceso`. Lo importan los dos desde `@minehunt/game-engine`; ni se redeclara en la web ni se saca a un cuarto paquete.
+- `packages/game-engine` — librería TypeScript **pura**: sin Angular, sin DOM, sin dependencias de runtime del navegador. Contiene generación de tablero, revelado y cascada, cálculo de adyacencias, turnos, marcador, ítem de despeje, módulo de IA y la tabla declarativa de niveles del Modo Historia. En `src/red/` está además todo lo que el multijugador comparte: `protocolo.ts` (nombres de los mensajes y forma de los datos), `sala.ts` (las reglas de una sala: puestos, turnos, bots, reconexión) y `anfitrion.ts` (el servidor de una sola sala, sin cable). Ahí no hay Socket.IO, ni Nest, ni Angular: vive aquí porque es el vocabulario y la lógica común de cliente y servidor, igual que `CodigoSuceso`. Lo importan los dos desde `@minehunt/game-engine`; ni se redeclara en la web ni se saca a un cuarto paquete. **`Sala` estuvo en `apps/server` hasta la Fase 8.5** y se mudó aquí para que el anfitrión de una partida local pueda ser un teléfono.
 - `apps/web` — Angular 18+ con standalone components; consume `game-engine` como dependencia de workspace. Se empaqueta a Android con Capacitor (Fase 5).
 - `apps/server` — NestJS + Socket.IO; consume **la misma** `game-engine` como fuente de verdad autoritativa (valida cada clic y difunde el estado).
 
@@ -322,7 +359,7 @@ Dentro de `apps/web/src/app`: `nucleo/` tiene los servicios con estado (`Servici
 
 La decisión estructural clave es que el motor de juego es una sola implementación compartida entre cliente y servidor. Lógica de juego nueva va en `game-engine`, nunca en un componente Angular ni en un gateway de NestJS; esos dos solo orquestan y presentan.
 
-En el cliente conviven tres modos que comparten los mismos componentes de tablero: Entrenamiento (motor local, hotseat + bots), Historia (progresión de 50 niveles, progreso en localStorage) y Multijugador Online (el motor local se sustituye por el estado que llega del servidor).
+En el cliente conviven cuatro modos que comparten los mismos componentes de tablero: Entrenamiento (motor local, hotseat + bots), Historia (progresión de 50 niveles, progreso en localStorage), Multijugador Online (el motor local se sustituye por el estado que llega del servidor) y Multijugador Local (lo mismo, pero el estado llega del teléfono de al lado por Nearby, y si uno es el anfitrión llega de la sala que corre dentro de su propio WebView).
 
 ## Idioma de la interfaz
 

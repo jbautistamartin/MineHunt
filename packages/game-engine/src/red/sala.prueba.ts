@@ -1,5 +1,6 @@
-import type { ConfiguracionSala } from '@minehunt/game-engine';
+import { describe, expect, it } from 'vitest';
 
+import type { ConfiguracionSala } from './protocolo.js';
 import { Sala } from './sala.js';
 
 /**
@@ -18,12 +19,17 @@ const CONFIGURACION: ConfiguracionSala = {
   nivelesIA: [],
 };
 
-/** Sala con reloj y azar de mentira, que es como se puede probar. */
+/** Sala con reloj, azar y credenciales de mentira, que es como se puede probar. */
 function crearSala(reloj = { ahora: 0 }): Sala {
+  let credenciales = 0;
   return new Sala(
     'PRUE',
     () => reloj.ahora,
     () => 0,
+    () => {
+      credenciales += 1;
+      return `credencial-${String(credenciales)}`;
+    },
   );
 }
 

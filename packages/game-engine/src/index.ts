@@ -10,7 +10,13 @@
  * online, que vive aqui por ser el vocabulario comun de los dos.
  * Fase 8: estadisticas por jugador dentro del estado, para el resumen del
  * final de la partida.
+ * Fase 8.5: la sala (que era del servidor) y el anfitrion que la envuelve, para
+ * que el telefono que monta una partida local pueda ser la autoridad sin
+ * arrastrarse medio NestJS dentro del WebView.
  */
+
+export { Anfitrion } from './red/anfitrion.js';
+export { CONFIGURACION_POR_DEFECTO, Sala, type InformeSala } from './red/sala.js';
 
 export {
   MENSAJES_DEL_CLIENTE,

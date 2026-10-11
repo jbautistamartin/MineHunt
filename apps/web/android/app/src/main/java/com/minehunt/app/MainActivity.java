@@ -12,10 +12,11 @@ import com.getcapacitor.BridgeActivity;
 
 /**
  * La unica actividad de la app: dentro va el WebView con la misma web de
- * siempre. Lo que hace de mas es registrar el plugin de vibracion del proyecto,
- * esconder las barras del sistema —la de arriba y la de abajo: el juego se
- * queda con la pantalla entera, y la de navegacion ademas esta justo donde se
- * clica— y, solo en depuracion, dejar hablar con un servidor por http.
+ * siempre. Lo que hace de mas es registrar los dos plugins del proyecto —el de
+ * vibracion y el de las radios del Multijugador Local—, esconder las barras
+ * del sistema —la de arriba y la de abajo: el juego se queda con la pantalla
+ * entera, y la de navegacion ademas esta justo donde se clica— y, solo en
+ * depuracion, dejar hablar con un servidor por http.
  */
 public class MainActivity extends BridgeActivity {
 
@@ -25,6 +26,7 @@ public class MainActivity extends BridgeActivity {
         // levanta el puente y carga los plugins, y uno registrado despues no
         // llega a existir para la web.
         registerPlugin(VibracionPlugin.class);
+        registerPlugin(CercanosPlugin.class);
 
         super.onCreate(estadoGuardado);
         ocultarBarrasDelSistema();

@@ -40,4 +40,34 @@
         dependencia la habria dejado caer sin que fallara nada al compilar.
     -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
+        El Multijugador Local (Nearby Connections).
+
+        Son muchos y cada uno vale para un tramo de versiones distinto, que es
+        justo el motivo de los maxSdkVersion: un permiso declarado de mas se
+        deniega solo en las versiones donde ya no existe, sin enseñar ningun
+        dialogo, y desde fuera se ve como si el jugador hubiera dicho que no.
+        Esta es la lista que documenta Google para Nearby Connections.
+
+        NEARBY_WIFI_DEVICES lleva neverForLocation porque el juego no deduce
+        donde esta nadie: solo busca con quien jugar. Sin esa marca, Android 13
+        y posteriores exigirian ademas la ubicacion precisa.
+    -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:maxSdkVersion="28" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="31" />
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation" />
 </manifest>

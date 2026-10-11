@@ -285,6 +285,41 @@ porque ahí están todas las idas y venidas entre el mapa de niveles y la partid
 
 En el navegador no se engancha nada: el atrás es el del navegador y ya funciona.
 
+## Los plugins nativos del proyecto
+
+Dos, y los dos se registran a mano en `MainActivity.onCreate()` **antes de
+`super.onCreate()`**: es ahí donde Capacitor levanta el puente y carga los
+plugins, y uno registrado después no llega a existir para la web. `cap sync` no
+toca ese fichero.
+
+| Plugin | Fichero | Para qué |
+|---|---|---|
+| `Vibracion` | `VibracionPlugin.java` | Vibrar con los atributos puestos (`USAGE_MEDIA`) y devolviendo un informe. `@capacitor/haptics` no declara atributos y Android se traga la vibración con la respuesta táctil apagada. |
+| `Cercanos` | `CercanosPlugin.java` | Nearby Connections: el Multijugador Local. Anunciar, buscar, conectar, mandar y recibir. |
+
+El nombre del `@CapacitorPlugin(name = …)` y el del `registerPlugin<…>('…')` de
+la web se emparejan por ese texto: **un desajuste no falla al compilar**, solo
+deja de existir el plugin en tiempo de ejecución.
+
+### Los permisos del Multijugador Local
+
+Nearby pide un juego de permisos que cambia con la versión de Android, y por eso
+el manifest los declara con `maxSdkVersion` y el plugin pide en caliente **solo
+los que tocan en ese aparato**. Pedir uno que el manifest declara con un
+`maxSdkVersion` por debajo de la versión del teléfono **se deniega solo, sin
+enseñar ningún diálogo**, y desde fuera parece que el jugador dijo que no.
+
+La tabla por versión y el resto del modo están en
+[MineHunt-local.md](MineHunt-local.md). Para diagnosticarlo con el teléfono en
+la mano:
+
+```bash
+adb logcat -v brief MineHuntCercanos:V Capacitor:V *:S
+```
+
+Y **Nearby no funciona en un emulador**: necesita radios de verdad, así que
+probar el modo pide dos teléfonos físicos.
+
 ## Lo que todavía no está
 
 De la Fase 8 (pulido): los recursos finales en todas las densidades de `mipmap`

@@ -1,10 +1,10 @@
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
+import { Sala } from '@minehunt/game-engine';
 
 import type { Configuracion } from '../configuracion.js';
 import { AZAR, CONFIGURACION, RELOJ, type Azar, type Reloj } from './dependencias.js';
-import { Sala } from './sala.js';
 
 /**
  * Quien abre una sala, a efectos de los topes.
@@ -61,7 +61,10 @@ export class ServicioSalas {
       return null;
     }
 
-    const sala = new Sala(this.codigoLibre(), this.ahora, this.azar);
+    // La credencial se inyecta como el reloj y el azar: `Sala` vive en el
+    // motor, que no sabe de Node, y en el telefono que monta una partida local
+    // la fabrica el navegador.
+    const sala = new Sala(this.codigoLibre(), this.ahora, this.azar, randomUUID);
     this.salas.set(sala.codigo, sala);
     this.duenos.set(sala.codigo, dueno);
     return sala;

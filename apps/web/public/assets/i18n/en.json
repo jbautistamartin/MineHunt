@@ -21,6 +21,10 @@
       "titulo": "Online multiplayer",
       "texto": "Open a room and play with anyone, each on their own screen."
     },
+    "local": {
+      "titulo": "Local multiplayer",
+      "texto": "Two to four phones side by side. No internet needed."
+    },
     "ayuda": {
       "titulo": "How to play",
       "texto": "The rules, the shockwave and the turn clock."
@@ -279,6 +283,28 @@
       "titulo": "Talking to the server…",
       "texto": "If this takes too long, check that the server is running and that the address is right.",
       "cancelar": "Cancel"
+    }
+  },
+  "local": {
+    "titulo": "Local multiplayer",
+    "lema": "Two to four phones nearby, with no server and no internet.",
+    "explicacion": "Phones find each other over Bluetooth and Wi-Fi. One player creates the game and the others see it here; you do not need to be on the same network.",
+    "caido": "Lost contact with the player hosting the game.",
+    "fallo": "The radio could not do it: {{motivo}}",
+    "sala": {
+      "comparte": "The others can already see you in their list. Wait for them to join."
+    },
+    "cercanas": {
+      "titulo": "Games near you",
+      "actualizar": "Search again",
+      "buscando": "Looking for nearby phones…",
+      "ninguna": "None yet. Ask someone to create one, or create your own.",
+      "detalle": "right next to you"
+    },
+    "permisos": {
+      "explicacion": "To find the phones next to you, the game needs permission to use Bluetooth and Wi-Fi. It is not used to know where you are, and in this mode nothing leaves your phone.",
+      "empezar": "Look for nearby games",
+      "denegados": "Without permission to use Bluetooth and Wi-Fi there is no way to look for someone to play with. You can grant it in the phone settings, under Apps → MineHunt → Permissions."
     }
   },
   "ayuda": {

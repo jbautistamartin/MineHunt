@@ -5,9 +5,10 @@ import {
   effect,
   inject,
   signal,
+  type OnDestroy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { MAX_JUGADORES, type Coordenada, type NivelIA } from '@minehunt/game-engine';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -16,6 +17,7 @@ import { ResumenFinal } from '../../componentes/resumen-final/resumen-final';
 import { Tablero } from '../../componentes/tablero/tablero';
 import { ServicioCompartir } from '../../nucleo/compartir.servicio';
 import { ServicioJugador } from '../../nucleo/jugador.servicio';
+import { ServicioLocal } from '../../nucleo/local.servicio';
 import { ServicioOnline } from '../../nucleo/online.servicio';
 import { ServicioServidor } from '../../nucleo/servidor';
 import { ServicioSonido } from '../../nucleo/sonido.servicio';
@@ -41,13 +43,19 @@ const AJUSTES_INICIALES = {
 } as const;
 
 /**
- * El Multijugador Online: crear o entrar en una sala, esperar en el lobby y
- * jugar la partida.
+ * El multijugador: crear o entrar en una sala, esperar en el lobby y jugar la
+ * partida.
  *
  * Las tres cosas en una pantalla porque son el mismo sitio visto en tres
  * momentos, y porque saltando de ruta se pierde de vista que la sala sigue
- * siendo la misma. Lo que manda es el estado que llega del servidor: aqui no
- * se decide nada del juego.
+ * siendo la misma. Lo que manda es el estado que llega de quien tenga la sala:
+ * aqui no se decide nada del juego.
+ *
+ * **Sirve a los dos modos.** En `/online` la sala vive en el servidor y en
+ * `/local` en el telefono de al lado, y eso solo cambia la primera de las tres
+ * partes —con quien se juega y como se le encuentra—; el lobby y la partida son
+ * los mismos hasta el pixel. Lo dice el dato `modo` de la ruta, y `ServicioLocal`
+ * se encarga de que `ServicioOnline` hable por la radio en vez de por el socket.
  *
  * El tablero es **el mismo componente** que el Entrenamiento y la Historia, y
  * las claves de los sucesos y de los errores tambien: lo unico que cambia es de
@@ -60,15 +68,25 @@ const AJUSTES_INICIALES = {
   styleUrl: './online.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Online {
+export class Online implements OnDestroy {
   private readonly online = inject(ServicioOnline);
+  private readonly local = inject(ServicioLocal);
   private readonly servidor = inject(ServicioServidor);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly compartidor = inject(ServicioCompartir);
   private readonly traductor = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly sonido = inject(ServicioSonido);
   private readonly vibracion = inject(ServicioVibracion);
   private readonly jugador = inject(ServicioJugador);
+
+  /**
+   * Esta pantalla es la del Multijugador Local y no la del Online.
+   *
+   * Se lee una sola vez de la ruta: las dos son rutas distintas, asi que
+   * cambiar de modo es cambiar de pantalla y el componente se monta de nuevo.
+   */
+  readonly esLocal = this.ruta.snapshot.data['modo'] === 'local';
 
   /** Se puede callar el juego sin salir de la partida. */
   readonly sonidoActivo = this.sonido.activo;
@@ -91,6 +109,14 @@ export class Online {
   readonly ultimoSuceso = this.online.ultimoSuceso;
   readonly ultimoError = this.online.ultimoError;
   readonly salasAbiertas = this.online.salasAbiertas;
+
+  /** Partidas anunciandose ahi al lado; solo en el Multijugador Local. */
+  readonly cercanas = this.local.cercanas;
+  readonly buscandoCercanas = this.local.buscando;
+  readonly permisosDeRadio = this.local.permisos;
+  readonly falloDeRadio = this.local.fallo;
+  /** El modo local solo existe en la aplicacion de Android. */
+  readonly hayRadio = this.local.disponible;
 
   /** Se puede mandar el codigo por donde se hable con esa persona. */
   readonly sePuedeCompartir = this.compartidor.sePuedeCompartir;
@@ -142,6 +168,16 @@ export class Online {
   readonly cargandoSalas = signal(false);
 
   readonly hayCredencial = this.online.hayCredencial;
+
+  /**
+   * En el Local todavia no se ha pedido el permiso de la radio.
+   *
+   * Mientras dure, la pantalla enseña para que sirve en lugar de una lista
+   * vacia: la lista sin permiso esta vacia siempre, y eso no lo explica nadie.
+   */
+  readonly permisosPorPedir = computed(
+    () => this.esLocal && this.permisosDeRadio() === 'sin-pedir',
+  );
 
   readonly totalCeldas = computed(() => this.ancho() * this.alto());
   /** Al menos una celda sin mina: la primera que se clica. */
@@ -218,9 +254,11 @@ export class Online {
   private finalSonado = false;
 
   constructor() {
-    // Lo primero al abrir la pantalla: que salas hay. De paso se ve si el
-    // servidor esta ahi antes de que nadie escriba ningun nombre.
-    void this.actualizarSalas();
+    // Lo primero al abrir la pantalla: con quien se puede jugar. En el Online
+    // eso es preguntarle al servidor que salas tiene —y de paso ver si esta
+    // ahi antes de que nadie escriba ningun nombre—, y en el Local encender la
+    // radio a buscar partidas cerca.
+    void (this.esLocal ? this.prepararLocal() : this.actualizarSalas());
 
     // El nombre se recuerda segun se escribe, no al entrar en la sala: asi
     // tambien sobrevive lo que se tecleo sin llegar a jugar.
@@ -343,17 +381,49 @@ export class Online {
   }
 
   async crearSala(): Promise<void> {
+    const configuracion = {
+      ancho: this.ancho(),
+      alto: this.alto(),
+      minas: this.minas(),
+      tiempoPorTurnoSegundos: this.tiempoPorTurno(),
+      recargaOndaSegundos: this.recargaOnda(),
+      publica: this.publica(),
+      nivelesIA: this.nivelesIA(),
+    };
+
     await this.conPaciencia(() =>
-      this.online.crearSala(this.nombre(), {
-        ancho: this.ancho(),
-        alto: this.alto(),
-        minas: this.minas(),
-        tiempoPorTurnoSegundos: this.tiempoPorTurno(),
-        recargaOndaSegundos: this.recargaOnda(),
-        publica: this.publica(),
-        nivelesIA: this.nivelesIA(),
-      }),
+      this.esLocal
+        ? this.local.abrir(this.nombre(), configuracion)
+        : this.online.crearSala(this.nombre(), configuracion),
     );
+  }
+
+  /**
+   * Al abrir el Multijugador Local **no se pide ningun permiso todavia**.
+   *
+   * Si ya estaban concedidos se empieza a buscar en el acto, y si no, la
+   * pantalla explica para que son y espera a que el jugador toque el boton. El
+   * dialogo del sistema sale entonces, con la explicacion ya leida.
+   */
+  private async prepararLocal(): Promise<void> {
+    if (await this.local.comprobarPermisos()) {
+      await this.buscarCercanas();
+    }
+  }
+
+  /** Vuelve a barrer la radio en busca de partidas cerca. */
+  async buscarCercanas(): Promise<void> {
+    this.cargandoSalas.set(true);
+    try {
+      await this.local.buscar();
+    } finally {
+      this.cargandoSalas.set(false);
+    }
+  }
+
+  /** Entra en una de las partidas que la radio encontro al lado. */
+  async entrarEnCercana(id: string): Promise<void> {
+    await this.conPaciencia(() => this.local.unirse(id, this.nombre()));
   }
 
   /**
@@ -410,10 +480,31 @@ export class Online {
     await this.conPaciencia(() => this.online.otraPartida());
   }
 
-  /** Deja la sala y vuelve al menu principal. */
+  /**
+   * Deja la sala y vuelve al menu principal.
+   *
+   * En el Local se apaga ademas la radio, y con ella la sala si era este
+   * telefono el que la tenia: alli no hay servidor que la siga guardando.
+   */
   async salir(): Promise<void> {
     await this.online.salir();
+    if (this.esLocal) {
+      await this.local.cerrar();
+    }
     await this.router.navigate(['/']);
+  }
+
+  /**
+   * Irse de la pantalla por donde sea —el boton de atras tambien— apaga la
+   * radio.
+   *
+   * Sin esto el telefono sigue anunciando una partida que ya no se esta
+   * jugando, gastando bateria y apareciendo en la lista de los demas.
+   */
+  ngOnDestroy(): void {
+    if (this.esLocal) {
+      void this.local.cerrar();
+    }
   }
 
   alternarAjusteDelServidor(): void {

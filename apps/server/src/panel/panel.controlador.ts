@@ -1,7 +1,7 @@
 import { Controller, Get, Header } from '@nestjs/common';
 import { VERSION_MOTOR } from '@minehunt/game-engine';
 
-import type { InformeSala } from '../salas/sala.js';
+import type { InformeSala } from '@minehunt/game-engine';
 import { ServicioSalas } from '../salas/salas.servicio.js';
 import { contenidoDelPanel, paginaDelPanel } from './panel.js';
 

@@ -1,21 +1,20 @@
-import { randomUUID } from 'node:crypto';
-
+import { JugadorIA, type NivelIA } from '../ia/jugador-ia.js';
+import { MotorJuego } from '../motor.js';
 import {
   ErrorPartida,
-  JugadorIA,
   MAX_JUGADORES,
   MIN_JUGADORES,
-  MotorJuego,
-  type ConfiguracionSala,
   type EstadoPartida,
-  type EstadoSala,
-  type NivelIA,
-  type PuestoSala,
-  type Resultado,
-  type SalaAbierta,
-  type SucesoPartida,
-  type VistaSala,
-} from '@minehunt/game-engine';
+} from '../tipos.js';
+import type {
+  ConfiguracionSala,
+  EstadoSala,
+  PuestoSala,
+  Resultado,
+  SalaAbierta,
+  SucesoPartida,
+  VistaSala,
+} from './protocolo.js';
 
 /**
  * Lo que espera el servidor a que vuelva un jugador caido antes de ponerle un
@@ -94,18 +93,23 @@ export interface InformeSala {
 /**
  * Una sala de juego: la partida y la gente que la juega.
  *
- * **El servidor es la autoridad.** Aqui vive el unico `MotorJuego` de verdad
- * de esta partida; los clientes solo mandan intenciones («clic en 3,4») y
- * reciben el estado que salga. Un cliente manipulado no puede jugar fuera de
+ * **Quien tiene la sala es la autoridad.** Aqui vive el unico `MotorJuego` de
+ * verdad de esta partida; los clientes solo mandan intenciones («clic en 3,4»)
+ * y reciben el estado que salga. Un cliente manipulado no puede jugar fuera de
  * su turno ni ver una mina antes de tiempo, porque el estado que se le manda
  * es el que el motor deja ver a cualquiera.
  *
  * No sabe nada de Socket.IO ni de Nest a proposito: recibe llamadas y devuelve
  * resultados, asi que se puede probar entera sin levantar nada. Quien la
- * envuelve (`PasarelaPartida`) se encarga de difundir lo que aqui ocurra.
+ * envuelve se encarga de difundir lo que aqui ocurra, y hay dos que lo hacen:
+ * `PasarelaPartida` en el servidor del Online, y `Anfitrion` —el de al lado—
+ * dentro del telefono que monta una partida local.
  *
- * El tiempo entra por `ahora()` y el azar por `aleatorio()`, los dos
- * inyectados, por lo mismo que en el motor: para que las pruebas manden.
+ * El tiempo entra por `ahora()`, el azar por `aleatorio()` y las credenciales
+ * por `credencial()`, los tres inyectados, por lo mismo que en el motor: para
+ * que las pruebas manden. La tercera ademas es lo que permite que esto viva en
+ * el motor y no en el servidor: `randomUUID` es de Node, y el anfitrion de una
+ * partida local es un telefono, donde no hay Node que valga.
  */
 export class Sala {
   private readonly puestos: Puesto[] = [];
@@ -124,6 +128,7 @@ export class Sala {
     readonly codigo: string,
     private readonly ahora: () => number,
     private readonly aleatorio: () => number,
+    private readonly credencial: () => string,
   ) {
     this.abiertaEn = ahora();
   }
@@ -233,7 +238,7 @@ export class Sala {
     const sitio = this.puestos.findIndex((puesto) => puesto.nivelIA !== null);
     const suyo: Puesto = {
       nombre: limpio,
-      token: randomUUID(),
+      token: this.credencial(),
       conectado: true,
       sustituido: false,
       nivelIA: null,

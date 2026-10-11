@@ -1,6 +1,6 @@
 import type { EstadoSala } from '@minehunt/game-engine';
 
-import type { InformeSala } from '../salas/sala.js';
+import type { InformeSala } from '@minehunt/game-engine';
 
 /**
  * El panel del servidor: la pagina que se ve al abrir su direccion en el
