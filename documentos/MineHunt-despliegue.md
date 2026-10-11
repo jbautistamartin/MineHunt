@@ -159,6 +159,42 @@ del servidor **deja de publicar su puerto**: se llega por el proxy y solo por
 El certificado se guarda en un volumen entre reinicios. Sin eso, cada `up`
 pediría uno nuevo y Let's Encrypt acaba cortando por exceso de peticiones.
 
+### El ensayo del HTTPS en local
+
+La capa se puede levantar **sin dominio y sin internet**, y conviene hacerlo
+antes de pagar un servidor: con `DOMINIO=localhost`, Caddy no va a Let's Encrypt
+sino que firma con su propia autoridad local, y todo lo demás —el proxy, el paso
+del WebSocket, el `X-Forwarded-For`, el CORS cerrado a `https://localhost`— es
+exactamente lo que correrá fuera.
+
+```bash
+DOMINIO=localhost CORREO=lo-que-sea@ejemplo \
+  docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+
+NODE_TLS_REJECT_UNAUTHORIZED=0 \
+  npm run humo --workspace @minehunt/server -- https://localhost
+```
+
+Esa variable hace falta porque el certificado lo firma una autoridad que no
+conoce nadie. La prueba de humo **solo admite un certificado así cuando se le
+dice por ahí**; contra el servidor de verdad el certificado tiene que valer, y
+si no vale la prueba falla, que es lo que se quiere. Hay que pasarla al cliente
+aparte de la variable de entorno porque el cliente de WebSocket monta su propia
+conexión y no la mira.
+
+Lo que este ensayo **no** cubre es lo único que necesita un dominio público: que
+Let's Encrypt emita el certificado de verdad. Todo lo demás ya se ha ejecutado.
+
+Para volver al servidor pelado, sin proxy. **El `down` también quiere las dos
+variables**: compose las exige para leer el fichero, aunque solo vaya a parar lo
+que levantó con él.
+
+```bash
+DOMINIO=localhost CORREO=lo-que-sea@ejemplo \
+  docker compose -f docker-compose.yml -f docker-compose.https.yml down
+docker compose up -d
+```
+
 ---
 
 ## Comprobación de salud y reinicio
@@ -215,11 +251,60 @@ ese vive en el teléfono.
 
 ---
 
+## Dónde alojarlo
+
+La decisión no es libre: **las salas viven en memoria**. De ahí salen dos
+condiciones que descartan media lista de opciones antes de mirar el precio.
+
+- **Una sola instancia.** Con dos, los jugadores de una misma sala pueden
+  acabar hablando con procesos distintos, que no comparten ni salas ni
+  partidas. Nada de escalado automático mientras las salas no salgan del
+  proceso.
+- **Que no se apague sola.** Un alojamiento que duerme el contenedor cuando no
+  hay tráfico tira las partidas en curso, y despertarlo tarda justo cuando
+  alguien acaba de abrir una sala.
+
+Con eso, lo que encaja es **un VPS pequeño con Docker**: es exactamente lo que
+describen `docker-compose.yml` y `docker-compose.https.yml`, no hay que
+reescribir nada y el servicio entero cabe de sobra en la máquina más barata del
+catálogo (el juego no guarda nada en disco y una sala son unos pocos kilobytes).
+Del orden de 4 a 6 € al mes en cualquiera de los de siempre —Hetzner, DigitalOcean,
+Vultr, OVH, Scaleway—, más el dominio, del orden de 10 a 15 € al año. Conviene
+elegir la región por donde estén los jugadores: esto va por WebSocket y la
+latencia se nota en el turno.
+
+Lo que se descartó, y por qué, para no volver a mirarlo:
+
+| Opción | Por qué no |
+|---|---|
+| Cloud Run, Lambda y similares | Escalan a varias instancias y duermen a cero: las dos cosas que las salas en memoria no admiten. |
+| PaaS de contenedor (Fly, Railway, Render) | Funcionar funcionarían, con una sola instancia y sin dormir, pero ponen su propio HTTPS: sobraría la capa de Caddy que ya está escrita y probada, y se cambiaría control por comodidad en un servicio que no la necesita. Son el plan B si administrar un VPS se hace cuesta arriba. |
+| Alojamiento compartido | No ejecuta contenedores ni deja abrir un puerto de WebSocket. |
+
+### Los pasos, una vez contratado
+
+1. Apuntar el dominio (un registro `A`) a la IP del VPS, y esperar a que
+   resuelva: sin eso Let's Encrypt no emite nada.
+2. Instalar Docker, traer el repositorio y levantarlo:
+
+   ```bash
+   DOMINIO=<el dominio> CORREO=<un correo> \
+     docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+   ```
+
+   Los puertos 80 y 443 tienen que estar abiertos: el certificado necesita los
+   dos.
+3. Comprobar que juega de verdad, no que responde:
+   `npm run humo --workspace @minehunt/server -- https://<el dominio>`.
+4. Poner esa dirección en `nucleo/servidor.ts` —hoy ahí hay una IP de la red
+   local— y recompilar el APK. Es la única línea del cliente que depende de
+   dónde se aloje, y es lo que la Fase 10 sube a la tienda.
+
 ## Lo que queda pendiente
 
-- **Probarlo en un servidor de verdad**, con dominio y certificado. Todo lo de
-  arriba está comprobado en local contra el contenedor; la capa de HTTPS está
-  escrita pero **no se ha ejecutado nunca contra un dominio real**.
-- Decidir **dónde se aloja**, que condiciona el resto de la Fase 10: la
-  aplicación de Android tiene que traer esa dirección de fábrica en
-  `nucleo/servidor.ts`, donde hoy hay una IP de la red local.
+- **Probarlo en un servidor de verdad**, con dominio y certificado. Es lo único
+  que le falta a la fase, y no lo puede dar ninguna prueba: hay que contratar el
+  alojamiento y el dominio.
+- Todo lo demás está comprobado en local, la capa de HTTPS incluida: ver «El
+  ensayo del HTTPS en local», más abajo. Lo que no se ha ejecutado nunca es la
+  emisión del certificado de Let's Encrypt, que exige un dominio público.

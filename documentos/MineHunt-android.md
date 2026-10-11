@@ -80,6 +80,7 @@ O sin consola, desde el Explorador: **`android-apk.cmd`** y
 | Qué | Dónde |
 |---|---|
 | APK de depuración | `apps/web/android/app/build/outputs/apk/debug/app-debug.apk` |
+| APK de publicación | `apps/web/android/app/build/outputs/apk/release/app-release.apk` |
 | AAB de publicación | `apps/web/android/app/build/outputs/bundle/release/app-release.aab` |
 
 El APK de depuración se instala en un móvil con la depuración USB activada:
@@ -90,12 +91,32 @@ adb install -r apps/web/android/app/build/outputs/apk/debug/app-debug.apk
 
 ### Firmar la versión de publicación
 
-`bundleRelease` produce un AAB **sin firmar** mientras no haya un almacén de
-claves. Para publicar en Google Play hace falta crear uno (`keytool -genkey`) y
-declararlo; Capacitor lo lee de `capacitor.config.ts`, en
-`android.buildOptions`, o se configura en `android/app/build.gradle`. **La
-clave no se guarda en el repositorio**: va fuera, y en la máquina que compile.
-Esto es de la Fase 10 (publicación en Google Play), aquí solo queda apuntado.
+El release se firma con el **almacén compartido de la casa**, el mismo que firma
+las demás aplicaciones, y que vive **fuera del repositorio**. Las cuatro claves
+van en `apps/web/android/local.properties`, que no se versiona:
+
+```properties
+KEYSTORE_PATH=../../../../../Claves/capicua.jks
+KEYSTORE_PASSWORD=...
+KEY_ALIAS=...
+KEY_PASSWORD=...
+```
+
+La ruta se escribe relativa y **resuelve desde el módulo `app/`**, que es donde la
+interpreta el `file()` de `app/build.gradle`: de ahí los cinco `../`, uno por cada
+carpeta que hay que subir (app, android, web, apps y la raíz del repositorio).
+
+Lo lee el bloque `signingConfigs` de `app/build.gradle` — un fichero del proyecto
+nativo que `cap sync` no pisa, como `MainActivity` o el manifiesto. **Si falta
+alguna de las cuatro claves, la firma no se declara**: el release sale sin firmar y
+la compilación no rompe, para que el repositorio se pueda clonar y compilar en una
+máquina que no tenga el almacén.
+
+Al ser una clave compartida, toda actualización futura tiene que firmarse con ese
+mismo almacén: si se pierde, lo que ya esté instalado no se puede actualizar, solo
+desinstalar y volver a instalar. Lo que sigue siendo de la Fase 10 es la
+publicación en Google Play, que además necesita registrar la firma de subida en su
+consola.
 
 ## Iconos y pantalla de arranque
 
@@ -148,7 +169,9 @@ elección manual** del jugador: si eligió idioma en el menú, manda el suyo.
 - `touch-action: manipulation` en las celdas, para que el navegador no espere al
   doble toque (que es zoom) antes de dar por buena la jugada.
 - `viewport-fit=cover` y `env(safe-area-inset-*)` en el `body`: la app llega al
-  borde en móviles con muesca, sin que el contenido se meta debajo.
+  borde y el documento deja los huecos. Dentro del APK el hueco de la muesca lo
+  descuenta además la actividad encogiendo el WebView, que es lo único que
+  aguanta el scroll; ver «La muesca» más abajo.
 - Sin rebote de scroll ni «tirar para recargar» (`overscroll-behavior: none`), y
   sin selección de texto al pulsar rápido, salvo en la ayuda.
 - La onda expansiva **se lanza con el botón**: en Android no hay clic derecho,
@@ -196,12 +219,60 @@ plugin. Tres cosas que hay que saber:
   la vez. Si algún día se quiere dejar la de arriba a la vista, ese `systemBars()`
   pasa a ser `navigationBars()` y no hay que tocar nada más.
 
-El WebView pasa a pintar de borde a borde (`setDecorFitsSystemWindows(false)`) y
-los huecos los sigue dejando el documento con `env(safe-area-inset-*)`, que ya
-estaba puesto.
+El WebView pasa a pintar de borde a borde (`setDecorFitsSystemWindows(false)`).
 
 `empaquetado.prueba.ts` comprueba las dos cosas: son ajustes que solo se notan
 con el teléfono en la mano y que no se ven al revisar un cambio.
+
+### La muesca
+
+Escondida la barra de estado, **nadie reserva ya la franja donde está la cámara**
+y la ventana se extiende por debajo de ella: desde Android 15, una aplicación que
+apunta a la API 35 o superior se despliega bajo la muesca aunque no declare
+`layoutInDisplayCutoutMode` (se ve en `dumpsys window windows`, que informa
+`layoutInDisplayCutoutMode=always` y `EDGE_TO_EDGE_ENFORCED`). Lo que cae ahí no
+solo se ve tapado: **no se puede pulsar**, porque el toque se lo come la muesca.
+
+El relleno del documento con `env(safe-area-inset-*)` **no basta**, y conviene
+entender por qué antes de volver a intentarlo:
+
+- Es relleno del `body`, así que **se va hacia arriba con el scroll**. En las
+  pantallas que no caben enteras —la ayuda, la configuración, el lobby— el
+  contenido acaba pasando por debajo de la muesca en cuanto se desplaza.
+- No alcanza a nada en `position: fixed`, que no está dentro de ese relleno.
+- Y encima depende del WebView del teléfono: `env(safe-area-inset-*)` no
+  funcionó en el WebView de Android hasta la versión 140 (es el fallo 40699457
+  de Chromium, que el propio Capacitor cita en su plugin `SystemBars`).
+
+Así que el hueco se descuenta **encogiendo la vista**, en
+`dejarLaWebDentroDeLaPantallaSegura()`: un `OnApplyWindowInsetsListener` sobre el
+contenedor del WebView —el mismo sitio donde lo pone Capacitor— que le mete de
+relleno `systemBars() | displayCutout()`, con lo que **el área visible entera**
+se queda dentro de la pantalla segura y no hay forma de pintar debajo de la
+cámara, ni con scroll ni con capas flotantes.
+
+Tres detalles que no son decorativos:
+
+- **Lo descontado se pone a cero antes de llegar a la web** (`Insets.NONE` sobre
+  esos dos tipos). Si llegara, el documento lo descontaría otra vez con su
+  `env(safe-area-inset-*)` y el hueco saldría doble. No se devuelve
+  `WindowInsetsCompat.CONSUMED` porque entonces el WebView deja de recalcular su
+  área segura cuando algo cambia.
+- **El teclado entra en la cuenta** (`Type.ime()`). Pintando de borde a borde la
+  ventana no se encoge sola al abrirse el teclado, y sin esto la caja del nombre
+  del Multijugador se queda debajo de las teclas.
+- **La franja no la pinta la web**, sino el fondo de la ventana: el contenedor
+  del WebView lo infla Capacitor desde su propio layout y no trae fondo. De ahí
+  el `android:windowBackground` con `@color/mh_fondo` en `AppTheme.NoActionBar`
+  (`res/values/styles.xml`), que es el tema que Capacitor pone al arrancar. Sin
+  eso sale una banda **blanca**, que es el fondo del tema claro del sistema.
+  Ojo: el `res/layout/activity_main.xml` del proyecto **no se usa** —Capacitor
+  infla `capacitor_bridge_layout_main` desde su librería—, así que ponerle a ese
+  el color no pinta nada.
+
+El `env(safe-area-inset-*)` del `body` **se queda** de todos modos: es lo que
+protege a la versión instalable desde el navegador, donde no hay actividad
+nativa que encoja nada. Dentro del APK vale cero y no estorba.
 
 ## Tráfico en claro, solo en depuración
 

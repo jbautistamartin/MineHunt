@@ -27,6 +27,15 @@ import type { InformeSala } from '@minehunt/game-engine';
 /** Cada cuanto el navegador vuelve a pedir la lista de salas. */
 const REFRESCO_MS = 3000;
 
+/**
+ * El enlace del donativo, el mismo que ofrece el juego en su «Acerca de».
+ *
+ * Va copiado a mano, igual que el icono y por el mismo motivo: esta pagina se
+ * pinta sin arrastrar nada de la web. Si cambia, cambia en los dos sitios — el
+ * otro es `apps/web/src/app/nucleo/donativo.ts`.
+ */
+const URL_DONATIVO = 'https://paypal.me/jbautistamartin';
+
 /** Ruta de la que sale la lista sola, sin el resto de la pagina. */
 export const RUTA_DE_LA_LISTA = '/panel/salas';
 
@@ -125,6 +134,8 @@ export function paginaDelPanel(
       <footer class="pie">
         <p>La lista se actualiza sola cada ${String(REFRESCO_MS / 1000)} segundos.</p>
         <p>Para jugar, abre la aplicacion y entra con el codigo de la sala.</p>
+        <p>Este servidor es gratis y lo paga quien lo mantiene. Si te es util,
+          <a href="${URL_DONATIVO}" target="_blank" rel="noopener">${CORAZON}invitale a un cafe</a>.</p>
       </footer>
     </main>
     <script>${GUION}</script>
@@ -175,7 +186,16 @@ function tarjeta(sala: InformeSala): string {
   `;
 }
 
-/** La mina del icono del juego, simplificada para que quepa en una cadena. */
+/*
+ * El corazon del donativo, el mismo que llevan las demas aplicaciones de la casa:
+ * cuatro curvas de Bezier —punta, lobulo izquierdo, escote y lobulo derecho— en un
+ * lienzo de 24, con su dorado. Va copiado a mano igual que el icono y la direccion,
+ * y por el mismo motivo: aqui no se importa nada de la web.
+ */
+const CORAZON = `<svg class="corazon" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12,22.56 C2.4,14.88 0.48,9.12 4.08,5.28 C7.2,2.16 11.04,3.12 12,6.24 C12.96,3.12 16.8,2.16 19.92,5.28 C23.52,9.12 21.6,14.88 12,22.56 Z"/>
+</svg>`;
+
 /*
  * El icono del juego, **copia literal del icono maestro**
  * (`documentos/MineHunt-icon.svg`) con el tamano puesto en la etiqueta. Va
@@ -327,6 +347,16 @@ const ESTILOS = `
   }
   .pie { text-align: center; }
   .pie p { margin: 0.2rem 0; font-size: 0.8rem; color: var(--mh-texto-tenue); }
+  .pie a { color: var(--mh-texto); }
+  .corazon {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.3em;
+    vertical-align: -0.125em;
+    fill: #ffcb4c;
+    stroke: #d69e2e;
+    stroke-width: 0.857;
+  }
   @media (width < 30rem) {
     .sala { flex-wrap: wrap; }
     .etiquetas { justify-content: flex-start; width: 100%; }

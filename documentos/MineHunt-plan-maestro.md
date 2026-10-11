@@ -1026,3 +1026,113 @@ WebView. Se resuelve sin renunciar a arrancar traducido: la detección síncrona
 de siempre pinta la primera pantalla, y después `ServicioIdioma` le pregunta al
 sistema con `@capacitor/device` y corrige si no coincidían. Solo en nativo, y
 nunca por encima de lo que el jugador eligiera a mano.
+
+### La muesca se descuenta encogiendo el WebView (posterior a la Fase 8.5)
+
+Con la barra de estado escondida, nadie reserva la franja donde está la cámara, y
+desde Android 15 una aplicación que apunta a la API 35 o superior se despliega
+por debajo de la muesca aunque no lo pida. Lo que cae ahí no solo se ve tapado:
+**no se puede pulsar**.
+
+El relleno del `body` con `env(safe-area-inset-*)`, que era lo que había desde la
+Fase 5, no lo arregla, y conviene que quede escrito por qué: ese relleno **se va
+con el scroll**, así que en las pantallas que no caben enteras el contenido acaba
+pasando por debajo de la cámara igualmente; no alcanza a nada en
+`position: fixed`; y encima `env(safe-area-inset-*)` no funcionó en el WebView de
+Android hasta su versión 140.
+
+Así que se descuenta **encogiendo la vista** y no el documento:
+`MainActivity.dejarLaWebDentroDeLaPantallaSegura()` mete de relleno
+`systemBars() | displayCutout()` al contenedor del WebView, con lo que el área
+visible entera se queda dentro de la pantalla segura y no hay forma de pintar
+debajo de la cámara. Lo descontado se pone a cero antes de llegar a la web, o el
+documento volvería a descontarlo y el hueco saldría doble; el teclado entra en la
+cuenta, porque pintando de borde a borde la ventana no se encoge sola; y la
+franja la pinta el fondo de la ventana —el contenedor que infla Capacitor no
+trae fondo propio—, de ahí el `android:windowBackground` de la paleta en
+`styles.xml`. El `activity_main.xml` del proyecto no lo usa nadie desde
+Capacitor 7, cosa que se descubrió poniéndole el color ahí y viendo la banda
+blanca igual.
+
+El `env(safe-area-inset-*)` del `body` se queda de todos modos: es lo único que
+protege a la versión instalable desde el navegador, donde no hay actividad nativa
+que encoja nada.
+
+### Dónde se aloja el servidor (Fase 9)
+
+La decisión que faltaba para cerrar la fase, y no es libre: **las salas viven en
+memoria**. De ahí salen dos condiciones que descartan medio catálogo antes de
+mirar el precio — una sola instancia, porque con dos los jugadores de una misma
+sala pueden acabar en procesos distintos que no comparten nada; y que no se
+apague sola, porque dormir el contenedor tira las partidas en curso.
+
+Eso descarta Cloud Run y las funciones sin servidor, que hacen justo las dos
+cosas, y deja fuera el alojamiento compartido, que ni ejecuta contenedores ni
+abre un puerto de WebSocket. Lo que encaja es **un VPS pequeño con Docker**, que
+es exactamente lo que ya describen `docker-compose.yml` y `docker-compose.https.yml`:
+no hay que reescribir nada. Un PaaS de contenedor (Fly, Railway, Render) es el
+plan B si administrar el VPS se hace cuesta arriba, a cambio de no usar la capa
+de Caddy que ya está escrita.
+
+El detalle, con los pasos una vez contratado, está en
+`documentos/MineHunt-despliegue.md`.
+
+### El release se firma con el almacén compartido (Fase 10)
+
+La firma es lo primero de la Fase 10 que se podía adelantar sin abrir la cuenta
+de Google Play, y conviene tenerla antes: **la clave con la que se publica la
+primera versión es la que hay que usar en todas las siguientes**, así que
+equivocarse ahí no se arregla con un parche.
+
+Se usa el **almacén de claves compartido de la casa**, el que firma también las
+demás aplicaciones, y vive fuera del repositorio. Las cuatro claves
+(`KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) van en
+`android/local.properties`, que no se versiona, y las lee el bloque
+`signingConfigs` de `app/build.gradle`.
+
+La decisión que no era obvia es **qué hace una máquina que no tenga el almacén**:
+si falta alguna de las cuatro claves, la firma **no se declara** y el release
+sale sin firmar, sin que la compilación rompa. Lo contrario —reventar al
+compilar— dejaría el repositorio sin construir en cualquier sitio que no sea
+este PC, y firmar es un paso de publicación, no de compilación.
+
+Lo que esto implica para el teléfono de pruebas es que el APK de release **no se
+instala encima del de depuración**: son claves distintas y Android lo rechaza.
+Hay que desinstalar primero, perdiendo el `localStorage` (idioma, ajustes y
+progreso de Historia).
+
+### El donativo se ofrece en «Acerca de», y en ningún otro sitio (posterior a la Fase 8)
+
+El juego es gratis, sin anuncios y sin compras dentro, y la forma de pedir apoyo
+tenía que no contradecir eso. Lo que se decidió: **una sola ficha, en «Acerca
+de»**, con el enlace que abre PayPal fuera de la aplicación.
+
+Está ahí porque esa pantalla es donde se cuenta quién hace esto, y no en el
+menú, ni al terminar una partida, ni como aviso: **el juego no pide dinero
+mientras se juega**. No desbloquea nada, no quita nada, y no se vuelve a
+mencionar en ninguna otra pantalla. Tampoco cuenta como una salida más — la
+prueba de la pantalla sigue exigiendo que las salidas lleven solo a la ayuda y
+al menú.
+
+La dirección vive en `nucleo/donativo.ts`, y **el panel del servidor lleva su
+propia copia** en el pie, por lo mismo que lleva copiado el icono: esa página se
+pinta sin importar nada de la web. Si la dirección cambia, se cambia en los dos
+sitios. El `.github/FUNDING.yml` del repositorio apunta a la misma, que es el
+botón de GitHub y no tiene nada que ver con el juego.
+
+### Cada pantalla empieza por arriba (posterior a la Fase 8)
+
+Angular, por defecto, no toca el desplazamiento al cambiar de ruta: la pantalla
+nueva se monta con el scroll donde lo dejó la anterior. Se notaba justo al
+entrar en «Acerca de», que es la última entrada del menú — para tocarla hay que
+bajar, y la ficha aparecía ya desplazada hasta el final, con el texto empezado.
+
+Lo arregla `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })` en
+`app.config.ts`, que además hace lo que hacía falta al volver: el botón de atrás
+devuelve a cada pantalla el sitio por el que iba, que es lo que se quiere en el
+mapa de niveles del Modo Historia.
+
+**No tiene prueba, y no es un olvido**: el `RouterScroller` que lo hace solo se
+engancha al arrancar la aplicación de verdad, no cuando TestBed monta un
+inyector. Queda escrito en `app.prueba.ts` para que nadie lo añada creyendo que
+falta.

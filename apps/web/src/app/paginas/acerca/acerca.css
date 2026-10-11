@@ -61,6 +61,38 @@ h2 {
   user-select: text;
 }
 
+/*
+ * El enlace del donativo. Tiene aspecto de boton porque se pulsa, pero no es el
+ * que mas pesa de la pantalla: lo que se vino a hacer aqui es leer, y donar es
+ * opcional.
+ */
+.donativo {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  color: var(--mh-texto);
+  text-decoration: none;
+  background: var(--mh-superficie-alta);
+  border-radius: 0.5rem;
+}
+
+/*
+ * El dorado del corazon no sale de la paleta del juego a proposito: es el color
+ * con el que se reconoce en las demas aplicaciones de la casa, y cambiarlo aqui
+ * lo convertiria en otro icono.
+ */
+.corazon {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: #ffcb4c;
+  stroke: #d69e2e;
+  stroke-width: 0.857;
+}
+
 .salidas {
   display: flex;
   flex-wrap: wrap;

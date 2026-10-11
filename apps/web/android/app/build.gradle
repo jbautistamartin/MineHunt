@@ -1,5 +1,19 @@
 apply plugin: 'com.android.application'
 
+// Con que se firma el APK de release. Las claves estan en android/local.properties,
+// que no se versiona, y el almacen vive fuera del repositorio porque lo comparten
+// todas las aplicaciones. Una maquina que no lo tenga tiene que poder compilar
+// igual: si falta alguna de las cuatro claves no se declara la firma, el APK de
+// release sale sin firmar y la compilacion no rompe.
+def clavesFirma = new Properties()
+def ficheroDeClaves = rootProject.file('local.properties')
+if (ficheroDeClaves.exists()) {
+    ficheroDeClaves.withInputStream { clavesFirma.load(it) }
+}
+def hayFirmaRelease = ['KEYSTORE_PATH', 'KEYSTORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD'].every {
+    clavesFirma.getProperty(it)
+}
+
 android {
     namespace = "com.minehunt.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +30,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hayFirmaRelease) {
+            release {
+                // La ruta del almacen es relativa a este modulo, que es desde donde
+                // la resuelve file(): cinco ../ para llegar a C:/Proyectos.
+                storeFile file(clavesFirma.getProperty('KEYSTORE_PATH'))
+                storePassword clavesFirma.getProperty('KEYSTORE_PASSWORD')
+                keyAlias clavesFirma.getProperty('KEY_ALIAS')
+                keyPassword clavesFirma.getProperty('KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hayFirmaRelease) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

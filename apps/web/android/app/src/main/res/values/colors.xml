@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    El fondo del juego: el mismo color que `styles.css` publica como variable
+    de la paleta y el mismo que lleva `capacitor.config.ts`. Aqui hace falta
+    porque la franja de la muesca la pinta el contenedor del WebView y no la
+    web: ver `dejarLaWebDentroDeLaPantallaSegura()` en MainActivity.
+
+    Hay una prueba (`empaquetado.prueba.ts`) que falla si deja de coincidir con
+    la paleta.
+-->
+<resources>
+    <color name="mh_fondo">#0d1730</color>
+</resources>

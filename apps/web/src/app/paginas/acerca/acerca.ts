@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Intro } from '../../componentes/intro/intro';
+import { URL_DONATIVO } from '../../nucleo/donativo';
 import { VERSION_APP } from '../../nucleo/version';
 
 /**
@@ -28,6 +29,14 @@ import { VERSION_APP } from '../../nucleo/version';
 })
 export class Acerca {
   readonly version = VERSION_APP;
+
+  /**
+   * El donativo. Es la unica pantalla del juego que lo menciona, y a proposito:
+   * quien entra aqui viene a ver que es esto y quien lo hace, que es donde cabe
+   * ofrecerlo. No sale en el menu, ni al terminar una partida, ni vuelve a
+   * aparecer si no se pulsa.
+   */
+  readonly urlDonativo = URL_DONATIVO;
 
   /** La presentacion, delante de la pantalla hasta que se aparta o se salta. */
   readonly mostrandoIntro = signal(true);

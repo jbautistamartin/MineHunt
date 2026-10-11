@@ -8,6 +8,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 import { Acerca } from './acerca';
 import { routes } from '../../app.routes';
+import { URL_DONATIVO } from '../../nucleo/donativo';
 import { ServicioIntro } from '../../nucleo/intro.servicio';
 import { VERSION_APP } from '../../nucleo/version';
 
@@ -62,6 +63,21 @@ describe('Acerca de', () => {
   });
 
   /**
+   * El donativo se ofrece aqui y en ningun otro sitio, y se abre fuera del
+   * juego. No es una salida mas: las salidas siguen siendo dos.
+   */
+  it('ofrece el donativo sin convertirlo en una salida', () => {
+    const fixture = TestBed.createComponent(Acerca);
+    fixture.detectChanges();
+    const elemento = fixture.nativeElement as HTMLElement;
+    const enlace = elemento.querySelector('.donativo');
+
+    expect(enlace?.getAttribute('href')).toBe(URL_DONATIVO);
+    expect(enlace?.getAttribute('target')).toBe('_blank');
+    expect(elemento.querySelectorAll('.salidas a')).toHaveLength(2);
+  });
+
+  /**
    * Aqui la presentacion no es el peaje de llegar al juego: es la mitad de lo
    * que se vino a ver, asi que sale cada vez que se entra.
    */
@@ -107,6 +123,11 @@ describe('Acerca de', () => {
       expect(autoria?.['texto'], idioma).toContain('Capicua');
       expect(autoria?.['texto'], idioma).toContain('José Luis Bautista');
       expect(autoria?.['derechos'], idioma).toContain('Capicua');
+      // El donativo se ofrece en los dos idiomas, o en uno saldria la clave cruda.
+      const donativo = acerca?.['donativo'] as Record<string, string> | undefined;
+      expect(donativo?.['titulo'], idioma).toBeTruthy();
+      expect(donativo?.['texto'], idioma).toBeTruthy();
+      expect(donativo?.['boton'], idioma).toBeTruthy();
       // Y la entrada del menu que lleva hasta aqui.
       expect((inicio?.['acerca'] as Record<string, string>)?.['titulo'], idioma).toBeTruthy();
     }

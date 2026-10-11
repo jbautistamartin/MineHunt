@@ -20,6 +20,25 @@
     <p class="ayuda">{{ 'acerca.autoria.derechos' | translate }}</p>
   </div>
 
+  <div class="ficha">
+    <h2>{{ 'acerca.donativo.titulo' | translate }}</h2>
+    <p class="texto">{{ 'acerca.donativo.texto' | translate }}</p>
+    <a class="donativo" [href]="urlDonativo" target="_blank" rel="noopener">
+      <!--
+        El mismo corazon que llevan las demas aplicaciones de la casa: cuatro curvas
+        de Bezier —punta, lobulo izquierdo, escote y lobulo derecho— en un lienzo de
+        24. Va aqui dentro y no como fichero porque es un trazo de cuatro lineas, y
+        asi hereda el tamaño del texto sin una peticion aparte.
+      -->
+      <svg class="corazon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12,22.56 C2.4,14.88 0.48,9.12 4.08,5.28 C7.2,2.16 11.04,3.12 12,6.24 C12.96,3.12 16.8,2.16 19.92,5.28 C23.52,9.12 21.6,14.88 12,22.56 Z"
+        />
+      </svg>
+      {{ 'acerca.donativo.boton' | translate }}
+    </a>
+  </div>
+
   <p class="version">{{ 'acerca.version' | translate }} {{ version }}</p>
 
   <nav class="salidas">

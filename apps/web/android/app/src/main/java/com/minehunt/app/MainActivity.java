@@ -2,8 +2,11 @@ package com.minehunt.app;
 
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.WebSettings;
 
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -15,7 +18,8 @@ import com.getcapacitor.BridgeActivity;
  * siempre. Lo que hace de mas es registrar los dos plugins del proyecto —el de
  * vibracion y el de las radios del Multijugador Local—, esconder las barras
  * del sistema —la de arriba y la de abajo: el juego se queda con la pantalla
- * entera, y la de navegacion ademas esta justo donde se clica— y, solo en
+ * entera, y la de navegacion ademas esta justo donde se clica—, dejar la web
+ * dentro de la pantalla segura para que la muesca no le tape nada y, solo en
  * depuracion, dejar hablar con un servidor por http.
  */
 public class MainActivity extends BridgeActivity {
@@ -30,7 +34,78 @@ public class MainActivity extends BridgeActivity {
 
         super.onCreate(estadoGuardado);
         ocultarBarrasDelSistema();
+        dejarLaWebDentroDeLaPantallaSegura();
         permitirServidorEnClaroEnDepuracion();
+    }
+
+    /**
+     * Encoge el WebView hasta la parte de la pantalla donde no hay muesca.
+     *
+     * El juego pinta de borde a borde, y en un telefono con muesca eso incluye
+     * la franja donde esta el agujero de la camara: lo que caiga ahi se ve
+     * tapado y, peor, **no se puede pulsar**, porque la muesca se come el
+     * toque. Con las barras del sistema escondidas no hay nada que reserve esa
+     * franja, asi que la reservamos nosotros.
+     *
+     * Se hace **sobre la vista y no con CSS** a proposito. El documento ya trae
+     * su `padding` con `env(safe-area-inset-*)` en `styles.css`, pero eso solo
+     * protege al contenido que no se mueve: en una pantalla con scroll el
+     * relleno del `body` se va hacia arriba con el resto, y lo que sube pasa
+     * por debajo de la muesca igualmente; lo mismo con cualquier capa
+     * `position: fixed`. Encogiendo el WebView se encoge **el area visible
+     * entera**, asi que no hay forma de pintar ahi.
+     *
+     * Los huecos se descuentan aqui y **se ponen a cero antes de que lleguen a
+     * la web**, o el documento los descontaria otra vez con
+     * `env(safe-area-inset-*)` y el hueco saldria doble. No se devuelve
+     * `WindowInsetsCompat.CONSUMED` porque entonces el WebView deja de
+     * recalcular su area segura cuando algo cambia.
+     *
+     * El teclado entra en la cuenta: sin el, al escribir el nombre en el
+     * Multijugador la caja de texto se queda debajo de las teclas (la ventana
+     * no se encoge sola cuando se pinta de borde a borde).
+     */
+    private void dejarLaWebDentroDeLaPantallaSegura() {
+        if (getBridge() == null || getBridge().getWebView() == null) {
+            return;
+        }
+
+        // El oyente va en el contenedor del WebView, que es donde lo pone
+        // Capacitor, y no en el WebView mismo.
+        //
+        // Ojo: ese contenedor lo infla **Capacitor** desde su propio layout y
+        // no trae fondo, asi que la franja que queda libre la pinta el fondo
+        // de la ventana. De ahi el `android:windowBackground` de
+        // `AppTheme.NoActionBar` en `styles.xml`: sin el sale una banda blanca,
+        // que es el fondo del tema claro del sistema. El `activity_main.xml`
+        // del proyecto no pinta nada, que no lo usa nadie desde Capacitor 7.
+        View contenedor = (View) getBridge().getWebView().getParent();
+        if (contenedor == null) {
+            return;
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(contenedor, (vista, huecos) -> {
+            Insets seguro = huecos.getInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            Insets teclado = huecos.getInsets(WindowInsetsCompat.Type.ime());
+
+            vista.setPadding(
+                seguro.left,
+                seguro.top,
+                seguro.right,
+                Math.max(seguro.bottom, teclado.bottom)
+            );
+
+            return new WindowInsetsCompat.Builder(huecos)
+                .setInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout(),
+                    Insets.NONE
+                )
+                .build();
+        });
+
+        contenedor.requestApplyInsets();
     }
 
     /**

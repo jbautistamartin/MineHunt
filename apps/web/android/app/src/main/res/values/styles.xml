@@ -9,10 +9,21 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!--
+        El tema con el que corre la aplicacion: lo pone Capacitor en
+        BridgeActivity.onCreate, por encima del de arranque.
+
+        El fondo de la ventana es el de la paleta y no el del tema claro del
+        sistema. Es lo que se ve en la franja que deja la muesca, porque el
+        contenedor que infla Capacitor no trae fondo propio: sin esto sale una
+        banda blanca arriba. Hay una prueba (`empaquetado.prueba.ts`) que falla
+        si deja de coincidir con la paleta.
+    -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/mh_fondo</item>
     </style>
 
 

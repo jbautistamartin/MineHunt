@@ -353,6 +353,11 @@
       "texto": "Un juego de Capicua, desarrollado por José Luis Bautista.",
       "derechos": "© 2026 Capicua. Todos los derechos reservados."
     },
+    "donativo": {
+      "titulo": "Apoyar el juego",
+      "texto": "MineHunt es gratis, sin anuncios y sin compras dentro del juego. Si te lo estás pasando bien, puedes invitarme a un café. Es completamente opcional: no desbloquea nada y aquí no se vuelve a mencionar.",
+      "boton": "Invitar a un café"
+    },
     "ir_a_ayuda": "Cómo se juega"
   },
   "error": {

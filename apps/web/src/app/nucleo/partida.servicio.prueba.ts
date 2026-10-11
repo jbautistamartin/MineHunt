@@ -23,6 +23,13 @@ function configuracion(cambios: Partial<ConfiguracionPartida> = {}): Configuraci
  *
  * Hace falta porque las minas se reparten al azar y ahora quien acierta
  * conserva el turno: no se puede dar por hecho que el turno alterne.
+ *
+ * **Ojo a quien la llame despues de gastar una onda**: si la cascada deja
+ * destapado todo lo que no es mina, las unicas celdas que quedan ocultas son
+ * minas, el rival las encuentra todas seguidas —quien acierta repite— y la
+ * partida se acaba aqui dentro. Entonces la comprobacion de despues ya no mira
+ * lo que creia y falla una vez de cada tantas. Por eso esas pruebas reparten
+ * minas de sobra: con el tablero apretado no hay cascada que lo despeje.
  */
 function devolverElTurnoA(servicio: ServicioPartida, jugador: number): void {
   for (let intento = 0; intento < 50; intento += 1) {
@@ -536,7 +543,8 @@ describe('ServicioPartida: onda expansiva', () => {
   });
 
   it('rechaza activarlo mientras recarga y deja el codigo de error', () => {
-    servicio.iniciar(configuracion({ ancho: 8, alto: 8, minas: 5, recargaOndaSegundos: 60 }));
+    // Minas de sobra: ver la nota de `devolverElTurnoA`.
+    servicio.iniciar(configuracion({ ancho: 8, alto: 8, minas: 20, recargaOndaSegundos: 60 }));
 
     servicio.activarOnda();
     servicio.clicEnCelda(4, 4); // la gasta y cede el turno
@@ -556,7 +564,8 @@ describe('ServicioPartida: onda expansiva', () => {
   });
 
   it('el clic con onda no clica nada si la onda esta recargando', () => {
-    servicio.iniciar(configuracion({ ancho: 8, alto: 8, minas: 5, recargaOndaSegundos: 60 }));
+    // Minas de sobra: ver la nota de `devolverElTurnoA`.
+    servicio.iniciar(configuracion({ ancho: 8, alto: 8, minas: 20, recargaOndaSegundos: 60 }));
     servicio.clicConOnda(4, 4); // la gasta y cede el turno
     devolverElTurnoA(servicio, 0);
 

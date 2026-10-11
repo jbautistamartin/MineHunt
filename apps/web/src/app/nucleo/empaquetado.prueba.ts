@@ -87,6 +87,44 @@ describe('ajustes nativos de Android', () => {
   });
 
   /**
+   * La muesca de la camara se come lo que caiga debajo: no solo lo tapa, es
+   * que **no deja pulsarlo**. Con las barras escondidas nadie reserva esa
+   * franja, asi que la descuenta la actividad encogiendo el WebView.
+   *
+   * No vale con el `env(safe-area-inset-*)` del documento: ese relleno se va
+   * hacia arriba con el scroll y no alcanza a las capas `position: fixed`.
+   */
+  it('descuenta la muesca encogiendo el WebView', () => {
+    const actividad = leerNativo('java/com/minehunt/app/MainActivity.java');
+
+    expect(actividad).toContain('WindowInsetsCompat.Type.displayCutout()');
+    expect(actividad).toContain('setPadding');
+    // El teclado entra en la cuenta, o al escribir el nombre en el
+    // Multijugador la caja de texto se queda debajo de las teclas.
+    expect(actividad).toContain('WindowInsetsCompat.Type.ime()');
+    // Y lo descontado se pone a cero antes de llegar a la web, o el documento
+    // volveria a descontarlo con env(safe-area-inset-*) y saldria doble.
+    expect(actividad).toContain('Insets.NONE');
+  });
+
+  /**
+   * Esa franja no la pinta la web, sino el fondo de la ventana: el contenedor
+   * que infla Capacitor no trae fondo propio. Sin decirlo sale el del tema
+   * claro del sistema, que es una banda blanca justo donde esta la muesca.
+   */
+  it('pinta la franja de la muesca con el fondo de la paleta', () => {
+    const estilos = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
+    const fondo = /--mh-fondo:\s*(#[0-9a-f]{6})/i.exec(estilos)?.[1];
+
+    expect(leerNativo('res/values/colors.xml')).toContain(
+      `<color name="mh_fondo">${fondo}</color>`,
+    );
+    expect(leerNativo('res/values/styles.xml')).toContain(
+      '<item name="android:windowBackground">@color/mh_fondo</item>',
+    );
+  });
+
+  /**
    * Capacitor sirve la aplicacion desde https://localhost, asi que hablar con
    * un servidor por http es contenido mixto y Chromium lo corta dentro del
    * telefono, sin que se vea ningun error de red. El permiso de trafico en

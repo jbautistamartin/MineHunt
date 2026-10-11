@@ -39,8 +39,24 @@ const RAFAGA = 40;
 
 const url = process.argv[2] ?? 'http://localhost:3000';
 
+/**
+ * Si se admite un certificado que no firma nadie conocido.
+ *
+ * Por defecto no: contra el servidor de verdad el certificado tiene que valer.
+ * Se abre solo cuando quien llama ya ha apagado la comprobacion de TLS para
+ * todo el proceso, que es lo que hace falta para el ensayo en local —ahi Caddy
+ * firma con su propia autoridad— y contra un servidor de pruebas. Hay que
+ * decirselo aparte porque el cliente de WebSocket monta su propia conexion y no
+ * mira esa variable.
+ */
+const SIN_VERIFICAR_CERTIFICADO = process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0';
+
 function conectar() {
-  const cliente = io(url, { transports: ['websocket'], forceNew: true });
+  const cliente = io(url, {
+    transports: ['websocket'],
+    forceNew: true,
+    rejectUnauthorized: !SIN_VERIFICAR_CERTIFICADO,
+  });
   return new Promise((listo, fallo) => {
     cliente.once('connect', () => listo(cliente));
     cliente.once('connect_error', fallo);

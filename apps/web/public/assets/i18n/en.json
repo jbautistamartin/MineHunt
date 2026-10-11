@@ -353,6 +353,11 @@
       "texto": "A game by Capicua, developed by José Luis Bautista.",
       "derechos": "© 2026 Capicua. All rights reserved."
     },
+    "donativo": {
+      "titulo": "Support the game",
+      "texto": "MineHunt is free, with no ads and no in-game purchases. If you are having a good time, you can buy me a coffee. It is entirely optional: it unlocks nothing and will not be mentioned again.",
+      "boton": "Buy me a coffee"
+    },
     "ir_a_ayuda": "How to play"
   },
   "error": {
