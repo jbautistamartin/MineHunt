@@ -4,7 +4,7 @@ import { VERSION_MOTOR, saludar } from './index.js';
 
 describe('motor de juego', () => {
   it('expone la version del motor', () => {
-    expect(VERSION_MOTOR).toBe('1.0.0');
+    expect(VERSION_MOTOR).toBe('1.0.1');
   });
 
   it('saluda indicando que el motor esta listo', () => {

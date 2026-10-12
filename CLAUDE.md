@@ -4,10 +4,21 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 ## Estado actual del repositorio
 
-**Fases 0 a 8.5 completadas.** El monorepo compila, tipa y pasa 435 pruebas (160 del motor, 234 de la web y 41 del servidor), más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae; y la web tiene el Multijugador Online en `/online`, con el mismo tablero que los otros modos; abriendo la dirección del servidor en el navegador sale su panel de salas. El juego está pulido: sonidos sintetizados, animaciones de destape y detonación, resumen con estadísticas por jugador al terminar, iconos y manifiestos de aplicación instalable en los dos idiomas. Y tiene **Multijugador Local** en `/local` (Fase 8.5): de dos a cuatro teléfonos Android jugando entre ellos por Nearby Connections, sin servidor, sin Wi-Fi común y sin internet, con la sala corriendo dentro del teléfono que abre la partida. La **Fase 9 está hecha salvo el despliegue de verdad**: el servidor se empaqueta en una imagen Docker que lleva dentro el cliente web, con topes de salas, límite de ritmo, CORS y puerto por variables de entorno, comprobación de salud y prueba de humo, y la capa de HTTPS con Caddy se ha ensayado en local con un certificado firmado por el propio proxy; **falta contratar alojamiento y dominio** y levantarlo allí, que es lo único que no se puede hacer desde el repositorio. Pendiente entera queda la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
+**Fases 0 a 8.5 completadas.** El monorepo compila, tipa y pasa 451 pruebas (160 del motor, 250 de la web y 41 del servidor), más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae; y la web tiene el Multijugador Online en `/online`, con el mismo tablero que los otros modos; abriendo la dirección del servidor en el navegador sale su panel de salas. El juego está pulido: sonidos sintetizados, animaciones de destape y detonación, resumen con estadísticas por jugador al terminar, iconos y manifiestos de aplicación instalable en los dos idiomas. Y tiene **Multijugador Local** en `/local` (Fase 8.5): de dos a cuatro teléfonos Android jugando entre ellos por Nearby Connections, sin servidor, sin Wi-Fi común y sin internet, con la sala corriendo dentro del teléfono que abre la partida. La **Fase 9 está hecha salvo el despliegue de verdad**: el servidor se empaqueta en una imagen Docker que lleva dentro el cliente web, con topes de salas, límite de ritmo, CORS y puerto por variables de entorno, comprobación de salud y prueba de humo, y la capa de HTTPS con Caddy se ha ensayado en local con un certificado firmado por el propio proxy; **falta contratar alojamiento y dominio** y levantarlo allí, que es lo único que no se puede hacer desde el repositorio. Pendiente entera queda la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
 
 ### Dónde nos quedamos (11 de octubre de 2026)
 
+- **Publicadas la 1.0.0 y, detrás, la 1.0.1.** Las dos con su tag en `main`, `develop` en el mismo
+  commit y el APK firmado en su release. La 1.0.1 es **un parche sin cambios de juego**: se subió
+  porque se dudaba de que el APK etiquetado llevara todo lo del día, y la forma limpia de
+  resolverlo es publicar una versión nueva en lugar de reemplazar un artefacto ya publicado.
+  **Comprobado después, por si vuelve la duda**: el bundle que llevaba dentro el APK de la 1.0.0
+  era byte a byte el del build actual —solo añadía `cordova.js` y `cordova_plugins.js`, que los
+  inyecta `cap sync`—, así que no faltaba nada. La forma de comprobarlo es comparar los hashes de
+  `assets/public/` del APK con los de `apps/web/dist/web/browser/`.
+  **Al ser un parche, el protocolo sigue siendo compatible**: solo se comparan *major* y *minor*,
+  así que un cliente de la 1.0.0 entra en un servidor de la 1.0.1 y al revés. El `versionCode` de
+  Android sí sube a **2**, que es lo que permite instalar el APK encima del anterior.
 - **La versión es ya la 1.0.0.** Subida a mano en los cuatro `package.json`, en el `version.ts`
   del motor y en el de la web, en la prueba del motor y en el `versionName` del `build.gradle` de
   Android (el `versionCode` sigue en 1, que es el primer release). El `package-lock.json` se
@@ -16,15 +27,16 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
   bajo «No publicado» pasó a `[1.0.0] - 2026-10-11`, escrito como primera versión y no como el
   diff contra la 0.1.1. **Ojo a lo que implica**: es un salto de *major*, así que `VERSION_PROTOCOLO`
   cambia y **ningún APK anterior entra en este servidor**; hay que recompilar e instalar.
-  **El release no está subido a GitHub**, y el `README.md` lo dice.
+  **El release ya está publicado** en GitHub, y detrás de él la 1.0.1.
 - **El repositorio ya existe y es público**: `github.com/jbautistamartin/MineHunt`, con `origin`
   configurado y `develop` y `master` al día. Hasta hoy el proyecto vivía solo en el disco, y con
   ello llegaron el `README.md` de la raíz —que no existía— y el `LICENSE` (**LGPL-2.1**, que es
   también lo que declaran ahora los cuatro `package.json`).
   **La firma de «Acerca de» lo dice ya**: `acerca.autoria.derechos` pasó de «todos los derechos
   reservados» —que es lo que ponía cuando el código no estaba publicado— a la GNU LGPL v2.1, en
-  los dos idiomas. **Queda una cosa suelta**: su rama por defecto en GitHub es `master`, al revés
-  que las demás aplicaciones de la casa, que usan `main`.
+  los dos idiomas. Su rama por defecto, que salió como `master`, se renombró a **`main`** con el
+  endpoint de GitHub —que arrastra la rama por defecto y las PR— para ir como las demás
+  aplicaciones de la casa.
 - **«Acerca de» lleva ahora la página del juego.** Una ficha más de esa pantalla, entre la firma y
   el donativo, con el enlace que la abre fuera del juego (`URL_PROYECTO`, en `nucleo/proyecto.ts`)
   y sus textos en los dos idiomas. **No es una tercera salida** y hay prueba que lo exige:
@@ -257,7 +269,7 @@ El título de la pestaña es `MineHunt` y el favicon es `apps/web/public/icono.s
 
 **No hay `favicon.ico`.** El que había era el de la plantilla de Angular y era el que salía en la pestaña, porque los navegadores piden `/favicon.ico` y ese ganaba al SVG. Se borró: el icono del juego es uno solo. Si alguna vez hace falta una versión rasterizada (o un juego de PNG), sale del icono maestro al generar los recursos de Android en la Fase 5, que es donde hay con qué rasterizar.
 
-La versión que se enseña al jugador (configuración, ayuda y «Acerca de») es `VERSION_APP`, en `nucleo/version.ts`, hoy **1.0.0**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él. **`VERSION_MOTOR` va a la par con ella**, y como `VERSION_MOTOR` es también `VERSION_PROTOCOLO`, el número que el jugador lee es el mismo que decide contra qué servidores puede jugar; `version.prueba.ts` lo comprueba. Al subir la versión se tocan los cuatro `package.json`, `version.ts` del motor, `version.ts` de la web y la prueba del motor. Y `CHANGELOG.md`: lo que esté bajo `[No publicado]` pasa a la versión nueva con su fecha, que es de donde saldrán las notas del primer release.
+La versión que se enseña al jugador (configuración, ayuda y «Acerca de») es `VERSION_APP`, en `nucleo/version.ts`, hoy **1.0.1**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él. **`VERSION_MOTOR` va a la par con ella**, y como `VERSION_MOTOR` es también `VERSION_PROTOCOLO`, el número que el jugador lee es el mismo que decide contra qué servidores puede jugar; `version.prueba.ts` lo comprueba. Al subir la versión se tocan los cuatro `package.json`, `version.ts` del motor, `version.ts` de la web y la prueba del motor. Y `CHANGELOG.md`: lo que esté bajo `[No publicado]` pasa a la versión nueva con su fecha, que es de donde saldrán las notas del primer release.
 
 ## El menú principal
 
