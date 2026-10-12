@@ -17,7 +17,7 @@ Es un juego **multijugador por turnos** de 2 a 4 jugadores, humanos o bots, con
 cuatro modos de juego, dos idiomas y app de Android. El código es un monorepo de
 TypeScript donde cliente y servidor comparten **el mismo motor de juego**.
 
-**Versión actual: [v1.0.0](https://github.com/jbautistamartin/MineHunt/releases/tag/v1.0.0)**,
+**Versión actual: [v1.0.1](https://github.com/jbautistamartin/MineHunt/releases/tag/v1.0.1)**,
 la primera versión completa — descarga el APK firmado desde la
 [página de releases](https://github.com/jbautistamartin/MineHunt/releases). No está
 en Google Play todavía. Lo que cambie en cada versión está en
@@ -59,7 +59,7 @@ verifican.
 
 ## Estado del proyecto
 
-Versión **1.0.0**. El juego se juega entero en las cuatro modalidades, y el
+Versión **1.0.1**. El juego se juega entero en las cuatro modalidades, y el
 monorepo compila, tipa y pasa sus pruebas.
 
 - **Hecho:** el motor, los cuatro modos, la app de Android con Capacitor, el

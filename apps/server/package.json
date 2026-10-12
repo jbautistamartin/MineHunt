@@ -1,6 +1,6 @@
 {
   "name": "@minehunt/server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Servidor NestJS de MineHunt: autoridad del juego y salas multijugador",
   "author": "",
   "private": true,

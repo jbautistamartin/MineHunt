@@ -23,6 +23,20 @@ versionado según [SemVer](https://semver.org/lang/es/).
   descarga ni instala nada: en Android el APK se instala desde la página del release y en el
   navegador basta con recargar.
 
+## [1.0.1] - 2026-10-11
+
+Versión de parche: el juego es el mismo que la 1.0.0 y se publica para que el APK instalado
+coincida con lo etiquetado y para dejar sitio a lo que caiga encima.
+
+**Al ser un parche, el protocolo no cambia**: `VERSION_PROTOCOLO` pasa de 1.0.0 a 1.0.1 y, como
+solo se comparan *major* y *minor*, un cliente de la 1.0.0 sigue entrando en un servidor de la
+1.0.1 y al revés.
+
+### Cambiado
+
+- Las cuatro versiones del monorepo, el motor, el protocolo y el `versionCode` de Android suben a
+  la 1.0.1 a la vez, como manda la convención del repositorio.
+
 ## [1.0.0] - 2026-10-11
 
 Primera versión. El juego está completo en sus cuatro modalidades: lo que queda fuera es
