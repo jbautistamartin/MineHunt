@@ -32,7 +32,8 @@
     "volver": "← Back to menu",
     "acerca": {
       "titulo": "About",
-      "texto": "Version, what this game is and who made it."
+      "texto": "Version, what this game is and who made it.",
+      "nueva": "A new version is available"
     }
   },
   "idioma": {
@@ -351,12 +352,18 @@
     "autoria": {
       "titulo": "Credits",
       "texto": "A game by Capicua, developed by José Luis Bautista.",
-      "derechos": "© 2026 Capicua. All rights reserved."
+      "derechos": "© 2026 Capicua. Distributed under the GNU LGPL v2.1 licence."
     },
     "donativo": {
       "titulo": "Support the game",
       "texto": "MineHunt is free, with no ads and no in-game purchases. If you are having a good time, you can buy me a coffee. It is entirely optional: it unlocks nothing and will not be mentioned again.",
       "boton": "Buy me a coffee"
+    },
+    "proyecto": {
+      "titulo": "The game's page",
+      "texto": "MineHunt is published in the open. Its page has the releases you can download, what changed in each one, and the place to report a bug or ask for something.",
+      "enlace": "Go to the game's page",
+      "nueva": "There is a newer version of the game: {{version}}. You can download it from its page."
     },
     "ir_a_ayuda": "How to play"
   },

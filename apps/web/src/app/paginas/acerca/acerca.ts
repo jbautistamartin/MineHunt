@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Intro } from '../../componentes/intro/intro';
+import { ServicioActualizacion } from '../../nucleo/actualizacion.servicio';
 import { URL_DONATIVO } from '../../nucleo/donativo';
+import { URL_PROYECTO } from '../../nucleo/proyecto';
 import { VERSION_APP } from '../../nucleo/version';
 
 /**
@@ -28,7 +30,23 @@ import { VERSION_APP } from '../../nucleo/version';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Acerca {
+  private readonly actualizacion = inject(ServicioActualizacion);
+
   readonly version = VERSION_APP;
+
+  /**
+   * La version publicada, si hay una mas nueva que esta. La pregunta se hace al
+   * arrancar el juego, no aqui: esta pantalla solo cuenta lo que ya se sepa.
+   */
+  readonly novedad = this.actualizacion.novedad;
+
+  /**
+   * La pagina del juego: de donde sale lo que hay instalado y donde se cuenta
+   * un fallo. Sale aqui porque esta es la pantalla que dice que es esto y
+   * quien lo firma, y de ahi cuelga tambien donde vive. Se abre fuera del
+   * juego, como el donativo, y tampoco cuenta como una salida de la pantalla.
+   */
+  readonly urlProyecto = this.actualizacion.pagina;
 
   /**
    * El donativo. Es la unica pantalla del juego que lo menciona, y a proposito:

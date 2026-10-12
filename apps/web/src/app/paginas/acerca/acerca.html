@@ -21,6 +21,19 @@
   </div>
 
   <div class="ficha">
+    <h2>{{ 'acerca.proyecto.titulo' | translate }}</h2>
+    <p class="texto">{{ 'acerca.proyecto.texto' | translate }}</p>
+    @if (novedad(); as nueva) {
+      <p class="texto separado nueva">
+        {{ 'acerca.proyecto.nueva' | translate: { version: nueva.version } }}
+      </p>
+    }
+    <a class="proyecto" [href]="urlProyecto()" target="_blank" rel="noopener">
+      {{ 'acerca.proyecto.enlace' | translate }}
+    </a>
+  </div>
+
+  <div class="ficha">
     <h2>{{ 'acerca.donativo.titulo' | translate }}</h2>
     <p class="texto">{{ 'acerca.donativo.texto' | translate }}</p>
     <a class="donativo" [href]="urlDonativo" target="_blank" rel="noopener">

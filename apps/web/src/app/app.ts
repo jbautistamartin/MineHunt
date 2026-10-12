@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { ServicioActualizacion } from './nucleo/actualizacion.servicio';
 import { ServicioBotonAtras } from './nucleo/atras.servicio';
 import { ServicioIdioma } from './nucleo/idioma.servicio';
 import { ServicioSonido } from './nucleo/sonido.servicio';
@@ -29,9 +30,17 @@ export class App {
   protected readonly idioma = inject(ServicioIdioma);
   private readonly atras = inject(ServicioBotonAtras);
   private readonly sonido = inject(ServicioSonido);
+  private readonly actualizacion = inject(ServicioActualizacion);
 
   constructor() {
     this.atras.escuchar();
+
+    // Se pregunta por el ultimo release al arrancar, no al abrir «Acerca de»:
+    // quien juega puede no entrar ahi nunca. El servicio se encarga de que sea
+    // una vez al dia como mucho, y si no hay red no pasa nada — nadie se queda
+    // esperando, porque esto no se espera: cuando conteste, el menu y «Acerca
+    // de» ya estaran leyendo su señal.
+    void this.actualizacion.comprobar();
   }
 
   /**

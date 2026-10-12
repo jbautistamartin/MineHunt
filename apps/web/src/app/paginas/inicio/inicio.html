@@ -65,7 +65,15 @@
 
     <a class="modo menor" routerLink="/acerca">
       <span class="modo-texto">
-        <span class="modo-titulo">{{ 'inicio.acerca.titulo' | translate }}</span>
+        <span class="modo-titulo">
+          {{ 'inicio.acerca.titulo' | translate }}
+          @if (hayVersionNueva()) {
+            <span
+              class="punto"
+              [attr.aria-label]="'inicio.acerca.nueva' | translate"
+            ></span>
+          }
+        </span>
         <span class="modo-detalle">{{ 'inicio.acerca.texto' | translate }}</span>
       </span>
       <span class="modo-flecha" aria-hidden="true">&#8594;</span>

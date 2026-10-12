@@ -62,11 +62,12 @@ h2 {
 }
 
 /*
- * El enlace del donativo. Tiene aspecto de boton porque se pulsa, pero no es el
- * que mas pesa de la pantalla: lo que se vino a hacer aqui es leer, y donar es
- * opcional.
+ * Los dos enlaces que salen del juego: la pagina del proyecto y el donativo.
+ * Tienen aspecto de boton porque se pulsan, pero no son lo que mas pesa de la
+ * pantalla: lo que se vino a hacer aqui es leer, y los dos son opcionales.
  */
-.donativo {
+.donativo,
+.proyecto {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
@@ -91,6 +92,15 @@ h2 {
   fill: #ffcb4c;
   stroke: #d69e2e;
   stroke-width: 0.857;
+}
+
+/*
+ * El aviso de version nueva. No grita: es una linea mas de la ficha, con el
+ * dorado del juego para que se distinga del texto que la rodea.
+ */
+.nueva {
+  font-weight: 600;
+  color: var(--mh-acento, #ffcb4c);
 }
 
 .salidas {
