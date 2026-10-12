@@ -10,6 +10,7 @@ import { Acerca } from './acerca';
 import { routes } from '../../app.routes';
 import { URL_DONATIVO } from '../../nucleo/donativo';
 import { ServicioIntro } from '../../nucleo/intro.servicio';
+import { URL_PROYECTO } from '../../nucleo/proyecto';
 import { VERSION_APP } from '../../nucleo/version';
 
 /** Textos de uno de los dos idiomas que se sirven en /assets/i18n/. */
@@ -60,6 +61,21 @@ describe('Acerca de', () => {
     ].map((enlace) => enlace.getAttribute('href'));
 
     expect(destinos).toEqual(['/ayuda', '/']);
+  });
+
+  /**
+   * La pagina del juego se abre fuera del juego, igual que el donativo, y por lo
+   * mismo no es una salida: de esta pantalla se sale a la ayuda y al menu.
+   */
+  it('lleva a la pagina del juego sin convertirla en una salida', () => {
+    const fixture = TestBed.createComponent(Acerca);
+    fixture.detectChanges();
+    const elemento = fixture.nativeElement as HTMLElement;
+    const enlace = elemento.querySelector('.proyecto');
+
+    expect(enlace?.getAttribute('href')).toBe(URL_PROYECTO);
+    expect(enlace?.getAttribute('target')).toBe('_blank');
+    expect(elemento.querySelectorAll('.salidas a')).toHaveLength(2);
   });
 
   /**
@@ -128,6 +144,11 @@ describe('Acerca de', () => {
       expect(donativo?.['titulo'], idioma).toBeTruthy();
       expect(donativo?.['texto'], idioma).toBeTruthy();
       expect(donativo?.['boton'], idioma).toBeTruthy();
+      // La pagina del juego, con su rotulo en los dos idiomas.
+      const proyecto = acerca?.['proyecto'] as Record<string, string> | undefined;
+      expect(proyecto?.['titulo'], idioma).toBeTruthy();
+      expect(proyecto?.['texto'], idioma).toBeTruthy();
+      expect(proyecto?.['enlace'], idioma).toBeTruthy();
       // Y la entrada del menu que lleva hasta aqui.
       expect((inicio?.['acerca'] as Record<string, string>)?.['titulo'], idioma).toBeTruthy();
     }

@@ -32,7 +32,8 @@
     "volver": "← Volver al menú",
     "acerca": {
       "titulo": "Acerca de",
-      "texto": "Versión, qué es este juego y quién lo hizo."
+      "texto": "Versión, qué es este juego y quién lo hizo.",
+      "nueva": "Hay una versión nueva"
     }
   },
   "idioma": {
@@ -351,12 +352,18 @@
     "autoria": {
       "titulo": "Autoría",
       "texto": "Un juego de Capicua, desarrollado por José Luis Bautista.",
-      "derechos": "© 2026 Capicua. Todos los derechos reservados."
+      "derechos": "© 2026 Capicua. Distribuido bajo licencia GNU LGPL v2.1."
     },
     "donativo": {
       "titulo": "Apoyar el juego",
       "texto": "MineHunt es gratis, sin anuncios y sin compras dentro del juego. Si te lo estás pasando bien, puedes invitarme a un café. Es completamente opcional: no desbloquea nada y aquí no se vuelve a mencionar.",
       "boton": "Invitar a un café"
+    },
+    "proyecto": {
+      "titulo": "La página del juego",
+      "texto": "MineHunt se publica en abierto. En su página están las versiones que se pueden descargar, lo que cambia en cada una y el sitio donde contar un fallo o pedir algo.",
+      "enlace": "Ir a la página del juego",
+      "nueva": "Hay una versión nueva del juego: la {{version}}. Se descarga desde su página."
     },
     "ir_a_ayuda": "Cómo se juega"
   },

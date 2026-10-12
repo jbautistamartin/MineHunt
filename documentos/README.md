@@ -16,6 +16,11 @@ esta carpeta**, y se añade a este índice en el mismo cambio.
 
 ## Lo que no está aquí y por qué
 
+- **`README.md`** se queda en la raíz porque es la portada que GitHub enseña al
+  entrar: cuenta qué es el juego, cómo se arranca y cómo está montado el
+  monorepo, y desde ahí se entra a este índice. No repite lo que hay aquí: lo
+  enlaza. Al lado va **`LICENSE`**, la LGPL v2.1 bajo la que se distribuye el
+  proyecto: GitHub solo la reconoce en la raíz.
 - **`CLAUDE.md`** se queda en la raíz del repositorio: es donde Claude Code lo
   busca al abrir el proyecto. Cuenta el estado actual, los comandos y las
   convenciones; el plan maestro cuenta el diseño.

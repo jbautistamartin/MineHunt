@@ -1,59 +1,50 @@
-# Web
+# @minehunt/web
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.6.
+El **cliente de MineHunt**: Angular 22 con componentes standalone, señales y
+carga diferida por pantalla. Es a la vez la web, la aplicación instalable y
+—dentro de un WebView de Capacitor— la app de Android, cuyo proyecto nativo vive
+en [`android/`](android). No hay una segunda implementación del juego: el APK
+lleva este mismo bundle.
 
-## Development server
+Las reglas no están aquí. Viven en `@minehunt/game-engine`, y en los modos
+online el estado llega hecho del servidor; esta aplicación presenta y orquesta.
 
-To start a local development server, run:
+## Comandos
 
-```bash
-ng serve
-```
+Desde la raíz del monorepo, con `--workspace @minehunt/web`:
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Comando | Qué hace |
+|---|---|
+| `arrancar` | `ng serve`, el juego en `localhost:4200`. |
+| `compilar` | `ng build` a `dist/web/browser`. |
+| `probar` / `probar:ver` | Vitest sobre jsdom (sin Chrome ni Karma). |
+| `verificar-tipos` | `tsc --noEmit` de la aplicación y de las pruebas. |
+| `sincronizar-android` | `ng build` + `cap sync`. |
+| `apk-android` / `aab-android` | Lo anterior y Gradle, para el APK o el AAB. |
+| `abrir-android` | Abre el proyecto nativo en Android Studio. |
+| `recursos-android` / `recursos-web` | Rasterizan el icono maestro y reparten las densidades y los PNG del manifiesto. |
 
-## Code scaffolding
+Recuerda que la web consume el `dist/` compilado del motor: si tocas el motor,
+recompílalo antes de lanzar estas pruebas.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Cómo está repartido
 
-```bash
-ng generate component component-name
-```
+- `src/app/nucleo/` — los servicios con estado: idioma, ajustes, partida,
+  historia, online, local, sonido, vibración y el botón de atrás.
+  **`ServicioPartida` es el único que habla con el motor.**
+- `src/app/paginas/` — las pantallas enrutadas: el menú, la configuración del
+  Entrenamiento, la partida, el mapa de la Historia, el multijugador, la ayuda y
+  «Acerca de».
+- `src/app/componentes/` — lo reutilizable, el tablero entre otras cosas: el
+  mismo en los cuatro modos.
+- `public/assets/i18n/` — los textos, en español y en inglés. Se tocan los dos
+  en el mismo cambio.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Documentación
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [**El cliente**](../../documentos/MineHunt-web.md) — desarrollo, build de
+  producción, presupuestos de tamaño, aplicación instalable e iconos.
+- [**Android**](../../documentos/MineHunt-android.md) — requisitos, ciclo de
+  compilación, firma y publicación.
+- [**El mapa del repositorio**](../../documentos/MineHunt-proyectos.md) y la
+  [portada](../../README.md).

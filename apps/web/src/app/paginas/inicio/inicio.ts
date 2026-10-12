@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Intro } from '../../componentes/intro/intro';
+import { ServicioActualizacion } from '../../nucleo/actualizacion.servicio';
 import { SelectorIdioma } from '../../componentes/selector-idioma/selector-idioma';
 import { ServicioHistoria } from '../../nucleo/historia.servicio';
 import { ServicioIntro } from '../../nucleo/intro.servicio';
@@ -37,6 +38,14 @@ export class Inicio {
   private readonly vibracion = inject(ServicioVibracion);
   private readonly intro = inject(ServicioIntro);
   private readonly local = inject(ServicioLocal);
+  private readonly actualizacion = inject(ServicioActualizacion);
+
+  /**
+   * Si hay una version nueva publicada, para marcar la entrada que lleva a
+   * «Acerca de», que es donde se cuenta. Un punto y nada mas: el menu es para
+   * elegir a que se juega, no para dar noticias.
+   */
+  readonly hayVersionNueva = this.actualizacion.novedad;
 
   /**
    * El Multijugador Local solo sale donde existe: en la aplicacion de Android.

@@ -76,6 +76,21 @@ a.modo:focus-visible {
   font-weight: 700;
 }
 
+/*
+ * El punto que avisa de que hay una version nueva. Va pegado al titulo de la
+ * entrada que lleva a «Acerca de», y lleva etiqueta para quien no lo ve: un
+ * color por si solo no cuenta nada.
+ */
+.punto {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  background: #ffcb4c;
+  border-radius: 50%;
+}
+
 .modo-detalle,
 .modo-progreso {
   font-size: 0.85rem;

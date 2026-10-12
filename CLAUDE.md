@@ -6,7 +6,32 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 
 **Fases 0 a 8.5 completadas.** El monorepo compila, tipa y pasa 435 pruebas (160 del motor, 234 de la web y 41 del servidor), más 15 e2e del servidor que van por su propio comando. El motor implementa tablero, turnos encadenados, reloj de turno, marcador, bots de 5 niveles, onda expansiva con recarga, rendición y la tabla de 50 niveles del Modo Historia; la web abre en un menú principal desde el que se elige modo, y tiene el Modo Entrenamiento hotseat con bots de niveles mezclados, el Modo Historia con su mapa de niveles y progreso guardado, onda, reloj, rendición, pantalla de ayuda e i18n; y se empaqueta a Android con Capacitor, con el proyecto nativo en `apps/web/android/`; el servidor NestJS lleva salas multijugador por Socket.IO, con el motor de autoridad, lobby, reconexión y bots que sustituyen a quien se cae; y la web tiene el Multijugador Online en `/online`, con el mismo tablero que los otros modos; abriendo la dirección del servidor en el navegador sale su panel de salas. El juego está pulido: sonidos sintetizados, animaciones de destape y detonación, resumen con estadísticas por jugador al terminar, iconos y manifiestos de aplicación instalable en los dos idiomas. Y tiene **Multijugador Local** en `/local` (Fase 8.5): de dos a cuatro teléfonos Android jugando entre ellos por Nearby Connections, sin servidor, sin Wi-Fi común y sin internet, con la sala corriendo dentro del teléfono que abre la partida. La **Fase 9 está hecha salvo el despliegue de verdad**: el servidor se empaqueta en una imagen Docker que lleva dentro el cliente web, con topes de salas, límite de ritmo, CORS y puerto por variables de entorno, comprobación de salud y prueba de humo, y la capa de HTTPS con Caddy se ha ensayado en local con un certificado firmado por el propio proxy; **falta contratar alojamiento y dominio** y levantarlo allí, que es lo único que no se puede hacer desde el repositorio. Pendiente entera queda la publicación en Google Play (Fase 10). Las tres últimas eran una sola en el plan original y se separaron a petición del usuario, porque son tres trabajos que no se parecen en nada y solo el primero lo verifica `npm run verificar`.
 
-### Dónde nos quedamos (10 de octubre de 2026)
+### Dónde nos quedamos (11 de octubre de 2026)
+
+- **La versión es ya la 1.0.0.** Subida a mano en los cuatro `package.json`, en el `version.ts`
+  del motor y en el de la web, en la prueba del motor y en el `versionName` del `build.gradle` de
+  Android (el `versionCode` sigue en 1, que es el primer release). El `package-lock.json` se
+  regeneró con `npm install --package-lock-only` y, de paso, se puso al día: se había quedado en
+  0.0.2 y con la licencia `UNLICENSED` de antes del `LICENSE`. En el `CHANGELOG.md` lo que estaba
+  bajo «No publicado» pasó a `[1.0.0] - 2026-10-11`, escrito como primera versión y no como el
+  diff contra la 0.1.1. **Ojo a lo que implica**: es un salto de *major*, así que `VERSION_PROTOCOLO`
+  cambia y **ningún APK anterior entra en este servidor**; hay que recompilar e instalar.
+  **El release no está subido a GitHub**, y el `README.md` lo dice.
+- **El repositorio ya existe y es público**: `github.com/jbautistamartin/MineHunt`, con `origin`
+  configurado y `develop` y `master` al día. Hasta hoy el proyecto vivía solo en el disco, y con
+  ello llegaron el `README.md` de la raíz —que no existía— y el `LICENSE` (**LGPL-2.1**, que es
+  también lo que declaran ahora los cuatro `package.json`).
+  **La firma de «Acerca de» lo dice ya**: `acerca.autoria.derechos` pasó de «todos los derechos
+  reservados» —que es lo que ponía cuando el código no estaba publicado— a la GNU LGPL v2.1, en
+  los dos idiomas. **Queda una cosa suelta**: su rama por defecto en GitHub es `master`, al revés
+  que las demás aplicaciones de la casa, que usan `main`.
+- **«Acerca de» lleva ahora la página del juego.** Una ficha más de esa pantalla, entre la firma y
+  el donativo, con el enlace que la abre fuera del juego (`URL_PROYECTO`, en `nucleo/proyecto.ts`)
+  y sus textos en los dos idiomas. **No es una tercera salida** y hay prueba que lo exige:
+  `.salidas` sigue llevando solo a la ayuda y al menú. Se rotula «la página del juego» y no por el
+  nombre del sitio donde está alojada, porque esta pantalla la lee quien va a jugar.
+
+### Dónde nos quedamos antes (10 de octubre de 2026)
 
 - **La Fase 8.5 ya está commiteada.** Hasta hoy el Multijugador Local entero
   vivía sin commit en el árbol de trabajo.
@@ -53,7 +78,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
 - **«Acerca de» ofrece el donativo**, con sus textos en los dos idiomas, y el pie
   del panel del servidor también. Es la única pantalla del juego que lo menciona.
 
-### Dónde nos quedamos antes (20 de septiembre de 2026)
+### Y antes (20 de septiembre de 2026)
 
 - **La Fase 8.5 (Multijugador Local) está hecha**, y es nueva: se intercaló
   entre la 8 y la 9 sin renumerar nada, porque el apéndice del plan cita las
@@ -73,7 +98,7 @@ Este fichero proporciona orientación a Claude Code (claude.ai/code) al trabajar
   comprobación que le falta a la fase, y no la puede dar ninguna prueba.
 - **La Fase 9 sigue empezada y a medias**, igual que estaba.
 
-### Y antes (19 de septiembre de 2026, noche)
+### Y más atrás (19 de septiembre de 2026, noche)
 
 - **La Fase 9 está empezada y a medias.** Hecho y comprobado en local: la imagen Docker por etapas con usuario sin privilegios, el cliente web servido por el propio Nest (el juego en `/`, el panel en `/panel`), la configuración por entorno, los tres puntos de endurecimiento con sus pruebas, `docker-compose.yml`, la comprobación de salud y la prueba de humo. **Falta**: desplegarlo en un servidor de verdad —la capa de HTTPS (`docker-compose.https.yml` con Caddy) está escrita pero **no se ha ejecutado nunca contra un dominio real**—, y decidir dónde se aloja, que es lo que hay que poner en `nucleo/servidor.ts` para la Fase 10. Todo el detalle en `documentos/MineHunt-despliegue.md`.
 - **El protocolo subió a 0.1.0** (y con él `VERSION_APP`), porque hay dos códigos de error nuevos. Un APK con 0.0.2 ya no entra en este servidor: hay que reinstalarlo en el teléfono.
@@ -232,7 +257,7 @@ El título de la pestaña es `MineHunt` y el favicon es `apps/web/public/icono.s
 
 **No hay `favicon.ico`.** El que había era el de la plantilla de Angular y era el que salía en la pestaña, porque los navegadores piden `/favicon.ico` y ese ganaba al SVG. Se borró: el icono del juego es uno solo. Si alguna vez hace falta una versión rasterizada (o un juego de PNG), sale del icono maestro al generar los recursos de Android en la Fase 5, que es donde hay con qué rasterizar.
 
-La versión que se enseña al jugador (configuración, ayuda y «Acerca de») es `VERSION_APP`, en `nucleo/version.ts`, hoy **0.1.1**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él. **`VERSION_MOTOR` va a la par con ella**, y como `VERSION_MOTOR` es también `VERSION_PROTOCOLO`, el número que el jugador lee es el mismo que decide contra qué servidores puede jugar; `version.prueba.ts` lo comprueba. Al subir la versión se tocan los cuatro `package.json`, `version.ts` del motor, `version.ts` de la web y la prueba del motor.
+La versión que se enseña al jugador (configuración, ayuda y «Acerca de») es `VERSION_APP`, en `nucleo/version.ts`, hoy **1.0.0**. Va a mano para no arrastrar el `package.json` al bundle, y `version.prueba.ts` falla si deja de coincidir con él. **`VERSION_MOTOR` va a la par con ella**, y como `VERSION_MOTOR` es también `VERSION_PROTOCOLO`, el número que el jugador lee es el mismo que decide contra qué servidores puede jugar; `version.prueba.ts` lo comprueba. Al subir la versión se tocan los cuatro `package.json`, `version.ts` del motor, `version.ts` de la web y la prueba del motor. Y `CHANGELOG.md`: lo que esté bajo `[No publicado]` pasa a la versión nueva con su fecha, que es de donde saldrán las notas del primer release.
 
 ## El menú principal
 
@@ -245,6 +270,47 @@ Del menú cuelgan también **la ayuda** (`/ayuda`, las reglas) y **«Acerca de»
 **Cada pantalla empieza por arriba.** Angular, por defecto, no toca el desplazamiento al cambiar de ruta: la pantalla nueva se monta con el scroll donde lo dejó la anterior. Eso se notaba justo aquí — «Acerca de» es la última entrada del menú, hay que bajar para tocarla, y la ficha aparecía ya desplazada hasta el final con el texto empezado. Lo arregla `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })` en `app.config.ts`: una navegación nueva sube arriba y el botón de atrás devuelve a cada pantalla el sitio por el que iba, que es lo que hace falta al volver al mapa de niveles. **No tiene prueba y no es un olvido**: el `RouterScroller` que lo hace solo se engancha al arrancar la aplicación de verdad, no cuando TestBed monta un inyector; está escrito en `app.prueba.ts`.
 
 **El donativo se ofrece en «Acerca de» y en ningún otro sitio.** Es una ficha más de esa pantalla, con el enlace que abre PayPal fuera de la aplicación (`URL_DONATIVO`, en `nucleo/donativo.ts`) y el corazón dorado que llevan las demás aplicaciones de la casa, en SVG dentro de la plantilla y con sus colores en `acerca.css` —no son de la paleta del juego a propósito: son los que hacen que el icono se reconozca—; está ahí porque es donde se cuenta quién hace esto, y no en el menú, ni al terminar una partida, ni como aviso: el juego no pide dinero mientras se juega. **No es una salida más** — la prueba sigue exigiendo que `.salidas` lleve solo a la ayuda y al menú—, no desbloquea nada y no hay nada que desbloquear. El panel del servidor lleva **su propia copia** de esa dirección, por lo mismo que lleva copiado el icono: esa página se pinta sin arrastrar nada de la web, así que si la dirección cambia hay que cambiarla en los dos sitios.
+
+**La página del juego se ofrece en la misma pantalla**, en su propia ficha y por delante del
+donativo: antes de pedir nada se dice dónde vive esto y de dónde sale lo que el jugador tiene
+instalado. El enlace está en `nucleo/proyecto.ts` (`URL_PROYECTO`), aparte del donativo y por el
+mismo motivo: no es lógica de juego y el motor no tiene por qué saber de ella. En el texto se la
+llama «la página del juego» y no por el nombre del sitio que la aloja — quien lee esto viene a
+jugar—, y **tampoco es una salida**: la prueba sigue exigiendo que `.salidas` lleve solo a la
+ayuda y al menú.
+
+**El juego mira si hay una versión más nueva publicada**, y lo hace **al arrancar**, desde el
+componente raíz (`ServicioActualizacion`, en `nucleo/actualizacion.servicio.ts`). No al abrir
+«Acerca de»: quien juega puede no entrar ahí nunca. Si la publicada supera a `VERSION_APP`, el
+menú principal marca con un **punto** la entrada que lleva a «Acerca de» y esa pantalla lo cuenta
+en una línea más de la ficha de la página del juego, con el enlace apuntando ya al release.
+
+Seis decisiones que no son casuales:
+
+- **Compara números, nunca texto.** `compararVersiones` está exportada aparte justo para poder
+  probarla: «1.10.0» va *antes* que «1.9.0» alfabéticamente, y con una comparación de cadenas el
+  aviso dejaría de salir a partir de la décima entrega. Una etiqueta que no se entiende —vacía,
+  con cuatro números, con letras— devuelve `null` y no avisa de nada.
+- **Una vez al día**, con la fecha del último intento en `localStorage` (`minehunt.actualizacion`)
+  y validada al leerla como todo lo que sale de ahí. El límite de la API pública de GitHub son 60
+  peticiones por hora e IP.
+- **Se calla cuando no puede.** Sin red, en avión o con un 404 porque todavía no hay releases
+  publicados, no se dice nada: que no se haya podido comprobar no es un problema del jugador.
+- **Usa `fetch` y no `HttpClient`**, al contrario de lo que haría un servicio de Angular normal.
+  Así este no depende de la inyección para nada: se prueba con `new ServicioActualizacion()` y un
+  `fetch` de mentira, y las dos pantallas que leen su señal no tienen que proveer nada en sus
+  TestBed. `provideHttpClient()` sigue en `app.config.ts` y nadie más lo usa.
+- **No descarga ni instala.** En Android el APK se instala desde la página del release con el
+  instalador del sistema, igual que la primera vez; en el navegador basta con recargar. Un plugin
+  nativo propio podría abrir el instalador, como hacen las aplicaciones Kotlin de la casa, pero
+  eso es trabajo de Java y aquí no existe todavía.
+- **El punto del menú lleva etiqueta** (`inicio.acerca.nueva`): un color por sí solo no cuenta
+  nada a quien no lo ve.
+
+**Lo que esto no cubre**: que el servidor del Online rechace a un cliente viejo. Eso ya lo hace
+`VERSION_INCOMPATIBLE`, con `VERSION_APP` a la par del protocolo, y convertir ese rechazo en un
+enlace a la página del release sería el aviso más oportuno de todos — pero toca la pantalla del
+Online y sus pruebas, así que sigue pendiente.
 
 **La presentación del arranque sale en dos sitios, y con reglas distintas.** En el menú (`ServicioIntro`) una sola vez por sesión, porque entre partida y partida se vuelve allí y verla cada vez sería un peaje. En «Acerca de», **cada vez que se entra**: ahí no es lo que separa al jugador de jugar, es la mitad de lo que se vino a ver. Por eso esa la monta con `[anotaLaSesion]="false"`, para que no gaste el turno del menú — quien recargue estando en `/acerca` tiene que ver la presentación igual al volver. Las dos se saltan tocando la pantalla, y las dos tapan sin sustituir: lo de debajo está montado desde el principio, así no hay salto al quitarse.
 
